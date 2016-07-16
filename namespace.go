@@ -1,3 +1,17 @@
+// Copyright 2016 Andrew O'Neill
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//     http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package choices
 
 import (
@@ -38,22 +52,43 @@ func ns(index int) Namespace {
 
 type Namespace struct {
 	Name        string
-	Segments    [16]byte
+	Segments    segments
 	TeamID      []string
 	Experiments []Experiment
 	Units       []string
 }
 
-func (n *Namespace) eval(units map[string][]string) int {
-	// TODO: need to implement the eval
-	return 0
+func (n *Namespace) eval(units []unit) (int, error) {
+	// TODO: determine the segment
+	i, err := hash(hashNs(n.Name), hashUnits(units))
+	if err != nil {
+		return 0, err
+	}
+	segment := uniform(i, 0, float64(len(n.Segments)*8))
+	// TODO: if segment in available segment return
+	if n.Segments.contains(uint64(segment)) {
+		return 0, fmt.Errorf("segment not assigned to an experiment")
+	}
+
+	// TODO: for each experiment
+	for _, exp := range n.Experiments {
+		// TODO:   if segment not in experiment continue
+		if !exp.Segments.contains(uint64(segment)) {
+			continue
+		}
+		// TODO:   return eval experiment
+		return exp.eval(n.Name, units)
+
+	}
+	// TODO: return default value
+	return 0, nil
 }
 
-func filterUnits(units map[string][]string, keep []string) map[string][]string {
-	out := make(map[string][]string)
+func filterUnits(units map[string][]string, keep []string) []unit {
+	out := make([]unit, len(keep))
 
-	for _, v := range keep {
-		out[v] = units[v]
+	for i, k := range keep {
+		out[i] = unit{key: k, value: units[k]}
 	}
 	return out
 }
@@ -62,7 +97,7 @@ type Response struct{}
 
 func (r *Response) add(i int) {}
 
-func Namespaces(ctx context.Context, teamID string, units map[string][]string) *Response {
+func Namespaces(ctx context.Context, teamID string, units map[string][]string) (*Response, error) {
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	defer cancel()
 
@@ -73,16 +108,24 @@ func Namespaces(ctx context.Context, teamID string, units map[string][]string) *
 		ns := ns(index)
 
 		u := filterUnits(units, ns.Units)
-
-		response.add(ns.eval(u))
+		r, err := ns.eval(u)
+		if err != nil {
+			return nil, err
+		}
+		response.add(r)
 	}
-	return response
+	return response, nil
 }
 
 type Experiment struct {
 	Name       string
 	Definition Definition
-	Segments   [16]byte
+	Segments   segments
+}
+
+func (e *Experiment) eval(ns string, units []unit) (int, error) {
+	// TODO: implement this
+	return 0, nil
 }
 
 type Definition struct {
@@ -105,8 +148,8 @@ type Uniform struct {
 	choice  int
 }
 
-func (u *Uniform) Value(ctx context.Context) string {
-	u.eval(ctx)
+func (u *Uniform) Value() string {
+	u.eval()
 	return u.Choices[u.choice]
 }
 
@@ -114,8 +157,8 @@ func (u *Uniform) String() string {
 	return u.Choices[u.choice]
 }
 
-func (u *Uniform) eval(ctx context.Context) error {
-	i, err := hash(ctx)
+func (u *Uniform) eval() error {
+	i, err := hash()
 	if err != nil {
 		return err
 	}
@@ -129,8 +172,8 @@ type Weighted struct {
 	choice  int
 }
 
-func (w *Weighted) Value(ctx context.Context) string {
-	w.eval(ctx)
+func (w *Weighted) Value() string {
+	w.eval()
 	return w.Choices[w.choice]
 }
 
@@ -138,12 +181,12 @@ func (w *Weighted) String() string {
 	return w.Choices[w.choice]
 }
 
-func (w *Weighted) eval(ctx context.Context) error {
+func (w *Weighted) eval() error {
 	if len(w.Choices) != len(w.Weights) {
 		return fmt.Errorf("len(w.Choices) != len(w.Weights): %v != %v", len(w.Choices), len(w.Weights))
 	}
 
-	i, err := hash(ctx)
+	i, err := hash()
 	if err != nil {
 		return err
 	}
@@ -154,7 +197,7 @@ func (w *Weighted) eval(ctx context.Context) error {
 		cumSum += v
 		selection[i] = cumSum
 	}
-	choice := getUniform(i, 0, cumSum)
+	choice := uniform(i, 0, cumSum)
 	for i, v := range selection {
 		if choice < v {
 			w.choice = i
