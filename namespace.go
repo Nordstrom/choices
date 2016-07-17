@@ -58,16 +58,16 @@ type Namespace struct {
 	Units       []string
 }
 
-func (n *Namespace) eval(units []unit) (int, error) {
+func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 	// TODO: determine the segment
 	i, err := hash(hashNs(n.Name), hashUnits(units))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
 	// TODO: if segment in available segment return
 	if n.Segments.contains(uint64(segment)) {
-		return 0, fmt.Errorf("segment not assigned to an experiment")
+		return nil, fmt.Errorf("segment not assigned to an experiment")
 	}
 
 	// TODO: for each experiment
@@ -81,7 +81,7 @@ func (n *Namespace) eval(units []unit) (int, error) {
 
 	}
 	// TODO: return default value
-	return 0, nil
+	return nil, nil
 }
 
 func filterUnits(units map[string][]string, keep []string) []unit {
@@ -95,7 +95,7 @@ func filterUnits(units map[string][]string, keep []string) []unit {
 
 type Response struct{}
 
-func (r *Response) add(i int) {}
+func (r *Response) add(p []paramValue) {}
 
 func Namespaces(ctx context.Context, teamID string, units map[string][]string) (*Response, error) {
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
@@ -115,95 +115,4 @@ func Namespaces(ctx context.Context, teamID string, units map[string][]string) (
 		response.add(r)
 	}
 	return response, nil
-}
-
-type Experiment struct {
-	Name       string
-	Definition Definition
-	Segments   segments
-}
-
-func (e *Experiment) eval(ns string, units []unit) (int, error) {
-	// TODO: implement this
-	return 0, nil
-}
-
-type Definition struct {
-	Params []Param
-}
-
-type Param struct {
-	Name  string
-	Type  string
-	Value Value
-}
-
-type Value interface {
-	Value(context.Context) string
-	String() string
-}
-
-type Uniform struct {
-	Choices []string
-	choice  int
-}
-
-func (u *Uniform) Value() string {
-	u.eval()
-	return u.Choices[u.choice]
-}
-
-func (u *Uniform) String() string {
-	return u.Choices[u.choice]
-}
-
-func (u *Uniform) eval() error {
-	i, err := hash()
-	if err != nil {
-		return err
-	}
-	u.choice = int(i) % len(u.Choices)
-	return nil
-}
-
-type Weighted struct {
-	Choices []string
-	Weights []float64
-	choice  int
-}
-
-func (w *Weighted) Value() string {
-	w.eval()
-	return w.Choices[w.choice]
-}
-
-func (w *Weighted) String() string {
-	return w.Choices[w.choice]
-}
-
-func (w *Weighted) eval() error {
-	if len(w.Choices) != len(w.Weights) {
-		return fmt.Errorf("len(w.Choices) != len(w.Weights): %v != %v", len(w.Choices), len(w.Weights))
-	}
-
-	i, err := hash()
-	if err != nil {
-		return err
-	}
-
-	selection := make([]float64, len(w.Weights))
-	cumSum := 0.0
-	for i, v := range w.Weights {
-		cumSum += v
-		selection[i] = cumSum
-	}
-	choice := uniform(i, 0, cumSum)
-	for i, v := range selection {
-		if choice < v {
-			w.choice = i
-			return nil
-		}
-	}
-
-	return fmt.Errorf("no choice made")
 }
