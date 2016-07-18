@@ -44,3 +44,35 @@ func TestHash(t *testing.T) {
 		}
 	}
 }
+
+func TestUniform(t *testing.T) {
+	tests := []struct {
+		hash     int64
+		min, max float64
+		want     float64
+	}{
+		{
+			hash: 0,
+			min:  0,
+			max:  100,
+			want: 0,
+		},
+		{
+			hash: 0xfffffffffffffff,
+			min:  0,
+			max:  10,
+			want: 10,
+		},
+	}
+	for _, test := range tests {
+		got := uniform(test.hash, test.min, test.max)
+		if test.want != got {
+			t.Errorf("uniform(%v, %v, %v) = %v, want %v",
+				test.hash,
+				test.min,
+				test.max,
+				got,
+				test.want)
+		}
+	}
+}
