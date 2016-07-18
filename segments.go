@@ -18,5 +18,17 @@ type segments [16]byte
 
 func (s *segments) contains(seg uint64) bool {
 	index, pos := seg/8, seg%8
-	return s[index]&1<<pos == 1
+	return s[index]>>pos&1 == 1
+}
+
+func (s *segments) available() []int {
+	out := make([]int, 0, 128)
+	for i := range s {
+		for shift := uint8(0); shift < 8; shift++ {
+			if s[i]&(1<<shift) == 1<<shift {
+				out = append(out, i*8+int(shift))
+			}
+		}
+	}
+	return out
 }
