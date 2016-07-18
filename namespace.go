@@ -59,28 +59,22 @@ type Namespace struct {
 }
 
 func (n *Namespace) eval(units []unit) ([]paramValue, error) {
-	// TODO: determine the segment
 	i, err := hash(hashNs(n.Name), hashUnits(units))
 	if err != nil {
 		return nil, err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
-	// TODO: if segment in available segment return
 	if n.Segments.contains(uint64(segment)) {
 		return nil, fmt.Errorf("segment not assigned to an experiment")
 	}
 
-	// TODO: for each experiment
 	for _, exp := range n.Experiments {
-		// TODO:   if segment not in experiment continue
 		if !exp.Segments.contains(uint64(segment)) {
 			continue
 		}
-		// TODO:   return eval experiment
 		return exp.eval(n.Name, units)
 
 	}
-	// TODO: return default value
 	return nil, nil
 }
 
