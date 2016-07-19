@@ -59,7 +59,7 @@ type Namespace struct {
 }
 
 func (n *Namespace) eval(units []unit) ([]paramValue, error) {
-	i, err := hash(hashNs(n.Name), hashUnits(units))
+	i, err := hash(nil, hashNs(n.Name), hashUnits(units))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 		if !exp.Segments.contains(uint64(segment)) {
 			continue
 		}
-		return exp.eval(n.Name, units)
+		return exp.eval(hashNs(n.Name))
 
 	}
 	return nil, nil

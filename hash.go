@@ -17,11 +17,10 @@ package choices
 import (
 	"bytes"
 	"crypto/sha1"
-	"fmt"
-	"strconv"
+	"encoding/binary"
 )
 
-const longScale = float64(0xFFFFFFFFFFFFFFF)
+const longScale = float64(0xFFFFFFFFFFFFFFFF)
 
 type unit struct {
 	key   string
@@ -38,30 +37,45 @@ type hashConfig struct {
 
 func hashSalt(s string) func(*hashConfig) {
 	return func(h *hashConfig) {
+		if h == nil {
+			h = &hashConfig{}
+		}
 		h.salt = s
 	}
 }
 
 func hashNs(ns string) func(*hashConfig) {
 	return func(h *hashConfig) {
+		if h == nil {
+			h = &hashConfig{}
+		}
 		h.namespace = ns
 	}
 }
 
 func hashExp(exp string) func(*hashConfig) {
 	return func(h *hashConfig) {
+		if h == nil {
+			h = &hashConfig{}
+		}
 		h.experiment = exp
 	}
 }
 
 func hashParam(p string) func(*hashConfig) {
 	return func(h *hashConfig) {
+		if h == nil {
+			h = &hashConfig{}
+		}
 		h.param = p
 	}
 }
 
 func hashUnits(u []unit) func(*hashConfig) {
 	return func(h *hashConfig) {
+		if h == nil {
+			h = &hashConfig{}
+		}
 		h.units = u
 	}
 }
@@ -100,20 +114,17 @@ func (h *hashConfig) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func hash(hashConf ...func(*hashConfig)) (int64, error) {
-	h := &hashConfig{}
-	for _, f := range hashConf {
-		f(h)
+func hash(funcs ...func(*hashConfig)) (uint64, error) {
+	h := hashConfig{}
+	for _, f := range funcs {
+		f(&h)
 	}
 
-	hash := fmt.Sprintf("%x", sha1.Sum(h.Bytes()))
-	i, err := strconv.ParseInt(hash[:15], 16, 64)
-	if err != nil {
-		return 0, err
-	}
+	hash := sha1.Sum(h.Bytes())
+	i := binary.BigEndian.Uint64(hash[:8])
 	return i, nil
 }
 
-func uniform(hash int64, min, max float64) float64 {
+func uniform(hash uint64, min, max float64) float64 {
 	return min + (max-min)*(float64(hash)/longScale)
 }

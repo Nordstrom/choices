@@ -17,7 +17,7 @@ package choices
 import "fmt"
 
 type Value interface {
-	Value(ns, exp, p string, units []unit) string
+	Value(...func(*hashConfig)) (string, error)
 	String() string
 }
 
@@ -26,22 +26,17 @@ type Uniform struct {
 	choice  int
 }
 
-func (u *Uniform) Value(ns, exp, p string, units []unit) string {
-	u.eval(ns, exp, p, units)
-	return u.Choices[u.choice]
+func (u *Uniform) Value(funcs ...func(*hashConfig)) (string, error) {
+	i, err := hash(funcs...)
+	if err != nil {
+		return "", err
+	}
+	u.choice = int(i) % len(u.Choices)
+	return u.Choices[u.choice], nil
 }
 
 func (u *Uniform) String() string {
 	return u.Choices[u.choice]
-}
-
-func (u *Uniform) eval(ns, exp, p string, units []unit) error {
-	i, err := hash(hashNs(ns), hashExp(exp), hashParam(p), hashUnits(units))
-	if err != nil {
-		return err
-	}
-	u.choice = int(i) % len(u.Choices)
-	return nil
 }
 
 type Weighted struct {
@@ -50,26 +45,17 @@ type Weighted struct {
 	choice  int
 }
 
-func (w *Weighted) Value(ns, exp, p string, units []unit) string {
-	w.eval(ns, exp, p, units)
-	return w.Choices[w.choice]
-}
-
-func (w *Weighted) String() string {
-	return w.Choices[w.choice]
-}
-
-func (w *Weighted) eval(ns, exp, p string, units []unit) error {
+func (w *Weighted) Value(funcs ...func(*hashConfig)) (string, error) {
 	if len(w.Choices) != len(w.Weights) {
-		return fmt.Errorf(
+		return "", fmt.Errorf(
 			"len(w.Choices) != len(w.Weights): %v != %v",
 			len(w.Choices),
 			len(w.Weights))
 	}
 
-	i, err := hash(hashNs(ns), hashExp(exp), hashParam(p), hashUnits(units))
+	i, err := hash(funcs...)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	selection := make([]float64, len(w.Weights))
@@ -79,12 +65,21 @@ func (w *Weighted) eval(ns, exp, p string, units []unit) error {
 		selection[i] = cumSum
 	}
 	choice := uniform(i, 0, cumSum)
+	selected := false
 	for i, v := range selection {
 		if choice < v {
 			w.choice = i
-			return nil
+			selected = true
 		}
 	}
 
-	return fmt.Errorf("no choice made")
+	if !selected {
+		return "", fmt.Errorf("no selection was made")
+	}
+
+	return w.Choices[w.choice], nil
+}
+
+func (w *Weighted) String() string {
+	return w.Choices[w.choice]
 }
