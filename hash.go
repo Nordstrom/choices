@@ -115,9 +115,9 @@ func (h *hashConfig) Bytes() []byte {
 }
 
 func hash(funcs ...func(*hashConfig)) (uint64, error) {
-	h := hashConfig{}
+	h := &hashConfig{}
 	for _, f := range funcs {
-		f(&h)
+		f(h)
 	}
 
 	hash := sha1.Sum(h.Bytes())

@@ -34,8 +34,21 @@ type Namespace struct {
 	Units       []string
 }
 
+func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
+	if len(units) == 0 {
+		return nil, fmt.Errorf("addns: no units given")
+	}
+	n := &Namespace{
+		Name:     name,
+		TeamID:   []string{teamID},
+		Units:    units,
+		Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+	}
+	return n, nil
+}
+
 func (n *Namespace) eval(units []unit) ([]paramValue, error) {
-	i, err := hash(nil, hashNs(n.Name), hashUnits(units))
+	i, err := hash(hashNs(n.Name), hashUnits(units))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +66,8 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 	}
 	return nil, nil
 }
-func (n *Namespace) addexp(name string, params []Param, numSegments int) {
+
+func (n *Namespace) Addexp(name string, params []Param, numSegments int) {
 	e := Experiment{
 		Name:     name,
 		Params:   params,
@@ -71,9 +85,16 @@ func filterUnits(units map[string][]string, keep []string) []unit {
 	return out
 }
 
-type Response struct{}
+type Response struct {
+	Experiments map[string][]paramValue
+}
 
-func (r *Response) add(p []paramValue) {}
+func (r *Response) add(key string, p []paramValue) {
+	if r.Experiments == nil {
+		r.Experiments = make(map[string][]paramValue, 10)
+	}
+	r.Experiments[key] = p
+}
 
 func Namespaces(ctx context.Context, m *manager, teamID string, units map[string][]string) (*Response, error) {
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
@@ -94,7 +115,7 @@ func Namespaces(ctx context.Context, m *manager, teamID string, units map[string
 		if err != nil {
 			return nil, err
 		}
-		response.add(r)
+		response.add(ns.Name, r)
 	}
 	return response, nil
 }

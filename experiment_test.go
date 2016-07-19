@@ -26,11 +26,9 @@ func TestExperiment(t *testing.T) {
 		{
 			exp: Experiment{
 				Name: "experiment",
-				Definition: Definition{
-					Params: []Param{
-						{Name: "p1", Value: &Uniform{Choices: []string{"a", "b"}}},
-						{Name: "p2", Value: &Weighted{Choices: []string{"a", "b", "c"}, Weights: []float64{1, 10, 1}}},
-					},
+				Params: []Param{
+					{Name: "p1", Value: &Uniform{Choices: []string{"a", "b"}}},
+					{Name: "p2", Value: &Weighted{Choices: []string{"a", "b", "c"}, Weights: []float64{1, 10, 1}}},
 				},
 				Segments: seg,
 			},
