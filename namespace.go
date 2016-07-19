@@ -17,7 +17,6 @@ package choices
 import (
 	"context"
 	"fmt"
-	"time"
 )
 
 var config = struct {
@@ -48,7 +47,11 @@ func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
 }
 
 func (n *Namespace) eval(units []unit) ([]paramValue, error) {
-	i, err := hash(hashNs(n.Name), hashUnits(units))
+	h := &hashConfig{}
+	h.hashSalt("choice")
+	h.hashNs(n.Name)
+	h.hashUnits(units)
+	i, err := hash(h)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +64,7 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 		if !exp.Segments.contains(uint64(segment)) {
 			continue
 		}
-		return exp.eval(hashNs(n.Name))
+		return exp.eval(h)
 
 	}
 	return nil, nil
@@ -97,8 +100,8 @@ func (r *Response) add(key string, p []paramValue) {
 }
 
 func Namespaces(ctx context.Context, m *manager, teamID string, units map[string][]string) (*Response, error) {
-	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	// defer cancel()
 
 	if m == nil {
 		m = defaultManager
@@ -106,8 +109,7 @@ func Namespaces(ctx context.Context, m *manager, teamID string, units map[string
 
 	response := &Response{}
 
-	namespaces := m.nsByID(teamID)
-	for _, index := range namespaces {
+	for _, index := range m.nsByID(teamID) {
 		ns := m.ns(index)
 
 		u := filterUnits(units, ns.Units)

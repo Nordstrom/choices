@@ -18,27 +18,27 @@ import "testing"
 
 func TestHash(t *testing.T) {
 	tests := []struct {
-		in     []func(*hashConfig)
+		in     *hashConfig
 		out    uint64
 		outErr error
 	}{
 		{
-			in: []func(*hashConfig){
-				hashSalt("hello"),
+			in: &hashConfig{
+				salt: "hello",
 			},
 			out:    12318688712325458082,
 			outErr: nil,
 		},
 		{
-			in: []func(*hashConfig){
-				hashSalt("choices"),
-				hashNs("hello"),
-				hashExp("test"),
-				hashParam("something"),
-				hashUnits([]unit{
+			in: &hashConfig{
+				salt:       "choices",
+				namespace:  "hello",
+				experiment: "test",
+				param:      "something",
+				units: []unit{
 					{key: "test", value: []string{"one", "two"}},
 					{key: "blah", value: []string{"a", "b", "c"}},
-				}),
+				},
 			},
 			out:    10856344482842820951,
 			outErr: nil,
@@ -46,7 +46,7 @@ func TestHash(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got, err := hash(test.in...)
+		got, err := hash(test.in)
 		if test.out != got || test.outErr != err {
 			t.Errorf(
 				"hash(%v) = %v, %v, want %v, %v",
@@ -92,17 +92,17 @@ func TestUniform(t *testing.T) {
 }
 
 func BenchmarkHash(b *testing.B) {
-	funcs := []func(*hashConfig){
-		hashSalt("salt"),
-		hashNs("namespace"),
-		hashExp("experiment"),
-		hashParam("param"),
-		hashUnits([]unit{
+	funcs := &hashConfig{
+		salt:       "salt",
+		namespace:  "namespace",
+		experiment: "experiment",
+		param:      "param",
+		units: []unit{
 			{key: "userid", value: []string{"abcdef1234567890"}},
-		}),
+		},
 	}
 	for i := 0; i < b.N; i++ {
-		hash(funcs...)
+		hash(funcs)
 	}
 }
 

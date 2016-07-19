@@ -36,8 +36,9 @@ func TestExperiment(t *testing.T) {
 			err:  nil,
 		},
 	}
+	h := &hashConfig{salt: "test"}
 	for _, test := range tests {
-		got, err := test.exp.eval()
+		got, err := test.exp.eval(h)
 		if err != test.err {
 			t.Errorf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 			t.FailNow()
@@ -72,9 +73,9 @@ func TestParamEval(t *testing.T) {
 			err:  nil,
 		},
 	}
-
+	h := &hashConfig{salt: "test"}
 	for _, test := range tests {
-		got, err := test.p.eval()
+		got, err := test.p.eval(h)
 		if err != test.err {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
 			t.FailNow()

@@ -17,7 +17,7 @@ package choices
 import "fmt"
 
 type Value interface {
-	Value(...func(*hashConfig)) (string, error)
+	Value(h *hashConfig) (string, error)
 	String() string
 }
 
@@ -26,8 +26,8 @@ type Uniform struct {
 	choice  int
 }
 
-func (u *Uniform) Value(funcs ...func(*hashConfig)) (string, error) {
-	i, err := hash(funcs...)
+func (u *Uniform) Value(h *hashConfig) (string, error) {
+	i, err := hash(h)
 	if err != nil {
 		return "", err
 	}
@@ -45,7 +45,7 @@ type Weighted struct {
 	choice  int
 }
 
-func (w *Weighted) Value(funcs ...func(*hashConfig)) (string, error) {
+func (w *Weighted) Value(h *hashConfig) (string, error) {
 	if len(w.Choices) != len(w.Weights) {
 		return "", fmt.Errorf(
 			"len(w.Choices) != len(w.Weights): %v != %v",
@@ -53,7 +53,7 @@ func (w *Weighted) Value(funcs ...func(*hashConfig)) (string, error) {
 			len(w.Weights))
 	}
 
-	i, err := hash(funcs...)
+	i, err := hash(h)
 	if err != nil {
 		return "", err
 	}

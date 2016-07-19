@@ -27,18 +27,18 @@ var defaultManager = &manager{
 	namespace:              []Namespace{},
 }
 
-func (m *manager) nsByID(teamID string) []int {
+func (m *manager) nsByID(teamID string) (ids []int) {
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	return m.namespaceIndexByTeamID[teamID]
+	ids = m.namespaceIndexByTeamID[teamID]
+	m.mu.RUnlock()
+	return
 }
 
-func (m *manager) ns(index int) Namespace {
+func (m *manager) ns(index int) (n Namespace) {
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	return m.namespace[index]
+	n = m.namespace[index]
+	m.mu.RUnlock()
+	return
 }
 
 func (m *manager) addns(n *Namespace) error {

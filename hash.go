@@ -35,49 +35,24 @@ type hashConfig struct {
 	units      []unit
 }
 
-func hashSalt(s string) func(*hashConfig) {
-	return func(h *hashConfig) {
-		if h == nil {
-			h = &hashConfig{}
-		}
-		h.salt = s
-	}
+func (h *hashConfig) hashSalt(s string) {
+	h.salt = s
 }
 
-func hashNs(ns string) func(*hashConfig) {
-	return func(h *hashConfig) {
-		if h == nil {
-			h = &hashConfig{}
-		}
-		h.namespace = ns
-	}
+func (h *hashConfig) hashNs(ns string) {
+	h.namespace = ns
 }
 
-func hashExp(exp string) func(*hashConfig) {
-	return func(h *hashConfig) {
-		if h == nil {
-			h = &hashConfig{}
-		}
-		h.experiment = exp
-	}
+func (h *hashConfig) hashExp(exp string) {
+	h.experiment = exp
 }
 
-func hashParam(p string) func(*hashConfig) {
-	return func(h *hashConfig) {
-		if h == nil {
-			h = &hashConfig{}
-		}
-		h.param = p
-	}
+func (h *hashConfig) hashParam(p string) {
+	h.param = p
 }
 
-func hashUnits(u []unit) func(*hashConfig) {
-	return func(h *hashConfig) {
-		if h == nil {
-			h = &hashConfig{}
-		}
-		h.units = u
-	}
+func (h *hashConfig) hashUnits(u []unit) {
+	h.units = u
 }
 
 func (h *hashConfig) Bytes() []byte {
@@ -114,12 +89,10 @@ func (h *hashConfig) Bytes() []byte {
 	return buf.Bytes()
 }
 
-func hash(funcs ...func(*hashConfig)) (uint64, error) {
-	h := &hashConfig{}
-	for _, f := range funcs {
-		f(h)
+func hash(h *hashConfig) (uint64, error) {
+	if h == nil {
+		h = &hashConfig{}
 	}
-
 	hash := sha1.Sum(h.Bytes())
 	i := binary.BigEndian.Uint64(hash[:8])
 	return i, nil

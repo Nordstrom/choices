@@ -14,7 +14,32 @@
 
 package choices
 
-import "testing"
+import (
+	"context"
+	"log"
+	"testing"
+)
 
 func TestNsByID(t *testing.T) {
+}
+
+func BenchmarkNamespaces(b *testing.B) {
+	ns, err := NewNamespace("t1", "test", []string{"userid"})
+	if err != nil {
+		log.Fatal("%v", err)
+	}
+	ns.Addexp(
+		"aTest",
+		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
+		128,
+	)
+	if err := Addns(ns); err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	teamID := "test"
+	units := map[string][]string{"userid": []string{"some-user-id"}}
+	for i := 0; i < b.N; i++ {
+		Namespaces(context.Background(), nil, teamID, units)
+	}
 }
