@@ -48,7 +48,7 @@ func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
 
 func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 	h := &hashConfig{}
-	h.hashSalt("choice")
+	h.hashSalt(config.globalSalt)
 	h.hashNs(n.Name)
 	h.hashUnits(units)
 	i, err := hash(h)
