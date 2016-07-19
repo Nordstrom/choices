@@ -20,14 +20,14 @@ type paramValue struct {
 }
 
 type Experiment struct {
-	Name       string
-	Definition Definition
-	Segments   segments
+	Name     string
+	Params   []Param
+	Segments segments
 }
 
 func (e *Experiment) eval(funcs ...func(*hashConfig)) ([]paramValue, error) {
-	p := make([]paramValue, 0, len(e.Definition.Params))
-	for _, param := range e.Definition.Params {
+	p := make([]paramValue, 0, len(e.Params))
+	for _, param := range e.Params {
 		par, err := param.eval(append(funcs, hashExp(e.Name))...)
 		if err != nil {
 			return nil, err
@@ -35,10 +35,6 @@ func (e *Experiment) eval(funcs ...func(*hashConfig)) ([]paramValue, error) {
 		p = append(p, par)
 	}
 	return p, nil
-}
-
-type Definition struct {
-	Params []Param
 }
 
 type Param struct {

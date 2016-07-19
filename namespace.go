@@ -17,7 +17,6 @@ package choices
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 )
 
@@ -25,29 +24,6 @@ var config = struct {
 	globalSalt string
 }{
 	globalSalt: "choices",
-}
-
-var expManager = struct {
-	namespaceIndexByTeamID map[string][]int
-	namespace              []Namespace
-	mu                     sync.RWMutex
-}{
-	namespaceIndexByTeamID: make(map[string][]int, 100),
-	namespace:              []Namespace{},
-}
-
-func nsByID(teamID string) []int {
-	expManager.mu.RLock()
-	defer expManager.mu.RUnlock()
-
-	return expManager.namespaceIndexByTeamID[teamID]
-}
-
-func ns(index int) Namespace {
-	expManager.mu.RLock()
-	defer expManager.mu.RUnlock()
-
-	return expManager.namespace[index]
 }
 
 type Namespace struct {
@@ -77,6 +53,14 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 	}
 	return nil, nil
 }
+func (n *Namespace) addexp(name string, params []Param, numSegments int) {
+	e := Experiment{
+		Name:     name,
+		Params:   params,
+		Segments: n.Segments.sample(numSegments),
+	}
+	n.Experiments = append(n.Experiments, e)
+}
 
 func filterUnits(units map[string][]string, keep []string) []unit {
 	out := make([]unit, len(keep))
@@ -91,15 +75,19 @@ type Response struct{}
 
 func (r *Response) add(p []paramValue) {}
 
-func Namespaces(ctx context.Context, teamID string, units map[string][]string) (*Response, error) {
+func Namespaces(ctx context.Context, m *manager, teamID string, units map[string][]string) (*Response, error) {
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	defer cancel()
 
+	if m == nil {
+		m = defaultManager
+	}
+
 	response := &Response{}
 
-	namespaces := nsByID(teamID)
+	namespaces := m.nsByID(teamID)
 	for _, index := range namespaces {
-		ns := ns(index)
+		ns := m.ns(index)
 
 		u := filterUnits(units, ns.Units)
 		r, err := ns.eval(u)

@@ -14,6 +14,8 @@
 
 package choices
 
+import "math/rand"
+
 type segments [16]byte
 
 func (s *segments) contains(seg uint64) bool {
@@ -29,6 +31,33 @@ func (s *segments) available() []int {
 				out = append(out, i*8+int(shift))
 			}
 		}
+	}
+	return out
+}
+
+type bit int
+
+const (
+	zero bit = iota
+	one
+)
+
+func (s *segments) set(index int, val bit) {
+	i, pos := index/8, uint8(index%8)
+	switch val {
+	case zero:
+		s[i] &= ^(1 << pos)
+	case one:
+		s[i] |= 1 << pos
+	}
+}
+
+func (s *segments) sample(n int) segments {
+	avail := s.available()
+	out := segments{}
+	for _, i := range rand.Perm(n) {
+		s.set(avail[i], zero)
+		out.set(avail[i], one)
 	}
 	return out
 }
