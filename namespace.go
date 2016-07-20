@@ -25,6 +25,8 @@ var config = struct {
 	globalSalt: "choices",
 }
 
+// Namespace is a container for experiments. Segments in the namespace divide
+// traffic. Units are the keys that will hash experiments.
 type Namespace struct {
 	Name        string
 	Segments    segments
@@ -33,6 +35,8 @@ type Namespace struct {
 	Units       []string
 }
 
+// NewNamespace creates a new namespace with all segments available. It returns
+// an error if no units are given.
 func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
 	if len(units) == 0 {
 		return nil, fmt.Errorf("addns: no units given")
@@ -70,13 +74,20 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 	return nil, nil
 }
 
-func (n *Namespace) Addexp(name string, params []Param, numSegments int) {
+// Addexp adds an experiment to the namespace. It takes the the given number of
+// segments from the namespace. It returns an error if the number of segments
+// is larger than the number of available segments in the namespace.
+func (n *Namespace) Addexp(name string, params []Param, numSegments int) error {
+	if n.Segments.count() < numSegments {
+		return fmt.Errorf("Namespace.Addexp: not enough segments in namespace, want: %v, got %v", numSegments, n.Segments.count())
+	}
 	e := Experiment{
 		Name:     name,
 		Params:   params,
 		Segments: n.Segments.sample(numSegments),
 	}
 	n.Experiments = append(n.Experiments, e)
+	return nil
 }
 
 func filterUnits(units map[string][]string, keep []string) []unit {
@@ -88,6 +99,7 @@ func filterUnits(units map[string][]string, keep []string) []unit {
 	return out
 }
 
+// Response is what is returned to the user on a call to Namespaces.
 type Response struct {
 	Experiments map[string][]paramValue
 }
@@ -99,7 +111,11 @@ func (r *Response) add(key string, p []paramValue) {
 	r.Experiments[key] = p
 }
 
+// Namespaces determines the assignments for the a given users units based on
+// the current set of namespaces and experiments. It returns a Response object
+// if it is successful or an error if something went wrong.
 func Namespaces(ctx context.Context, m *manager, teamID string, units map[string][]string) (*Response, error) {
+	// TODO: decide what to do about the context.
 	// ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	// defer cancel()
 
