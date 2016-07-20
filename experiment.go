@@ -25,9 +25,9 @@ type Experiment struct {
 	Segments segments
 }
 
-func (e *Experiment) eval(h *hashConfig) ([]paramValue, error) {
+func (e *Experiment) eval(h hashConfig) ([]paramValue, error) {
 	p := make([]paramValue, 0, len(e.Params))
-	h.hashExp(e.Name)
+	h.setExp(e.Name)
 	for _, param := range e.Params {
 		par, err := param.eval(h)
 		if err != nil {
@@ -43,8 +43,8 @@ type Param struct {
 	Value Value
 }
 
-func (p *Param) eval(h *hashConfig) (paramValue, error) {
-	h.hashParam(p.Name)
+func (p *Param) eval(h hashConfig) (paramValue, error) {
+	h.setParam(p.Name)
 	val, err := p.Value.Value(h)
 	if err != nil {
 		return paramValue{}, err

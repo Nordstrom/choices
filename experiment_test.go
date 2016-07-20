@@ -17,7 +17,7 @@ package choices
 import "testing"
 
 func TestExperiment(t *testing.T) {
-	seg := segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
+	seg := segmentsAll
 	tests := []struct {
 		exp  Experiment
 		want []paramValue
@@ -36,7 +36,7 @@ func TestExperiment(t *testing.T) {
 			err:  nil,
 		},
 	}
-	h := &hashConfig{salt: "test"}
+	h := hashConfig{salt: [4]string{"salt", "", "", ""}}
 	for _, test := range tests {
 		got, err := test.exp.eval(h)
 		if err != test.err {
@@ -64,7 +64,7 @@ func TestParamEval(t *testing.T) {
 	}{
 		{
 			p:    Param{Name: "test", Value: &Uniform{Choices: []string{"a", "b"}}},
-			want: paramValue{name: "test", value: "a"},
+			want: paramValue{name: "test", value: "b"},
 			err:  nil,
 		},
 		{
@@ -73,7 +73,7 @@ func TestParamEval(t *testing.T) {
 			err:  nil,
 		},
 	}
-	h := &hashConfig{salt: "test"}
+	h := hashConfig{salt: [4]string{"test", "", "", ""}}
 	for _, test := range tests {
 		got, err := test.p.eval(h)
 		if err != test.err {
@@ -84,5 +84,21 @@ func TestParamEval(t *testing.T) {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
 			t.FailNow()
 		}
+	}
+}
+
+func BenchmarkExperimentEval(b *testing.B) {
+	e := Experiment{
+		Name: "experiment",
+		Params: []Param{
+			{Name: "p", Value: &Uniform{Choices: []string{"a", "b"}}},
+		},
+		Segments: segmentsAll,
+	}
+	h := hashConfig{
+		salt: [4]string{"salt", "namespace", "", ""},
+	}
+	for i := 0; i < b.N; i++ {
+		e.eval(h)
 	}
 }

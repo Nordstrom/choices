@@ -18,6 +18,8 @@ import "math/rand"
 
 type segments [16]byte
 
+var segmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
+
 func (s *segments) contains(seg uint64) bool {
 	index, pos := seg/8, seg%8
 	return s[index]>>pos&1 == 1

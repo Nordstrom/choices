@@ -28,71 +28,65 @@ type unit struct {
 }
 
 type hashConfig struct {
-	salt       string
-	namespace  string
-	experiment string
-	param      string
-	units      []unit
+	salt  [4]string
+	units []unit
 }
 
-func (h *hashConfig) hashSalt(s string) {
-	h.salt = s
+func (h *hashConfig) setSalt(s string) {
+	h.salt[0] = s
 }
 
-func (h *hashConfig) hashNs(ns string) {
-	h.namespace = ns
+func (h *hashConfig) setNs(ns string) {
+	h.salt[1] = ns
 }
 
-func (h *hashConfig) hashExp(exp string) {
-	h.experiment = exp
+func (h *hashConfig) setExp(exp string) {
+	h.salt[2] = exp
 }
 
-func (h *hashConfig) hashParam(p string) {
-	h.param = p
+func (h *hashConfig) setParam(p string) {
+	h.salt[3] = p
 }
 
-func (h *hashConfig) hashUnits(u []unit) {
+func (h *hashConfig) setUnits(u []unit) {
 	h.units = u
 }
 
 func (h *hashConfig) Bytes() []byte {
 	var buf bytes.Buffer
 
-	addString := func(s string) {
-		if s != "" {
-			if buf.Len() != 0 {
-				buf.WriteByte('.')
-			}
-			buf.WriteString(s)
+	for i, v := range h.salt {
+		buf.WriteString(v)
+		if i < len(h.salt)-1 {
+			buf.WriteByte('.')
 		}
 	}
 
-	addString(h.salt)
-	addString(h.namespace)
-	addString(h.experiment)
-	addString(h.param)
-	if len(h.units) != 0 {
-		if buf.Len() != 0 {
-			buf.WriteByte('.')
-		}
-		for _, unit := range h.units {
-			buf.WriteString(unit.key)
-			buf.WriteByte('=')
-			for i, v := range unit.value {
-				buf.WriteString(v)
-				if i < len(unit.value)-1 {
-					buf.WriteByte(',')
-				}
+	buf.WriteByte('@')
+
+	for _, unit := range h.units {
+		buf.WriteString(unit.key)
+		buf.WriteByte('=')
+		for i, v := range unit.value {
+			buf.WriteString(v)
+			if i < len(unit.value)-1 {
+				buf.WriteByte(',')
 			}
 		}
 	}
 	return buf.Bytes()
 }
 
-func hash(h *hashConfig) (uint64, error) {
-	if h == nil {
-		h = &hashConfig{}
+func addString(buf *bytes.Buffer, s string) {
+	if s != "" {
+		if buf.Len() != 0 {
+			buf.WriteByte('.')
+		}
+		buf.WriteString(s)
 	}
+}
+
+func hash(h hashConfig) (uint64, error) {
 	hash := sha1.Sum(h.Bytes())
 	i := binary.BigEndian.Uint64(hash[:8])
 	return i, nil

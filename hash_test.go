@@ -18,29 +18,26 @@ import "testing"
 
 func TestHash(t *testing.T) {
 	tests := []struct {
-		in     *hashConfig
+		in     hashConfig
 		out    uint64
 		outErr error
 	}{
 		{
-			in: &hashConfig{
-				salt: "hello",
+			in: hashConfig{
+				salt: [4]string{"hello", "", "", ""},
 			},
-			out:    12318688712325458082,
+			out:    15651637208744958586,
 			outErr: nil,
 		},
 		{
-			in: &hashConfig{
-				salt:       "choices",
-				namespace:  "hello",
-				experiment: "test",
-				param:      "something",
+			in: hashConfig{
+				salt: [4]string{"choices", "hello", "test", "something"},
 				units: []unit{
 					{key: "test", value: []string{"one", "two"}},
 					{key: "blah", value: []string{"a", "b", "c"}},
 				},
 			},
-			out:    10856344482842820951,
+			out:    8039872972452716165,
 			outErr: nil,
 		},
 	}
@@ -92,17 +89,14 @@ func TestUniform(t *testing.T) {
 }
 
 func BenchmarkHash(b *testing.B) {
-	funcs := &hashConfig{
-		salt:       "salt",
-		namespace:  "namespace",
-		experiment: "experiment",
-		param:      "param",
+	h := hashConfig{
+		salt: [4]string{"salt", "namespace", "experiment", "param"},
 		units: []unit{
 			{key: "userid", value: []string{"abcdef1234567890"}},
 		},
 	}
 	for i := 0; i < b.N; i++ {
-		hash(funcs)
+		hash(h)
 	}
 }
 
@@ -114,7 +108,7 @@ func BenchmarkHashBytes(b *testing.B) {
 }
 
 func BenchmarkHashBytesAll(b *testing.B) {
-	h := hashConfig{salt: "salt", namespace: "namespace", experiment: "experiment", param: "param", units: []unit{{key: "key", value: []string{"value"}}}}
+	h := hashConfig{salt: [4]string{"salt", "namespace", "experiment", "param"}, units: []unit{{key: "key", value: []string{"value"}}}}
 	for i := 0; i < b.N; i++ {
 		h.Bytes()
 	}

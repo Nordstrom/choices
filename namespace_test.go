@@ -43,3 +43,27 @@ func BenchmarkNamespaces(b *testing.B) {
 		Namespaces(context.Background(), nil, teamID, units)
 	}
 }
+
+func BenchmarkNamespaceEval(b *testing.B) {
+	ns, err := NewNamespace("t1", "test", []string{"userid"})
+	if err != nil {
+		log.Fatal("%v", err)
+	}
+	ns.Addexp(
+		"aTest",
+		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
+		128,
+	)
+	units := []unit{{key: "userid", value: []string{"my-super-unique-userid"}}}
+	for i := 0; i < b.N; i++ {
+		ns.eval(units)
+	}
+}
+
+func BenchmarkFilterUnits(b *testing.B) {
+	units := map[string][]string{"test": []string{"a", "b"}, "useless": []string{"blah"}, "keep": []string{"arst"}}
+	keep := []string{"keep", "test"}
+	for i := 0; i < b.N; i++ {
+		filterUnits(units, keep)
+	}
+}

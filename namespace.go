@@ -45,16 +45,16 @@ func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
 		Name:     name,
 		TeamID:   []string{teamID},
 		Units:    units,
-		Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+		Segments: segmentsAll,
 	}
 	return n, nil
 }
 
 func (n *Namespace) eval(units []unit) ([]paramValue, error) {
-	h := &hashConfig{}
-	h.hashSalt(config.globalSalt)
-	h.hashNs(n.Name)
-	h.hashUnits(units)
+	h := hashConfig{}
+	h.setSalt(config.globalSalt)
+	h.setNs(n.Name)
+	h.setUnits(units)
 	i, err := hash(h)
 	if err != nil {
 		return nil, err
