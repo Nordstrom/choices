@@ -14,7 +14,11 @@
 
 package choices
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/foolusion/choices/elwin"
+)
 
 var config = struct {
 	globalSalt string
@@ -47,18 +51,18 @@ func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
 	return n, nil
 }
 
-func (n *Namespace) eval(units []unit) ([]paramValue, error) {
+func (n *Namespace) eval(userID string) (*elwin.Experiment, error) {
 	h := hashConfig{}
 	h.setSalt(config.globalSalt)
 	h.setNs(n.Name)
-	h.setUnits(units)
+	h.setUserID(userID)
 	i, err := hash(h)
 	if err != nil {
 		return nil, err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
 	if n.Segments.contains(uint64(segment)) {
-		return []paramValue{}, nil
+		return nil, nil
 	}
 
 	for _, exp := range n.Experiments {
@@ -68,7 +72,7 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 		return exp.eval(h)
 
 	}
-	return []paramValue{}, fmt.Errorf("shouldn't be here")
+	return nil, fmt.Errorf("shouldn't be here")
 }
 
 // Addexp adds an experiment to the namespace. It takes the the given number of
@@ -111,22 +115,21 @@ func (r *Response) add(key string, p []paramValue) {
 // Namespaces determines the assignments for the a given users units based on
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
-func Namespaces(m *manager, teamID string, units map[string][]string) (*Response, error) {
+func Namespaces(m *manager, teamID, userID string) (*elwin.Experiments, error) {
 	if m == nil {
 		m = defaultManager
 	}
 
-	response := &Response{}
+	response := &elwin.Experiments{}
 
 	for _, index := range m.nsByID(teamID) {
 		ns := m.ns(index)
 
-		u := filterUnits(units, ns.Units)
-		r, err := ns.eval(u)
+		r, err := ns.eval(userID)
 		if err != nil {
 			return nil, err
 		}
-		response.add(ns.Name, r)
+		response.Experiments[ns.Name] = r
 	}
 	return response, nil
 }

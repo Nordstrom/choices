@@ -16,7 +16,8 @@ message Experiments {
 }
 
 message Experiment {
-	repeated Param params = 1;
+	string name = 1;
+	repeated Param params = 2;
 }
 
 message Param {

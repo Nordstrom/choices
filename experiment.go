@@ -14,6 +14,8 @@
 
 package choices
 
+import "github.com/foolusion/choices/elwin"
+
 type paramValue struct {
 	Experiment string
 	Name       string
@@ -26,18 +28,17 @@ type Experiment struct {
 	Segments segments
 }
 
-func (e *Experiment) eval(h hashConfig) ([]paramValue, error) {
-	p := make([]paramValue, 0, len(e.Params))
+func (e *Experiment) eval(h hashConfig) (*elwin.Experiment, error) {
+	p := make([]*elwin.Param, 0, len(e.Params))
 	h.salt[2] = e.Name
 	for _, param := range e.Params {
 		par, err := param.eval(h)
 		if err != nil {
 			return nil, err
 		}
-		par.Experiment = e.Name
 		p = append(p, par)
 	}
-	return p, nil
+	return &elwin.Experiment{Name: e.Name, Params: p}, nil
 }
 
 type Param struct {
@@ -45,15 +46,15 @@ type Param struct {
 	Value Value
 }
 
-func (p *Param) eval(h hashConfig) (paramValue, error) {
+func (p *Param) eval(h hashConfig) (*elwin.Param, error) {
 	h.salt[3] = p.Name
 	i, err := hash(h)
 	if err != nil {
-		return paramValue{}, err
+		return nil, err
 	}
 	val, err := p.Value.Value(i)
 	if err != nil {
-		return paramValue{}, err
+		return nil, err
 	}
-	return paramValue{Name: p.Name, Value: val}, nil
+	return &elwin.Param{Key: p.Name, Value: val}, nil
 }

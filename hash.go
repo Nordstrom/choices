@@ -28,8 +28,8 @@ type unit struct {
 }
 
 type hashConfig struct {
-	salt  [4]string
-	units []unit
+	salt   [4]string
+	userID string
 }
 
 func (h *hashConfig) setSalt(s string) {
@@ -48,8 +48,8 @@ func (h *hashConfig) setParam(p string) {
 	h.salt[3] = p
 }
 
-func (h *hashConfig) setUnits(u []unit) {
-	h.units = u
+func (h *hashConfig) setUserID(u string) {
+	h.userID = u
 }
 
 func (h *hashConfig) Bytes() []byte {
@@ -64,16 +64,8 @@ func (h *hashConfig) Bytes() []byte {
 
 	buf.WriteByte('@')
 
-	for _, unit := range h.units {
-		buf.WriteString(unit.key)
-		buf.WriteByte('=')
-		for i, v := range unit.value {
-			buf.WriteString(v)
-			if i < len(unit.value)-1 {
-				buf.WriteByte(',')
-			}
-		}
-	}
+	buf.WriteString(h.userID)
+
 	return buf.Bytes()
 }
 

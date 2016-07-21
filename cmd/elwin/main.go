@@ -18,9 +18,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 
+	"golang.org/x/net/context"
+
 	"github.com/foolusion/choices"
+	"github.com/foolusion/choices/elwin"
+	"google.golang.org/grpc"
 )
 
 func init() {
@@ -84,7 +89,24 @@ func main() {
 		log.Fatalf("%v", err)
 	}
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	lis, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		log.Fatalf("main: failed to listen: %v", err)
+	}
+	grpcServer := grpc.NewServer()
+	elwin.RegisterElwinServer(grpcServer, &elwinServer{})
+	grpcServer.Serve(lis)
+}
+
+type elwinServer struct {
+}
+
+func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
+	if id == nil {
+		return nil, fmt.Errorf("GetNamespaces: no Identifier recieved")
+	}
+
+	return choices.Namespaces(nil, id.TeamID, id.UserID)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
