@@ -15,8 +15,9 @@
 package choices
 
 type paramValue struct {
-	name  string
-	value string
+	Experiment string
+	Name       string
+	Value      string
 }
 
 type Experiment struct {
@@ -27,12 +28,13 @@ type Experiment struct {
 
 func (e *Experiment) eval(h hashConfig) ([]paramValue, error) {
 	p := make([]paramValue, 0, len(e.Params))
-	h.setExp(e.Name)
+	h.salt[2] = e.Name
 	for _, param := range e.Params {
 		par, err := param.eval(h)
 		if err != nil {
 			return nil, err
 		}
+		par.Experiment = e.Name
 		p = append(p, par)
 	}
 	return p, nil
@@ -44,10 +46,14 @@ type Param struct {
 }
 
 func (p *Param) eval(h hashConfig) (paramValue, error) {
-	h.setParam(p.Name)
-	val, err := p.Value.Value(h)
+	h.salt[3] = p.Name
+	i, err := hash(h)
 	if err != nil {
 		return paramValue{}, err
 	}
-	return paramValue{name: p.Name, value: val}, nil
+	val, err := p.Value.Value(i)
+	if err != nil {
+		return paramValue{}, err
+	}
+	return paramValue{Name: p.Name, Value: val}, nil
 }

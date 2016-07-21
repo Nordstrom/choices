@@ -14,10 +14,7 @@
 
 package choices
 
-import (
-	"context"
-	"fmt"
-)
+import "fmt"
 
 var config = struct {
 	globalSalt string
@@ -61,7 +58,7 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
 	if n.Segments.contains(uint64(segment)) {
-		return nil, fmt.Errorf("segment not assigned to an experiment")
+		return []paramValue{}, nil
 	}
 
 	for _, exp := range n.Experiments {
@@ -71,7 +68,7 @@ func (n *Namespace) eval(units []unit) ([]paramValue, error) {
 		return exp.eval(h)
 
 	}
-	return nil, nil
+	return []paramValue{}, fmt.Errorf("shouldn't be here")
 }
 
 // Addexp adds an experiment to the namespace. It takes the the given number of
@@ -114,11 +111,7 @@ func (r *Response) add(key string, p []paramValue) {
 // Namespaces determines the assignments for the a given users units based on
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
-func Namespaces(ctx context.Context, m *manager, teamID string, units map[string][]string) (*Response, error) {
-	// TODO: decide what to do about the context.
-	// ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-	// defer cancel()
-
+func Namespaces(m *manager, teamID string, units map[string][]string) (*Response, error) {
 	if m == nil {
 		m = defaultManager
 	}

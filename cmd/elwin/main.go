@@ -15,7 +15,7 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -29,25 +29,71 @@ func init() {
 
 func main() {
 	log.Println("Starting elwin...")
-	ns, err := choices.NewNamespace("t1", "test", []string{"userid"})
+	t1, err := choices.NewNamespace("t1", "test", []string{"userid"})
 	if err != nil {
-		log.Fatal("%v", err)
+		log.Fatalf("%v", err)
 	}
-	ns.Addexp(
-		"aTest",
+	t1.Addexp(
+		"uniform",
 		[]choices.Param{{Name: "a", Value: &choices.Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	if err := choices.Addns(ns); err != nil {
+	if err := choices.Addns(t1); err != nil {
 		log.Fatalf("%v", err)
 	}
+
+	t2, err := choices.NewNamespace("t2", "test", []string{"userid"})
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+	t2.Addexp(
+		"weighted",
+		[]choices.Param{{Name: "b", Value: &choices.Weighted{Choices: []string{"on", "off"}, Weights: []float64{2, 1}}}},
+		128,
+	)
+	if err := choices.Addns(t2); err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	t3, err := choices.NewNamespace("t3", "test", []string{"userid"})
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+	t3.Addexp(
+		"halfSegments",
+		[]choices.Param{{Name: "b", Value: &choices.Uniform{Choices: []string{"on"}}}},
+		64,
+	)
+	if err := choices.Addns(t3); err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	t4, err := choices.NewNamespace("t4", "test", []string{"userid"})
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+	t4.Addexp(
+		"multi",
+		[]choices.Param{
+			{Name: "a", Value: &choices.Uniform{Choices: []string{"on", "off"}}},
+			{Name: "b", Value: &choices.Weighted{Choices: []string{"up", "down"}, Weights: []float64{1, 2}}},
+		},
+		128,
+	)
+	if err := choices.Addns(t4); err != nil {
+		log.Fatalf("%v", err)
+	}
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	resp, err := choices.Namespaces(context.Background(), nil, "test", map[string][]string{"userid": []string{"some-user-id"}})
+	r.ParseForm()
+	resp, err := choices.Namespaces(nil, "test", r.Form)
 	if err != nil {
 		fmt.Fprintf(w, "%v", err)
+		return
 	}
-	fmt.Fprintf(w, "%v", *resp)
+	enc := json.NewEncoder(w)
+	enc.Encode(*resp)
 }

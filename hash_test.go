@@ -74,6 +74,12 @@ func TestUniform(t *testing.T) {
 			max:  10,
 			want: 10,
 		},
+		{
+			hash: 0x8000000000000000,
+			min:  0,
+			max:  100,
+			want: 50,
+		},
 	}
 	for _, test := range tests {
 		got := uniform(test.hash, test.min, test.max)

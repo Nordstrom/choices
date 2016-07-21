@@ -100,3 +100,68 @@ func TestSegmentsAvailable(t *testing.T) {
 
 	}
 }
+
+func TestSegmentsSet(t *testing.T) {
+	tests := []struct {
+		seg   segments
+		index int
+		value bit
+		want  segments
+	}{
+		{
+			seg:   segments{},
+			index: 0,
+			value: one,
+			want:  segments{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		{
+			seg:   segments{},
+			index: 13,
+			value: one,
+			want:  segments{0, 1 << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		{
+			seg:   segmentsAll,
+			index: 15,
+			value: zero,
+			want:  segments{255, 127, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+		},
+	}
+
+	for _, test := range tests {
+		test.seg.set(test.index, test.value)
+		for i, v := range test.seg {
+			if v != test.want[i] {
+				t.Errorf("test.set(%v, %v) = %v, want %v", test.index, test.value, test.seg, test.want)
+			}
+		}
+	}
+}
+
+func TestSegmentsSample(t *testing.T) {
+	tests := []struct {
+		seg  segments
+		num  int
+		want segments
+	}{
+		{
+			seg:  segmentsAll,
+			num:  0,
+			want: segments{},
+		},
+		{
+			seg:  segmentsAll,
+			num:  1,
+			want: segments{0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0},
+		},
+	}
+
+	for _, test := range tests {
+		got := test.seg.sample(test.num)
+		for i, v := range got {
+			if v != test.want[i] {
+				t.Errorf("test.sample() = %v %v, want %v", got, test.seg, test.want)
+			}
+		}
+	}
+}

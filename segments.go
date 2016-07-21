@@ -57,9 +57,10 @@ func (s *segments) set(index int, val bit) {
 func (s *segments) sample(n int) segments {
 	avail := s.available()
 	out := segments{}
-	for _, i := range rand.Perm(n) {
-		s.set(avail[i], zero)
-		out.set(avail[i], one)
+	p := rand.Perm(len(avail))
+	for i := 0; i < n; i++ {
+		s.set(avail[p[i]], zero)
+		out.set(avail[p[i]], one)
 	}
 	return out
 }

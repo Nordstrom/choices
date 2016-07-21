@@ -15,7 +15,6 @@
 package choices
 
 import (
-	"context"
 	"log"
 	"testing"
 )
@@ -40,7 +39,7 @@ func BenchmarkNamespaces(b *testing.B) {
 	teamID := "test"
 	units := map[string][]string{"userid": []string{"some-user-id"}}
 	for i := 0; i < b.N; i++ {
-		Namespaces(context.Background(), nil, teamID, units)
+		Namespaces(nil, teamID, units)
 	}
 }
 

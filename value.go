@@ -17,7 +17,7 @@ package choices
 import "fmt"
 
 type Value interface {
-	Value(h hashConfig) (string, error)
+	Value(i uint64) (string, error)
 	String() string
 }
 
@@ -26,11 +26,7 @@ type Uniform struct {
 	choice  int
 }
 
-func (u *Uniform) Value(h hashConfig) (string, error) {
-	i, err := hash(h)
-	if err != nil {
-		return "", err
-	}
+func (u *Uniform) Value(i uint64) (string, error) {
 	u.choice = int(i % uint64(len(u.Choices)))
 	return u.Choices[u.choice], nil
 }
@@ -45,7 +41,7 @@ type Weighted struct {
 	choice  int
 }
 
-func (w *Weighted) Value(h hashConfig) (string, error) {
+func (w *Weighted) Value(i uint64) (string, error) {
 	if len(w.Choices) != len(w.Weights) {
 		return "", fmt.Errorf(
 			"len(w.Choices) != len(w.Weights): %v != %v",
@@ -53,23 +49,19 @@ func (w *Weighted) Value(h hashConfig) (string, error) {
 			len(w.Weights))
 	}
 
-	i, err := hash(h)
-	if err != nil {
-		return "", err
-	}
-
 	selection := make([]float64, len(w.Weights))
 	cumSum := 0.0
-	for i, v := range w.Weights {
+	for ii, v := range w.Weights {
 		cumSum += v
-		selection[i] = cumSum
+		selection[ii] = cumSum
 	}
 	choice := uniform(i, 0, cumSum)
 	selected := false
-	for i, v := range selection {
+	for ii, v := range selection {
 		if choice < v {
-			w.choice = i
+			w.choice = ii
 			selected = true
+			break
 		}
 	}
 

@@ -32,8 +32,11 @@ func TestExperiment(t *testing.T) {
 				},
 				Segments: seg,
 			},
-			want: []paramValue{{name: "p1", value: "a"}, {name: "p2", value: "c"}},
-			err:  nil,
+			want: []paramValue{
+				{Experiment: "experiment", Name: "p1", Value: "a"},
+				{Experiment: "experiment", Name: "p2", Value: "c"},
+			},
+			err: nil,
 		},
 	}
 	h := hashConfig{salt: [4]string{"salt", "", "", ""}}
@@ -64,12 +67,12 @@ func TestParamEval(t *testing.T) {
 	}{
 		{
 			p:    Param{Name: "test", Value: &Uniform{Choices: []string{"a", "b"}}},
-			want: paramValue{name: "test", value: "b"},
+			want: paramValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
 		{
 			p:    Param{Name: "test", Value: &Weighted{Choices: []string{"a", "b"}, Weights: []float64{10, 90}}},
-			want: paramValue{name: "test", value: "b"},
+			want: paramValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
 	}
