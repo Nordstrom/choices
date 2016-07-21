@@ -34,7 +34,7 @@ func TestExperiment(t *testing.T) {
 			},
 			want: []paramValue{
 				{Experiment: "experiment", Name: "p1", Value: "a"},
-				{Experiment: "experiment", Name: "p2", Value: "c"},
+				{Experiment: "experiment", Name: "p2", Value: "a"},
 			},
 			err: nil,
 		},
