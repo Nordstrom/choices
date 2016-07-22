@@ -41,7 +41,7 @@ func main() {
 		[]choices.Param{{Name: "a", Value: &choices.Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	if err := choices.Addns(t1); err != nil {
+	if err := choices.AddNamespace(t1); err != nil {
 		log.Fatalf("%v", err)
 	}
 
@@ -51,7 +51,7 @@ func main() {
 		[]choices.Param{{Name: "b", Value: &choices.Weighted{Choices: []string{"on", "off"}, Weights: []float64{2, 1}}}},
 		128,
 	)
-	if err := choices.Addns(t2); err != nil {
+	if err := choices.AddNamespace(t2); err != nil {
 		log.Fatalf("%v", err)
 	}
 
@@ -61,7 +61,7 @@ func main() {
 		[]choices.Param{{Name: "b", Value: &choices.Uniform{Choices: []string{"on"}}}},
 		64,
 	)
-	if err := choices.Addns(t3); err != nil {
+	if err := choices.AddNamespace(t3); err != nil {
 		log.Fatalf("%v", err)
 	}
 
@@ -74,7 +74,7 @@ func main() {
 		},
 		128,
 	)
-	if err := choices.Addns(t4); err != nil {
+	if err := choices.AddNamespace(t4); err != nil {
 		log.Fatalf("%v", err)
 	}
 	go func() {

@@ -14,11 +14,16 @@
 
 package choices
 
+// ParamValue is a key value pair returned from an evalated experiment
+// parameter.
 type ParamValue struct {
 	Name  string
 	Value string
 }
 
+// Experiment is a structure that represents a single experiment in elwin. It
+// can contain multiple parameters. Experiments are evaluated through the call
+// to Namespaces.
 type Experiment struct {
 	Name     string
 	Params   []Param
@@ -38,6 +43,8 @@ func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 	return p, nil
 }
 
+// Param is a struct that represents a single parameter in an experiment. Param
+// is evaluated through the call to Namespaces.
 type Param struct {
 	Name  string
 	Value Value

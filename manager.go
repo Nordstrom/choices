@@ -46,6 +46,8 @@ func (m *manager) addns(n *Namespace) error {
 	return nil
 }
 
-func Addns(n *Namespace) error {
+// AddNamespace adds the given namespace to the defaultStorage implementation.
+// This is just a basic list of namespaces that is concurrency safe.
+func AddNamespace(n *Namespace) error {
 	return defaultStorage.addns(n)
 }

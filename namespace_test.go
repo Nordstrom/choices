@@ -29,7 +29,7 @@ func BenchmarkNamespaces(b *testing.B) {
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	if err := Addns(ns); err != nil {
+	if err := AddNamespace(ns); err != nil {
 		log.Fatalf("%v", err)
 	}
 
