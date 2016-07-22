@@ -114,7 +114,7 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 
 		for i, p := range v.Params {
 			exp.Experiments[v.Name].Params[i] = &elwin.Param{
-				Key:   p.Name,
+				Name:  p.Name,
 				Value: p.Value,
 			}
 		}
