@@ -91,6 +91,7 @@ func (n *Namespace) eval(h hashConfig, exps *elwin.Experiments) error {
 			exps.Experiments = make(map[string]*elwin.Experiment, 100)
 		}
 		exps.Experiments[exp.Name] = e
+		return nil
 
 	}
 	return nil
