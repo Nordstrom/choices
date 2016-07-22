@@ -55,11 +55,3 @@ func BenchmarkNamespaceEval(b *testing.B) {
 		ns.eval(exps, userID)
 	}
 }
-
-func BenchmarkFilterUnits(b *testing.B) {
-	units := map[string][]string{"test": []string{"a", "b"}, "useless": []string{"blah"}, "keep": []string{"arst"}}
-	keep := []string{"keep", "test"}
-	for i := 0; i < b.N; i++ {
-		filterUnits(units, keep)
-	}
-}

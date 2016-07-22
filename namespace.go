@@ -93,15 +93,6 @@ func (n *Namespace) Addexp(name string, params []Param, numSegments int) error {
 	return nil
 }
 
-func filterUnits(units map[string][]string, keep []string) []unit {
-	out := make([]unit, len(keep))
-
-	for i, k := range keep {
-		out[i] = unit{key: k, value: units[k]}
-	}
-	return out
-}
-
 // Namespaces determines the assignments for the a given users units based on
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
