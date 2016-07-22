@@ -14,11 +14,7 @@
 
 package choices
 
-import (
-	"fmt"
-
-	"github.com/foolusion/choices/elwin"
-)
+import "fmt"
 
 var config = struct {
 	globalSalt string
@@ -68,50 +64,54 @@ func (n *Namespace) Addexp(name string, params []Param, numSegments int) error {
 	return nil
 }
 
-func (n *Namespace) eval(h hashConfig, exps *elwin.Experiments) error {
+func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 	h.setNs(n.Name)
 	i, err := hash(h)
 	if err != nil {
-		return err
+		return ExperimentResponse{}, err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
 	if n.Segments.contains(uint64(segment)) {
-		return nil
+		return ExperimentResponse{}, nil
 	}
 
 	for _, exp := range n.Experiments {
 		if !exp.Segments.contains(uint64(segment)) {
 			continue
 		}
-		e, err := exp.eval(h)
+		p, err := exp.eval(h)
 		if err != nil {
-			return err
+			return ExperimentResponse{}, err
 		}
-		if exps.Experiments == nil {
-			exps.Experiments = make(map[string]*elwin.Experiment, 100)
-		}
-		exps.Experiments[exp.Name] = e
-		return nil
+		return ExperimentResponse{Name: exp.Name, Params: p}, nil
 
 	}
-	return nil
+
+	// unreachable
+	return ExperimentResponse{}, nil
+}
+
+type ExperimentResponse struct {
+	Name   string
+	Params []ParamValue
 }
 
 // Namespaces determines the assignments for the a given users units based on
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
-func Namespaces(teamID, userID string) (*elwin.Experiments, error) {
-	response := &elwin.Experiments{}
+func Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
 
 	h := hashConfig{}
 	h.setSalt(config.globalSalt)
 	h.setUserID(userID)
 
+	var response []ExperimentResponse
 	for _, ns := range config.storage.TeamNamespaces(teamID) {
-		err := ns.eval(h, response)
+		eResp, err := ns.eval(h)
 		if err != nil {
 			return nil, err
 		}
+		response = append(response, eResp)
 	}
 	return response, nil
 }

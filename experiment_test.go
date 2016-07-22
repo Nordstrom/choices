@@ -14,17 +14,13 @@
 
 package choices
 
-import (
-	"testing"
-
-	"github.com/foolusion/choices/elwin"
-)
+import "testing"
 
 func TestExperiment(t *testing.T) {
 	seg := segmentsAll
 	tests := []struct {
 		exp  Experiment
-		want *elwin.Experiment
+		want []ParamValue
 		err  error
 	}{
 		{
@@ -36,10 +32,8 @@ func TestExperiment(t *testing.T) {
 				},
 				Segments: seg,
 			},
-			want: &elwin.Experiment{
-				Params: []*elwin.Param{{Key: "p1", Value: "a"}, {Key: "p2", Value: "a"}},
-			},
-			err: nil,
+			want: []ParamValue{{Name: "p1", Value: "a"}, {Name: "p2", Value: "a"}},
+			err:  nil,
 		},
 	}
 	h := hashConfig{salt: [4]string{"salt", "", "", ""}}
@@ -49,8 +43,8 @@ func TestExperiment(t *testing.T) {
 			t.Errorf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 			t.FailNow()
 		}
-		for i, v := range got.Params {
-			if *v != *test.want.Params[i] {
+		for i, v := range got {
+			if v != test.want[i] {
 				t.Errorf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 				t.FailNow()
 			}
@@ -61,17 +55,17 @@ func TestExperiment(t *testing.T) {
 func TestParamEval(t *testing.T) {
 	tests := []struct {
 		p    Param
-		want *elwin.Param
+		want ParamValue
 		err  error
 	}{
 		{
 			p:    Param{Name: "test", Value: &Uniform{Choices: []string{"a", "b"}}},
-			want: &elwin.Param{Key: "test", Value: "b"},
+			want: ParamValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
 		{
 			p:    Param{Name: "test", Value: &Weighted{Choices: []string{"a", "b"}, Weights: []float64{10, 90}}},
-			want: &elwin.Param{Key: "test", Value: "b"},
+			want: ParamValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
 	}
@@ -82,7 +76,7 @@ func TestParamEval(t *testing.T) {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
 			t.FailNow()
 		}
-		if *got != *test.want {
+		if got != test.want {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
 			t.FailNow()
 		}

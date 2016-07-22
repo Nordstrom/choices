@@ -17,8 +17,6 @@ package choices
 import (
 	"log"
 	"testing"
-
-	"github.com/foolusion/choices/elwin"
 )
 
 func TestNsByID(t *testing.T) {
@@ -52,8 +50,7 @@ func BenchmarkNamespaceEval(b *testing.B) {
 	h := hashConfig{}
 	h.setSalt(config.globalSalt)
 	h.setUserID("my-user-id")
-	exps := &elwin.Experiments{Experiments: make(map[string]*elwin.Experiment, 100)}
 	for i := 0; i < b.N; i++ {
-		ns.eval(h, exps)
+		ns.eval(h)
 	}
 }
