@@ -20,6 +20,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 
 	"golang.org/x/net/context"
 
@@ -88,6 +89,9 @@ func main() {
 	if err := choices.Addns(t4); err != nil {
 		log.Fatalf("%v", err)
 	}
+	go func() {
+		log.Fatal(http.ListenAndServe(":8081", nil))
+	}()
 
 	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
@@ -111,7 +115,7 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	resp, err := choices.Namespaces(nil, "test", r.Form)
+	resp, err := choices.Namespaces(nil, "test", r.Form.Get("userID"))
 	if err != nil {
 		fmt.Fprintf(w, "%v", err)
 		return

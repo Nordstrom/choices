@@ -51,28 +51,35 @@ func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
 	return n, nil
 }
 
-func (n *Namespace) eval(userID string) (*elwin.Experiment, error) {
+func (n *Namespace) eval(exps *elwin.Experiments, userID string) error {
 	h := hashConfig{}
 	h.setSalt(config.globalSalt)
 	h.setNs(n.Name)
 	h.setUserID(userID)
 	i, err := hash(h)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
 	if n.Segments.contains(uint64(segment)) {
-		return nil, nil
+		return nil
 	}
 
 	for _, exp := range n.Experiments {
 		if !exp.Segments.contains(uint64(segment)) {
 			continue
 		}
-		return exp.eval(h)
+		e, err := exp.eval(h)
+		if err != nil {
+			return err
+		}
+		if exps.Experiments == nil {
+			exps.Experiments = make(map[string]*elwin.Experiment, 100)
+		}
+		exps.Experiments[exp.Name] = e
 
 	}
-	return nil, fmt.Errorf("shouldn't be here")
+	return nil
 }
 
 // Addexp adds an experiment to the namespace. It takes the the given number of
@@ -100,18 +107,6 @@ func filterUnits(units map[string][]string, keep []string) []unit {
 	return out
 }
 
-// Response is what is returned to the user on a call to Namespaces.
-type Response struct {
-	Experiments map[string][]paramValue
-}
-
-func (r *Response) add(key string, p []paramValue) {
-	if r.Experiments == nil {
-		r.Experiments = make(map[string][]paramValue, 10)
-	}
-	r.Experiments[key] = p
-}
-
 // Namespaces determines the assignments for the a given users units based on
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
@@ -125,11 +120,10 @@ func Namespaces(m *manager, teamID, userID string) (*elwin.Experiments, error) {
 	for _, index := range m.nsByID(teamID) {
 		ns := m.ns(index)
 
-		r, err := ns.eval(userID)
+		err := ns.eval(response, userID)
 		if err != nil {
 			return nil, err
 		}
-		response.Experiments[ns.Name] = r
 	}
 	return response, nil
 }

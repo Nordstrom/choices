@@ -29,16 +29,16 @@ type Experiment struct {
 }
 
 func (e *Experiment) eval(h hashConfig) (*elwin.Experiment, error) {
-	p := make([]*elwin.Param, 0, len(e.Params))
+	p := make([]*elwin.Param, len(e.Params))
 	h.salt[2] = e.Name
-	for _, param := range e.Params {
+	for i, param := range e.Params {
 		par, err := param.eval(h)
 		if err != nil {
 			return nil, err
 		}
-		p = append(p, par)
+		p[i] = par
 	}
-	return &elwin.Experiment{Name: e.Name, Params: p}, nil
+	return &elwin.Experiment{Params: p}, nil
 }
 
 type Param struct {

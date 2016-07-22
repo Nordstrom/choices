@@ -17,6 +17,8 @@ package choices
 import (
 	"log"
 	"testing"
+
+	"github.com/foolusion/choices/elwin"
 )
 
 func TestNsByID(t *testing.T) {
@@ -37,9 +39,9 @@ func BenchmarkNamespaces(b *testing.B) {
 	}
 
 	teamID := "test"
-	units := map[string][]string{"userid": []string{"some-user-id"}}
+	userID := "my-user-id"
 	for i := 0; i < b.N; i++ {
-		Namespaces(nil, teamID, units)
+		Namespaces(nil, teamID, userID)
 	}
 }
 
@@ -53,9 +55,10 @@ func BenchmarkNamespaceEval(b *testing.B) {
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	units := []unit{{key: "userid", value: []string{"my-super-unique-userid"}}}
+	userID := "my-user-id"
+	exps := &elwin.Experiments{Experiments: make(map[string]*elwin.Experiment, 100)}
 	for i := 0; i < b.N; i++ {
-		ns.eval(units)
+		ns.eval(exps, userID)
 	}
 }
 
