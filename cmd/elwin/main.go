@@ -36,7 +36,7 @@ func init() {
 func main() {
 	log.Println("Starting elwin...")
 	t1 := choices.NewNamespace("t1", "test")
-	t1.Addexp(
+	t1.AddExperiment(
 		"uniform",
 		[]choices.Param{{Name: "a", Value: &choices.Uniform{Choices: []string{"b", "c"}}}},
 		128,
@@ -46,7 +46,7 @@ func main() {
 	}
 
 	t2 := choices.NewNamespace("t2", "test")
-	t2.Addexp(
+	t2.AddExperiment(
 		"weighted",
 		[]choices.Param{{Name: "b", Value: &choices.Weighted{Choices: []string{"on", "off"}, Weights: []float64{2, 1}}}},
 		128,
@@ -56,7 +56,7 @@ func main() {
 	}
 
 	t3 := choices.NewNamespace("t3", "test")
-	t3.Addexp(
+	t3.AddExperiment(
 		"halfSegments",
 		[]choices.Param{{Name: "b", Value: &choices.Uniform{Choices: []string{"on"}}}},
 		64,
@@ -66,7 +66,7 @@ func main() {
 	}
 
 	t4 := choices.NewNamespace("t4", "test")
-	t4.Addexp(
+	t4.AddExperiment(
 		"multi",
 		[]choices.Param{
 			{Name: "a", Value: &choices.Uniform{Choices: []string{"on", "off"}}},

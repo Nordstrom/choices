@@ -24,6 +24,9 @@ var config = struct {
 	storage:    defaultStorage,
 }
 
+// Storage is an interface for the storage of experiments. It has a single
+// function TeamNamespaces that takes a teamID and returns a slice of matching
+// Namespaces.
 type Storage interface {
 	TeamNamespaces(teamID string) []Namespace
 }
@@ -48,10 +51,10 @@ func NewNamespace(name, teamID string) *Namespace {
 	return n
 }
 
-// Addexp adds an experiment to the namespace. It takes the the given number of
+// AddExperiment adds an experiment to the namespace. It takes the the given number of
 // segments from the namespace. It returns an error if the number of segments
 // is larger than the number of available segments in the namespace.
-func (n *Namespace) Addexp(name string, params []Param, numSegments int) error {
+func (n *Namespace) AddExperiment(name string, params []Param, numSegments int) error {
 	if n.Segments.count() < numSegments {
 		return fmt.Errorf("Namespace.Addexp: not enough segments in namespace, want: %v, got %v", numSegments, n.Segments.count())
 	}
@@ -91,6 +94,7 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 	return ExperimentResponse{}, nil
 }
 
+// ExperimentResponse holds the data for an evaluated expeiment.
 type ExperimentResponse struct {
 	Name   string
 	Params []ParamValue

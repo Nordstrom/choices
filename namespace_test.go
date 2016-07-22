@@ -24,7 +24,7 @@ func TestNsByID(t *testing.T) {
 
 func BenchmarkNamespaces(b *testing.B) {
 	ns := NewNamespace("t1", "test")
-	ns.Addexp(
+	ns.AddExperiment(
 		"aTest",
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
@@ -42,7 +42,7 @@ func BenchmarkNamespaces(b *testing.B) {
 
 func BenchmarkNamespaceEval(b *testing.B) {
 	ns := NewNamespace("t1", "test")
-	ns.Addexp(
+	ns.AddExperiment(
 		"aTest",
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
