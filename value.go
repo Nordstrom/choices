@@ -16,29 +16,30 @@ package choices
 
 import "fmt"
 
+type ValueType int
+
+const (
+	ValueTypeBad ValueType = iota
+	ValueTypeUniform
+	ValueTypeWeighted
+)
+
 type Value interface {
 	Value(i uint64) (string, error)
-	String() string
 }
 
 type Uniform struct {
 	Choices []string
-	choice  int
 }
 
 func (u *Uniform) Value(i uint64) (string, error) {
-	u.choice = int(i % uint64(len(u.Choices)))
-	return u.Choices[u.choice], nil
-}
-
-func (u *Uniform) String() string {
-	return u.Choices[u.choice]
+	choice := int(i % uint64(len(u.Choices)))
+	return u.Choices[choice], nil
 }
 
 type Weighted struct {
 	Choices []string
 	Weights []float64
-	choice  int
 }
 
 func (w *Weighted) Value(i uint64) (string, error) {
@@ -56,22 +57,17 @@ func (w *Weighted) Value(i uint64) (string, error) {
 		selection[ii] = cumSum
 	}
 	choice := uniform(i, 0, cumSum)
-	selected := false
+	selected := -1
 	for ii, v := range selection {
 		if choice < v {
-			w.choice = ii
-			selected = true
+			selected = ii
 			break
 		}
 	}
 
-	if !selected {
+	if selected < 0 {
 		return "", fmt.Errorf("no selection was made")
 	}
 
-	return w.Choices[w.choice], nil
-}
-
-func (w *Weighted) String() string {
-	return w.Choices[w.choice]
+	return w.Choices[selected], nil
 }
