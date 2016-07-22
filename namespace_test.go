@@ -25,10 +25,7 @@ func TestNsByID(t *testing.T) {
 }
 
 func BenchmarkNamespaces(b *testing.B) {
-	ns, err := NewNamespace("t1", "test", []string{"userid"})
-	if err != nil {
-		log.Fatal("%v", err)
-	}
+	ns := NewNamespace("t1", "test")
 	ns.Addexp(
 		"aTest",
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
@@ -46,10 +43,7 @@ func BenchmarkNamespaces(b *testing.B) {
 }
 
 func BenchmarkNamespaceEval(b *testing.B) {
-	ns, err := NewNamespace("t1", "test", []string{"userid"})
-	if err != nil {
-		log.Fatal("%v", err)
-	}
+	ns := NewNamespace("t1", "test")
 	ns.Addexp(
 		"aTest",
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},

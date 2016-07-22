@@ -33,22 +33,17 @@ type Namespace struct {
 	Segments    segments
 	TeamID      []string
 	Experiments []Experiment
-	Units       []string
 }
 
 // NewNamespace creates a new namespace with all segments available. It returns
 // an error if no units are given.
-func NewNamespace(name, teamID string, units []string) (*Namespace, error) {
-	if len(units) == 0 {
-		return nil, fmt.Errorf("addns: no units given")
-	}
+func NewNamespace(name, teamID string) *Namespace {
 	n := &Namespace{
 		Name:     name,
 		TeamID:   []string{teamID},
-		Units:    units,
 		Segments: segmentsAll,
 	}
-	return n, nil
+	return n
 }
 
 func (n *Namespace) eval(exps *elwin.Experiments, userID string) error {
