@@ -102,7 +102,24 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 	if err != nil {
 		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", id.TeamID, id.UserID, err)
 	}
-	return resp, nil
+
+	exp := &elwin.Experiments{
+		Experiments: make(map[string]*elwin.Experiment, len(resp)),
+	}
+
+	for _, v := range resp {
+		exp.Experiments[v.Name] = &elwin.Experiment{
+			Params: make([]*elwin.Param, len(v.Params)),
+		}
+
+		for i, p := range v.Params {
+			exp.Experiments[v.Name].Params[i] = &elwin.Param{
+				Key:   p.Name,
+				Value: p.Value,
+			}
+		}
+	}
+	return exp, nil
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -113,5 +130,5 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	enc := json.NewEncoder(w)
-	enc.Encode(*resp)
+	enc.Encode(resp)
 }
