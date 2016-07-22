@@ -17,46 +17,35 @@ package choices
 import "sync"
 
 type manager struct {
-	namespaceIndexByTeamID map[string][]int
-	namespace              []Namespace
-	mu                     sync.RWMutex
+	namespace []Namespace
+	mu        sync.RWMutex
 }
 
-var defaultManager = &manager{
-	namespaceIndexByTeamID: make(map[string][]int, 100),
-	namespace:              []Namespace{},
+var defaultStorage = &manager{
+	namespace: []Namespace{},
 }
 
-func (m *manager) nsByID(teamID string) (ids []int) {
+func (m *manager) TeamNamespaces(teamID string) []Namespace {
+	ns := make([]Namespace, 0, len(m.namespace))
 	m.mu.RLock()
-	ids = m.namespaceIndexByTeamID[teamID]
+	for _, n := range m.namespace {
+		for _, t := range n.TeamID {
+			if t == teamID {
+				ns = append(ns, n)
+			}
+		}
+	}
 	m.mu.RUnlock()
-	return
-}
-
-func (m *manager) ns(index int) (n Namespace) {
-	m.mu.RLock()
-	n = m.namespace[index]
-	m.mu.RUnlock()
-	return
+	return ns
 }
 
 func (m *manager) addns(n *Namespace) error {
+	m.mu.Lock()
 	m.namespace = append(m.namespace, *n)
-	m.namespaceIndexByTeamID = m.recompute()
+	m.mu.Unlock()
 	return nil
 }
 
-func (m *manager) recompute() map[string][]int {
-	out := make(map[string][]int, len(m.namespaceIndexByTeamID))
-	for i, n := range m.namespace {
-		for _, t := range n.TeamID {
-			out[t] = append(out[t], i)
-		}
-	}
-	return out
-}
-
 func Addns(n *Namespace) error {
-	return defaultManager.addns(n)
+	return defaultStorage.addns(n)
 }

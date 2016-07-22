@@ -22,8 +22,14 @@ import (
 
 var config = struct {
 	globalSalt string
+	storage    Storage
 }{
 	globalSalt: "choices",
+	storage:    defaultStorage,
+}
+
+type Storage interface {
+	TeamNamespaces(teamID string) []Namespace
 }
 
 // Namespace is a container for experiments. Segments in the namespace divide
@@ -46,11 +52,24 @@ func NewNamespace(name, teamID string) *Namespace {
 	return n
 }
 
-func (n *Namespace) eval(exps *elwin.Experiments, userID string) error {
-	h := hashConfig{}
-	h.setSalt(config.globalSalt)
+// Addexp adds an experiment to the namespace. It takes the the given number of
+// segments from the namespace. It returns an error if the number of segments
+// is larger than the number of available segments in the namespace.
+func (n *Namespace) Addexp(name string, params []Param, numSegments int) error {
+	if n.Segments.count() < numSegments {
+		return fmt.Errorf("Namespace.Addexp: not enough segments in namespace, want: %v, got %v", numSegments, n.Segments.count())
+	}
+	e := Experiment{
+		Name:     name,
+		Params:   params,
+		Segments: n.Segments.sample(numSegments),
+	}
+	n.Experiments = append(n.Experiments, e)
+	return nil
+}
+
+func (n *Namespace) eval(h hashConfig, exps *elwin.Experiments) error {
 	h.setNs(n.Name)
-	h.setUserID(userID)
 	i, err := hash(h)
 	if err != nil {
 		return err
@@ -77,36 +96,18 @@ func (n *Namespace) eval(exps *elwin.Experiments, userID string) error {
 	return nil
 }
 
-// Addexp adds an experiment to the namespace. It takes the the given number of
-// segments from the namespace. It returns an error if the number of segments
-// is larger than the number of available segments in the namespace.
-func (n *Namespace) Addexp(name string, params []Param, numSegments int) error {
-	if n.Segments.count() < numSegments {
-		return fmt.Errorf("Namespace.Addexp: not enough segments in namespace, want: %v, got %v", numSegments, n.Segments.count())
-	}
-	e := Experiment{
-		Name:     name,
-		Params:   params,
-		Segments: n.Segments.sample(numSegments),
-	}
-	n.Experiments = append(n.Experiments, e)
-	return nil
-}
-
 // Namespaces determines the assignments for the a given users units based on
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
-func Namespaces(m *manager, teamID, userID string) (*elwin.Experiments, error) {
-	if m == nil {
-		m = defaultManager
-	}
-
+func Namespaces(teamID, userID string) (*elwin.Experiments, error) {
 	response := &elwin.Experiments{}
 
-	for _, index := range m.nsByID(teamID) {
-		ns := m.ns(index)
+	h := hashConfig{}
+	h.setSalt(config.globalSalt)
+	h.setUserID(userID)
 
-		err := ns.eval(response, userID)
+	for _, ns := range config.storage.TeamNamespaces(teamID) {
+		err := ns.eval(h, response)
 		if err != nil {
 			return nil, err
 		}

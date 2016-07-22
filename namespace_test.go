@@ -38,7 +38,7 @@ func BenchmarkNamespaces(b *testing.B) {
 	teamID := "test"
 	userID := "my-user-id"
 	for i := 0; i < b.N; i++ {
-		Namespaces(nil, teamID, userID)
+		Namespaces(teamID, userID)
 	}
 }
 
@@ -49,9 +49,11 @@ func BenchmarkNamespaceEval(b *testing.B) {
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	userID := "my-user-id"
+	h := hashConfig{}
+	h.setSalt(config.globalSalt)
+	h.setUserID("my-user-id")
 	exps := &elwin.Experiments{Experiments: make(map[string]*elwin.Experiment, 100)}
 	for i := 0; i < b.N; i++ {
-		ns.eval(exps, userID)
+		ns.eval(h, exps)
 	}
 }

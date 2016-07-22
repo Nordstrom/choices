@@ -35,10 +35,7 @@ func init() {
 
 func main() {
 	log.Println("Starting elwin...")
-	t1, err := choices.NewNamespace("t1", "test", []string{"userid"})
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	t1 := choices.NewNamespace("t1", "test")
 	t1.Addexp(
 		"uniform",
 		[]choices.Param{{Name: "a", Value: &choices.Uniform{Choices: []string{"b", "c"}}}},
@@ -48,10 +45,7 @@ func main() {
 		log.Fatalf("%v", err)
 	}
 
-	t2, err := choices.NewNamespace("t2", "test", []string{"userid"})
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	t2 := choices.NewNamespace("t2", "test")
 	t2.Addexp(
 		"weighted",
 		[]choices.Param{{Name: "b", Value: &choices.Weighted{Choices: []string{"on", "off"}, Weights: []float64{2, 1}}}},
@@ -61,10 +55,7 @@ func main() {
 		log.Fatalf("%v", err)
 	}
 
-	t3, err := choices.NewNamespace("t3", "test", []string{"userid"})
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	t3 := choices.NewNamespace("t3", "test")
 	t3.Addexp(
 		"halfSegments",
 		[]choices.Param{{Name: "b", Value: &choices.Uniform{Choices: []string{"on"}}}},
@@ -74,10 +65,7 @@ func main() {
 		log.Fatalf("%v", err)
 	}
 
-	t4, err := choices.NewNamespace("t4", "test", []string{"userid"})
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	t4 := choices.NewNamespace("t4", "test")
 	t4.Addexp(
 		"multi",
 		[]choices.Param{
@@ -110,12 +98,16 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 		return nil, fmt.Errorf("GetNamespaces: no Identifier recieved")
 	}
 
-	return choices.Namespaces(nil, id.TeamID, id.UserID)
+	resp, err := choices.Namespaces(id.TeamID, id.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", id.TeamID, id.UserID, err)
+	}
+	return resp, nil
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	resp, err := choices.Namespaces(nil, "test", r.Form.Get("userID"))
+	resp, err := choices.Namespaces("test", r.Form.Get("userID"))
 	if err != nil {
 		fmt.Fprintf(w, "%v", err)
 		return
