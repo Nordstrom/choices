@@ -47,7 +47,6 @@ func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 // is evaluated through the call to Namespaces.
 type Param struct {
 	Name  string
-	Type  ValueType
 	Value Value
 }
 
