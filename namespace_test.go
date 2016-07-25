@@ -15,8 +15,9 @@
 package choices
 
 import (
-	"log"
 	"testing"
+
+	"golang.org/x/net/context"
 )
 
 func TestNsByID(t *testing.T) {
@@ -29,10 +30,10 @@ func BenchmarkNamespaces(b *testing.B) {
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	if err := AddNamespace(ns); err != nil {
-		log.Fatalf("%v", err)
-	}
-
+	AddNamespace(ns)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	SetStorage(ctx, defaultStorage)
 	teamID := "test"
 	userID := "my-user-id"
 	for i := 0; i < b.N; i++ {
@@ -47,6 +48,9 @@ func BenchmarkNamespaceEval(b *testing.B) {
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	SetStorage(ctx, defaultStorage)
 	h := hashConfig{}
 	h.setSalt(config.globalSalt)
 	h.setUserID("my-user-id")

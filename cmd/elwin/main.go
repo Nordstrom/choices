@@ -26,6 +26,7 @@ import (
 
 	"github.com/foolusion/choices"
 	"github.com/foolusion/choices/elwin"
+	"github.com/foolusion/choices/storage/mem"
 	"google.golang.org/grpc"
 )
 
@@ -35,36 +36,28 @@ func init() {
 
 func main() {
 	log.Println("Starting elwin...")
+	m := &mem.MemStore{}
 	t1 := choices.NewNamespace("t1", "test")
 	t1.AddExperiment(
 		"uniform",
 		[]choices.Param{{Name: "a", Value: &choices.Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	if err := choices.AddNamespace(t1); err != nil {
-		log.Fatalf("%v", err)
-	}
-
+	m.AddNamespace(t1)
 	t2 := choices.NewNamespace("t2", "test")
 	t2.AddExperiment(
 		"weighted",
 		[]choices.Param{{Name: "b", Value: &choices.Weighted{Choices: []string{"on", "off"}, Weights: []float64{2, 1}}}},
 		128,
 	)
-	if err := choices.AddNamespace(t2); err != nil {
-		log.Fatalf("%v", err)
-	}
-
+	m.AddNamespace(t2)
 	t3 := choices.NewNamespace("t3", "test")
 	t3.AddExperiment(
 		"halfSegments",
 		[]choices.Param{{Name: "b", Value: &choices.Uniform{Choices: []string{"on"}}}},
 		64,
 	)
-	if err := choices.AddNamespace(t3); err != nil {
-		log.Fatalf("%v", err)
-	}
-
+	m.AddNamespace(t3)
 	t4 := choices.NewNamespace("t4", "test")
 	t4.AddExperiment(
 		"multi",
@@ -74,9 +67,10 @@ func main() {
 		},
 		128,
 	)
-	if err := choices.AddNamespace(t4); err != nil {
-		log.Fatalf("%v", err)
-	}
+	m.AddNamespace(t4)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	choices.SetStorage(ctx, m)
 	go func() {
 		log.Fatal(http.ListenAndServe(":8081", nil))
 	}()

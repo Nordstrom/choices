@@ -16,21 +16,6 @@ package choices
 
 import "fmt"
 
-var config = struct {
-	globalSalt string
-	storage    Storage
-}{
-	globalSalt: "choices",
-	storage:    defaultStorage,
-}
-
-// Storage is an interface for the storage of experiments. It has a single
-// function TeamNamespaces that takes a teamID and returns a slice of matching
-// Namespaces.
-type Storage interface {
-	TeamNamespaces(teamID string) []Namespace
-}
-
 // Namespace is a container for experiments. Segments in the namespace divide
 // traffic. Units are the keys that will hash experiments.
 type Namespace struct {
@@ -110,7 +95,7 @@ func Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range config.storage.TeamNamespaces(teamID) {
+	for _, ns := range TeamNamespaces(config.storage, teamID) {
 		eResp, err := ns.eval(h)
 		if err != nil {
 			return nil, err
