@@ -12,21 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package choices
+package choicestest
 
-import "testing"
+import (
+	"testing"
 
-func BenchmarkNamespaceEval(b *testing.B) {
-	ns := NewNamespace("t1", "test")
+	"github.com/foolusion/choices"
+	"github.com/foolusion/choices/storage/mem"
+
+	"golang.org/x/net/context"
+)
+
+func BenchmarkNamespaces(b *testing.B) {
+	mem := &mem.MemStore{}
+	ns := choices.NewNamespace("t1", "test")
 	ns.AddExperiment(
 		"aTest",
-		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
+		[]choices.Param{{Name: "a", Value: &choices.Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	h := hashConfig{}
-	h.setSalt(config.globalSalt)
-	h.setUserID("my-user-id")
+	mem.AddNamespace(ns)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	choices.SetStorage(ctx, mem)
+	teamID := "test"
+	userID := "my-user-id"
 	for i := 0; i < b.N; i++ {
-		ns.eval(h)
+		choices.Namespaces(teamID, userID)
 	}
 }
