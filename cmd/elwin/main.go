@@ -34,6 +34,10 @@ func init() {
 	http.HandleFunc("/", rootHandler)
 }
 
+var config = struct {
+	ec *choices.ElwinConfig
+}{}
+
 func main() {
 	log.Println("Starting elwin...")
 	m := &mem.MemStore{}
@@ -70,7 +74,12 @@ func main() {
 	m.AddNamespace(t4)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	choices.SetStorage(ctx, m)
+	ec, err := choices.NewElwin(ctx, mem.WithMemStore(m))
+	if err != nil {
+		log.Fatal(err)
+	}
+	config.ec = ec
+
 	go func() {
 		log.Fatal(http.ListenAndServe(":8081", nil))
 	}()
@@ -92,7 +101,7 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 		return nil, fmt.Errorf("GetNamespaces: no Identifier recieved")
 	}
 
-	resp, err := choices.Namespaces(id.TeamID, id.UserID)
+	resp, err := config.ec.Namespaces(id.TeamID, id.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", id.TeamID, id.UserID, err)
 	}
@@ -118,7 +127,7 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	resp, err := choices.Namespaces("test", r.Form.Get("userID"))
+	resp, err := config.ec.Namespaces(r.Form.Get("teamid"), r.Form.Get("userid"))
 	if err != nil {
 		fmt.Fprintf(w, "%v", err)
 		return
