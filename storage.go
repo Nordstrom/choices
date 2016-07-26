@@ -30,6 +30,7 @@ type Storage interface {
 	Read() []Namespace
 }
 
+// TeamNamespaces filters the namespaces from storage based on teamID.
 func TeamNamespaces(s Storage, teamID string) []Namespace {
 	allNamespaces := s.Read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))

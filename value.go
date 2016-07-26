@@ -16,6 +16,8 @@ package choices
 
 import "fmt"
 
+// ValueType are the different types of Values a Param can have. This is used
+// for parsing params in storage.
 type ValueType int
 
 const (
@@ -24,10 +26,13 @@ const (
 	ValueTypeWeighted
 )
 
+// Value is the interface Param Values must implement. They take a hash value
+// and return the string that represents the value or an error.
 type Value interface {
 	Value(i uint64) (string, error)
 }
 
+// Uniform is a way to select from a list of Choices with uniform probability.
 type Uniform struct {
 	Choices []string
 }
@@ -37,6 +42,8 @@ func (u *Uniform) Value(i uint64) (string, error) {
 	return u.Choices[choice], nil
 }
 
+// Weighted is a way to select from a list of Choices with probability ratio
+// supplied in Weights.
 type Weighted struct {
 	Choices []string
 	Weights []float64
