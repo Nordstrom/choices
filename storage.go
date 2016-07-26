@@ -49,7 +49,7 @@ func TeamNamespaces(s Storage, teamID string) []Namespace {
 // SetUpdateInterval(d time.Duration). Must cancel the context before calling
 // SetStorage agian otherwise you will leak go routines.
 func SetStorage(ctx context.Context, s Storage) {
-	config.storage = s
+	config.Storage = s
 	go func() {
 		s.Update()
 		c := time.Tick(config.updateInterval)

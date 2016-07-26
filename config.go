@@ -16,23 +16,31 @@ package choices
 
 import "time"
 
-var config = struct {
+type ElwinConfig struct {
 	globalSalt     string
-	storage        Storage
+	Storage        Storage
 	updateInterval time.Duration
-}{
+}
+
+var config = ElwinConfig{
 	globalSalt:     "choices",
 	updateInterval: 5 * time.Minute,
 }
 
 // SetGlobalSalt sets the salt used in hashing users.
-func SetGlobalSalt(salt string) {
-	config.globalSalt = salt
+func WithGlobalSalt(salt string) func(*ElwinConfig) error {
+	return func(ec *ElwinConfig) error {
+		ec.globalSalt = salt
+		return nil
+	}
 }
 
 // SetUpdateInterval changes the update interval for Storage. Must call
 // SetStorage after this or cancel context of the current Storage and call
 // SetStorage again.
-func SetUpdateInterval(dur time.Duration) {
-	config.updateInterval = dur
+func SetUpdateInterval(dur time.Duration) func(*ElwinConfig) error {
+	return func(ec *ElwinConfig) error {
+		ec.updateInterval = dur
+		return nil
+	}
 }

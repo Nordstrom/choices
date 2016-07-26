@@ -1,3 +1,17 @@
+// Copyright 2016 Andrew O'Neill
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//     http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package mongo
 
 import (
@@ -11,8 +25,23 @@ import (
 )
 
 type mongo struct {
-	namespaces []choices.Namespace
-	mu         sync.RWMutex
+	namespaces    []choices.Namespace
+	sess          *mgo.Session
+	url, db, coll string
+	mu            sync.RWMutex
+}
+
+func WithMongoStorage(url, db, collection string) func(*choices.ElwinConfig) error {
+	return func(ec *choices.ElwinConfig) error {
+		m := &mongo{url: url, db: db, coll: collection}
+		sess, err := mgo.Dial(url)
+		if err != nil {
+			return err
+		}
+		m.sess = sess
+		ec.Storage = m
+		return nil
+	}
 }
 
 type MongoNamespace struct {
@@ -35,14 +64,10 @@ type MongoParams struct {
 }
 
 func (m *mongo) Update() {
-	sess, err := mgo.Dial("elwin-storage")
-	if err != nil {
-		log.Println(err)
-	}
-	c := sess.DB("test").C("namespaces")
+	c := m.sess.DB(m.db).C(m.coll)
 	iter := c.Find(bson.M{}).Iter()
 	var mongoNamespaces []MongoNamespace
-	err = iter.All(&mongoNamespaces)
+	err := iter.All(&mongoNamespaces)
 	if err != nil {
 		log.Println(err)
 	}

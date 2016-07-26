@@ -89,13 +89,19 @@ type ExperimentResponse struct {
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
 func Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
+	return config.Namespaces(teamID, userID)
+}
 
+// Namespaces determines the assignments for the a given users units based on
+// the current set of namespaces and experiments. It returns a Response object
+// if it is successful or an error if something went wrong.
+func (ec *ElwinConfig) Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
 	h := hashConfig{}
-	h.setSalt(config.globalSalt)
+	h.setSalt(ec.globalSalt)
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range TeamNamespaces(config.storage, teamID) {
+	for _, ns := range TeamNamespaces(ec.Storage, teamID) {
 		eResp, err := ns.eval(h)
 		if err != nil {
 			return nil, err
