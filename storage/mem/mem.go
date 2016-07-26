@@ -20,6 +20,13 @@ import (
 	"github.com/foolusion/choices"
 )
 
+func WithMemStore(m *MemStore) func(*choices.ElwinConfig) error {
+	return func(e *choices.ElwinConfig) error {
+		e.Storage = m
+		return nil
+	}
+}
+
 type MemStore struct {
 	namespace []choices.Namespace
 	nsmu      sync.RWMutex
