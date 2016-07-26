@@ -14,12 +14,6 @@
 
 package choices
 
-import (
-	"time"
-
-	"golang.org/x/net/context"
-)
-
 // Storage is an interface for the storage of experiments. Storage has two
 // functions. Update, which checks for new data from the data store, and Read
 // which returns the current slice of Namespaces. Clients using the storage
@@ -42,24 +36,4 @@ func TeamNamespaces(s Storage, teamID string) []Namespace {
 		}
 	}
 	return teamNamespaces
-}
-
-// SetStorage sets the storage engine. It starts a ticker that will call
-// s.Update() until the context is cancelled. To change the tick interval call
-// SetUpdateInterval(d time.Duration). Must cancel the context before calling
-// SetStorage agian otherwise you will leak go routines.
-func SetStorage(ctx context.Context, s Storage) {
-	config.Storage = s
-	go func() {
-		s.Update()
-		c := time.Tick(config.updateInterval)
-		for {
-			select {
-			case <-c:
-				s.Update()
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
 }

@@ -14,7 +14,11 @@
 
 package choices
 
-import "time"
+import (
+	"context"
+	"fmt"
+	"time"
+)
 
 type ElwinConfig struct {
 	globalSalt     string
@@ -27,7 +31,42 @@ var config = ElwinConfig{
 	updateInterval: 5 * time.Minute,
 }
 
-// SetGlobalSalt sets the salt used in hashing users.
+// NewElwin sets the storage engine. It starts a ticker that will call
+// s.Update() until the context is cancelled. To change the tick interval call
+// SetUpdateInterval(d time.Duration). Must cancel the context before calling
+// NewElwin again otherwise you will leak go routines.
+func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConfig, error) {
+	e := &ElwinConfig{
+		globalSalt:     "choices",
+		updateInterval: 5 * time.Minute,
+	}
+	for _, opt := range opts {
+		err := opt(e)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if e.Storage == nil {
+		return nil, fmt.Errorf("must supply a storage option")
+	}
+
+	go func() {
+		e.Storage.Update()
+		c := time.Tick(config.updateInterval)
+		for {
+			select {
+			case <-c:
+				e.Storage.Update()
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	return e, nil
+}
+
+// WithGlobalSalt sets the salt used in hashing users.
 func WithGlobalSalt(salt string) func(*ElwinConfig) error {
 	return func(ec *ElwinConfig) error {
 		ec.globalSalt = salt
@@ -35,10 +74,10 @@ func WithGlobalSalt(salt string) func(*ElwinConfig) error {
 	}
 }
 
-// SetUpdateInterval changes the update interval for Storage. Must call
+// UpdateInterval changes the update interval for Storage. Must call
 // SetStorage after this or cancel context of the current Storage and call
 // SetStorage again.
-func SetUpdateInterval(dur time.Duration) func(*ElwinConfig) error {
+func UpdateInterval(dur time.Duration) func(*ElwinConfig) error {
 	return func(ec *ElwinConfig) error {
 		ec.updateInterval = dur
 		return nil
