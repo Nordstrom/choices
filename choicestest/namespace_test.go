@@ -24,20 +24,24 @@ import (
 )
 
 func BenchmarkNamespaces(b *testing.B) {
-	mem := &mem.MemStore{}
+	ms := &mem.MemStore{}
 	ns := choices.NewNamespace("t1", "test")
 	ns.AddExperiment(
 		"aTest",
 		[]choices.Param{{Name: "a", Value: &choices.Uniform{Choices: []string{"b", "c"}}}},
 		128,
 	)
-	mem.AddNamespace(ns)
+	ms.AddNamespace(ns)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	choices.SetStorage(ctx, mem)
+	elwin, err := choices.NewElwin(ctx, mem.WithMemStore(ms))
+	if err != nil {
+		b.Fatalf("elwin err: %v", err)
+		return
+	}
 	teamID := "test"
 	userID := "my-user-id"
 	for i := 0; i < b.N; i++ {
-		choices.Namespaces(teamID, userID)
+		elwin.Namespaces(teamID, userID)
 	}
 }

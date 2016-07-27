@@ -26,10 +26,10 @@ type ElwinConfig struct {
 	updateInterval time.Duration
 }
 
-var config = ElwinConfig{
-	globalSalt:     "choices",
-	updateInterval: 5 * time.Minute,
-}
+const (
+	defaultSalt           string        = "choices"
+	defaultUpdateInterval time.Duration = 5 * time.Minute
+)
 
 // NewElwin sets the storage engine. It starts a ticker that will call
 // s.Update() until the context is cancelled. To change the tick interval call
@@ -37,8 +37,8 @@ var config = ElwinConfig{
 // NewElwin again otherwise you will leak go routines.
 func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConfig, error) {
 	e := &ElwinConfig{
-		globalSalt:     "choices",
-		updateInterval: 5 * time.Minute,
+		globalSalt:     defaultSalt,
+		updateInterval: defaultUpdateInterval,
 	}
 	for _, opt := range opts {
 		err := opt(e)
@@ -53,13 +53,13 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 
 	go func() {
 		e.Storage.Update()
-		c := time.Tick(config.updateInterval)
+		ticker := time.NewTicker(e.updateInterval)
 		for {
 			select {
-			case <-c:
+			case <-ticker.C:
 				e.Storage.Update()
 			case <-ctx.Done():
-				fmt.Println("shutting down updater...")
+				ticker.Stop()
 				return
 			}
 		}
