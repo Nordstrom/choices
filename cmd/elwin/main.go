@@ -21,12 +21,14 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/foolusion/choices"
 	"github.com/foolusion/choices/elwin"
 	"github.com/foolusion/choices/storage/mem"
+	"github.com/foolusion/choices/storage/mongo"
 	"google.golang.org/grpc"
 )
 
@@ -38,8 +40,7 @@ var config = struct {
 	ec *choices.ElwinConfig
 }{}
 
-func main() {
-	log.Println("Starting elwin...")
+func AddData() *mem.MemStore {
 	m := &mem.MemStore{}
 	t1 := choices.NewNamespace("t1", "test")
 	t1.AddExperiment(
@@ -72,13 +73,26 @@ func main() {
 		128,
 	)
 	m.AddNamespace(t4)
+	return m
+}
+
+func main() {
+	log.Println("Starting elwin...")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	ec, err := choices.NewElwin(ctx, mem.WithMemStore(m))
+	// ec, err := choices.NewElwin(ctx, mem.WithMemStore(m))
+	ec, err := choices.NewElwin(
+		ctx,
+		mongo.WithMongoStorage("localhost", "db", "test"),
+		choices.UpdateInterval(5*time.Second),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	config.ec = ec
+
+	m := ec.Storage.(*mongo.Mongo)
+	m.LoadExampleData()
 
 	go func() {
 		log.Fatal(http.ListenAndServe(":8081", nil))

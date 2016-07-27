@@ -31,7 +31,7 @@ func NewNamespace(name, teamID string) *Namespace {
 	n := &Namespace{
 		Name:     name,
 		TeamID:   []string{teamID},
-		Segments: segmentsAll,
+		Segments: SegmentsAll,
 	}
 	return n
 }

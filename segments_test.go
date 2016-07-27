@@ -121,7 +121,7 @@ func TestSegmentsSet(t *testing.T) {
 			want:  segments{0, 1 << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		},
 		{
-			seg:   segmentsAll,
+			seg:   SegmentsAll,
 			index: 15,
 			value: zero,
 			want:  segments{255, 127, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
@@ -145,12 +145,12 @@ func TestSegmentsSample(t *testing.T) {
 		want segments
 	}{
 		{
-			seg:  segmentsAll,
+			seg:  SegmentsAll,
 			num:  0,
 			want: segments{},
 		},
 		{
-			seg:  segmentsAll,
+			seg:  SegmentsAll,
 			num:  1,
 			want: segments{0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0},
 		},

@@ -24,7 +24,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type mongo struct {
+type Mongo struct {
 	namespaces    []choices.Namespace
 	sess          *mgo.Session
 	url, db, coll string
@@ -33,7 +33,7 @@ type mongo struct {
 
 func WithMongoStorage(url, db, collection string) func(*choices.ElwinConfig) error {
 	return func(ec *choices.ElwinConfig) error {
-		m := &mongo{url: url, db: db, coll: collection}
+		m := &Mongo{url: url, db: db, coll: collection}
 		sess, err := mgo.Dial(url)
 		if err != nil {
 			return err
@@ -48,22 +48,23 @@ type MongoNamespace struct {
 	Name        string
 	Segments    [16]byte
 	TeamID      []string
-	Experiments []MongoExperiments
+	Experiments []MongoExperiment
 }
 
-type MongoExperiments struct {
+type MongoExperiment struct {
 	Name     string
 	Segments [16]byte
-	Params   []MongoParams
+	Params   []MongoParam
 }
 
-type MongoParams struct {
+type MongoParam struct {
 	Name  string
 	Type  choices.ValueType
 	Value bson.Raw
 }
 
-func (m *mongo) Update() {
+func (m *Mongo) Update() {
+	log.Println("updating mongo")
 	c := m.sess.DB(m.db).C(m.coll)
 	iter := c.Find(bson.M{}).Iter()
 	var mongoNamespaces []MongoNamespace
@@ -93,13 +94,15 @@ func (m *mongo) Update() {
 		}
 	}
 
+	log.Println(namespaces)
+
 	m.mu.Lock()
 	m.namespaces = namespaces
 	m.mu.Unlock()
 	return
 }
 
-func (m *mongo) Read() []choices.Namespace {
+func (m *Mongo) Read() []choices.Namespace {
 	m.mu.RLock()
 	ns := m.namespaces
 	m.mu.RUnlock()

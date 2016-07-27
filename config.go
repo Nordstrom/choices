@@ -59,6 +59,7 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 			case <-c:
 				e.Storage.Update()
 			case <-ctx.Done():
+				fmt.Println("shutting down updater...")
 				return
 			}
 		}
@@ -67,7 +68,7 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 }
 
 // WithGlobalSalt sets the salt used in hashing users.
-func WithGlobalSalt(salt string) func(*ElwinConfig) error {
+func GlobalSalt(salt string) func(*ElwinConfig) error {
 	return func(ec *ElwinConfig) error {
 		ec.globalSalt = salt
 		return nil

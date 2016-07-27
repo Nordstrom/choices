@@ -17,7 +17,7 @@ package choices
 import "testing"
 
 func TestExperiment(t *testing.T) {
-	seg := segmentsAll
+	seg := SegmentsAll
 	tests := []struct {
 		exp  Experiment
 		want []ParamValue
@@ -89,7 +89,7 @@ func BenchmarkExperimentEval(b *testing.B) {
 		Params: []Param{
 			{Name: "p", Value: &Uniform{Choices: []string{"a", "b"}}},
 		},
-		Segments: segmentsAll,
+		Segments: SegmentsAll,
 	}
 	h := hashConfig{
 		salt: [4]string{"salt", "namespace", "", ""},
