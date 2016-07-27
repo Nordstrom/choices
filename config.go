@@ -25,7 +25,7 @@ type ElwinConfig struct {
 	globalSalt     string
 	Storage        Storage
 	updateInterval time.Duration
-	Errch          chan error
+	ErrChan        chan error
 }
 
 const (
@@ -41,7 +41,7 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 	e := &ElwinConfig{
 		globalSalt:     defaultSalt,
 		updateInterval: defaultUpdateInterval,
-		Errch:          make(chan error, 1),
+		ErrChan:        make(chan error, 1),
 	}
 	for _, opt := range opts {
 		err := opt(e)
@@ -65,7 +65,7 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 			case <-ticker.C:
 				err := e.Storage.Update()
 				if err != nil {
-					e.Errch <- err
+					e.ErrChan <- err
 					ticker.Stop()
 					return
 				}

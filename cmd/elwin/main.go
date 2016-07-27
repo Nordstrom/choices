@@ -21,6 +21,9 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"golang.org/x/net/context"
@@ -37,8 +40,19 @@ func init() {
 }
 
 var config = struct {
-	ec *choices.ElwinConfig
-}{}
+	ec              *choices.ElwinConfig
+	grpcAddr        string
+	jsonAddr        string
+	mongoAddr       string
+	mongoDB         string
+	mongoCollection string
+}{
+	jsonAddr:        ":8081",
+	grpcAddr:        ":8080",
+	mongoAddr:       "elwin-storage",
+	mongoDB:         "elwin",
+	mongoCollection: "test",
+}
 
 func AddData() *mem.MemStore {
 	m := &mem.MemStore{}
@@ -80,11 +94,10 @@ func main() {
 	log.Println("Starting elwin...")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	// ec, err := choices.NewElwin(ctx, mem.WithMemStore(m))
 	ec, err := choices.NewElwin(
 		ctx,
-		mongo.WithMongoStorage("localhost", "db", "test"),
-		choices.UpdateInterval(5*time.Second),
+		mongo.WithMongoStorage(config.mongoAddr, config.mongoDB, config.mongoCollection),
+		choices.UpdateInterval(time.Minute),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -95,21 +108,38 @@ func main() {
 	m.LoadExampleData()
 
 	go func() {
-		log.Fatal(http.ListenAndServe(":8081", nil))
+		config.ec.ErrChan <- http.ListenAndServe(config.jsonAddr, nil)
 	}()
 
-	lis, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		log.Fatalf("main: failed to listen: %v", err)
+	go func() {
+		lis, err := net.Listen("tcp", config.grpcAddr)
+		if err != nil {
+			config.ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
+		}
+		grpcServer := grpc.NewServer()
+		elwin.RegisterElwinServer(grpcServer, &elwinServer{})
+		config.ec.ErrChan <- grpcServer.Serve(lis)
+	}()
+
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	for {
+		select {
+		case err := <-config.ec.ErrChan:
+			if err != nil {
+				log.Fatal(err)
+			}
+		case s := <-signalChan:
+			log.Printf("Captured %v. Exitting...", s)
+			// send StatusServiceUnavailable to new requestors
+			// block server from accepting new requests
+			os.Exit(0)
+		}
 	}
-	grpcServer := grpc.NewServer()
-	elwin.RegisterElwinServer(grpcServer, &elwinServer{})
-	grpcServer.Serve(lis)
-	// TODO: add the graceful shutdown stuff. listen on ec.errch.
 }
 
-type elwinServer struct {
-}
+type elwinServer struct{}
 
 func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
 	if id == nil {
@@ -144,9 +174,11 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	resp, err := config.ec.Namespaces(r.Form.Get("teamid"), r.Form.Get("userid"))
 	if err != nil {
-		fmt.Fprintf(w, "%v", err)
+		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
 		return
 	}
 	enc := json.NewEncoder(w)
-	enc.Encode(resp)
+	if err := enc.Encode(resp); err != nil {
+		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't encode json: %v", err)
+	}
 }

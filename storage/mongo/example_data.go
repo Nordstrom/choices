@@ -58,7 +58,7 @@ func (m *Mongo) LoadExampleData() {
 							Name: "excrementColor",
 							Type: choices.ValueTypeWeighted,
 							Value: choices.Weighted{
-								Choices: []string{"brown", "black", "green"},
+								Choices: []string{"💩", "⬛️", "♻️"},
 								Weights: []float64{1, 8, 7},
 							},
 						},
