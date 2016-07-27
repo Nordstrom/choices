@@ -17,6 +17,7 @@ package choices
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -24,6 +25,7 @@ type ElwinConfig struct {
 	globalSalt     string
 	Storage        Storage
 	updateInterval time.Duration
+	Errch          chan error
 }
 
 const (
@@ -39,6 +41,7 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 	e := &ElwinConfig{
 		globalSalt:     defaultSalt,
 		updateInterval: defaultUpdateInterval,
+		Errch:          make(chan error, 1),
 	}
 	for _, opt := range opts {
 		err := opt(e)
@@ -51,19 +54,27 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 		return nil, fmt.Errorf("must supply a storage option")
 	}
 
-	go func() {
-		e.Storage.Update()
+	go func(e *ElwinConfig) {
+		err := e.Storage.Update()
+		if err != nil {
+			log.Fatal(err)
+		}
 		ticker := time.NewTicker(e.updateInterval)
 		for {
 			select {
 			case <-ticker.C:
-				e.Storage.Update()
+				err := e.Storage.Update()
+				if err != nil {
+					e.Errch <- err
+					ticker.Stop()
+					return
+				}
 			case <-ctx.Done():
 				ticker.Stop()
 				return
 			}
 		}
-	}()
+	}(e)
 	return e, nil
 }
 

@@ -105,6 +105,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	elwin.RegisterElwinServer(grpcServer, &elwinServer{})
 	grpcServer.Serve(lis)
+	// TODO: add the graceful shutdown stuff. listen on ec.errch.
 }
 
 type elwinServer struct {

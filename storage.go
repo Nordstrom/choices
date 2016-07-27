@@ -20,7 +20,7 @@ package choices
 // interface should never write data to the slice returned by Namespaces.
 // Storage should be read only the values should never be overwritten.
 type Storage interface {
-	Update()
+	Update() error
 	Read() []Namespace
 }
 

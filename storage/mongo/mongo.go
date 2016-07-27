@@ -15,7 +15,6 @@
 package mongo
 
 import (
-	"log"
 	"sync"
 
 	"github.com/foolusion/choices"
@@ -63,14 +62,13 @@ type MongoParam struct {
 	Value bson.Raw
 }
 
-func (m *Mongo) Update() {
-	log.Println("updating mongo")
+func (m *Mongo) Update() error {
 	c := m.sess.DB(m.db).C(m.coll)
 	iter := c.Find(bson.M{}).Iter()
 	var mongoNamespaces []MongoNamespace
 	err := iter.All(&mongoNamespaces)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	namespaces := make([]choices.Namespace, len(mongoNamespaces))
@@ -94,12 +92,10 @@ func (m *Mongo) Update() {
 		}
 	}
 
-	log.Println(namespaces)
-
 	m.mu.Lock()
 	m.namespaces = namespaces
 	m.mu.Unlock()
-	return
+	return nil
 }
 
 func (m *Mongo) Read() []choices.Namespace {

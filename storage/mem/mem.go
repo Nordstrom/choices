@@ -43,11 +43,11 @@ func (m *MemStore) Read() []choices.Namespace {
 	return ns
 }
 
-func (m *MemStore) Update() {
+func (m *MemStore) Update() error {
 	m.nextmu.RLock()
 	if !m.changed {
 		m.nextmu.RUnlock()
-		return
+		return nil
 	}
 	a := make([]choices.Namespace, len(m.next))
 	copy(a, m.next)
@@ -59,6 +59,7 @@ func (m *MemStore) Update() {
 	m.changed = false
 	m.nextmu.Unlock()
 	m.nsmu.Unlock()
+	return nil
 }
 
 func (m *MemStore) addns(n *choices.Namespace) {
