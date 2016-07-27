@@ -23,6 +23,7 @@ type MongoParamInput struct {
 
 func (m *Mongo) LoadExampleData() {
 	coll := m.sess.DB(m.db).C(m.coll)
+	coll.RemoveAll(nil)
 	coll.Insert(
 		&MongoNamespaceInput{
 			Name:     "ns1",
