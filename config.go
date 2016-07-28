@@ -15,10 +15,11 @@
 package choices
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 type ElwinConfig struct {
