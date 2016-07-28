@@ -34,10 +34,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-func init() {
-	http.HandleFunc("/", rootHandler)
-}
-
 var config = struct {
 	ec              *choices.ElwinConfig
 	grpcAddr        string
@@ -53,10 +49,41 @@ var config = struct {
 	mongoCollection: "test",
 }
 
+func init() {
+	http.HandleFunc("/", rootHandler)
+}
+
+const (
+	envJSONAddr  = "JSON_ADDRESS"
+	envGRPCAddr  = "GRPC_ADDRESS"
+	envMongoAddr = "MONGO_ADDRESS"
+	envMongoDB   = "MONGO_DATABASE"
+	envMongoColl = "MONGO_COLLECTION"
+)
+
 func main() {
 	log.Println("Starting elwin...")
 
 	// TODO: read environment variables for config
+	if os.Getenv(envJSONAddr) != "" {
+		config.jsonAddr = os.Getenv(envJSONAddr)
+	}
+
+	if os.Getenv(envGRPCAddr) != "" {
+		config.grpcAddr = os.Getenv(envGRPCAddr)
+	}
+
+	if os.Getenv(envMongoAddr) != "" {
+		config.mongoAddr = os.Getenv(envMongoAddr)
+	}
+
+	if os.Getenv(envMongoDB) != "" {
+		config.mongoDB = os.Getenv(envMongoDB)
+	}
+
+	if os.Getenv(envMongoColl) != "" {
+		config.mongoCollection = os.Getenv(envMongoColl)
+	}
 
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
@@ -71,6 +98,7 @@ func main() {
 	}
 	config.ec = ec
 
+	// TODO: remove when deployed
 	m := ec.Storage.(*mongo.Mongo)
 	m.LoadExampleData()
 
