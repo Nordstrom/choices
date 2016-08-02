@@ -69,7 +69,7 @@ func (m *Mongo) LoadExampleData() {
 					Segments: choices.SegmentsAll,
 					Params: []MongoParamInput{
 						{
-							Name: "excrementColor",
+							Name: "emoji",
 							Type: choices.ValueTypeWeighted,
 							Value: choices.Weighted{
 								Choices: []string{"💩", "⬛️", "♻️"},
