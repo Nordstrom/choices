@@ -18,6 +18,7 @@ import "math/rand"
 
 type segments [16]byte
 
+// SegmentsAll is a value where every segment is available
 var SegmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
 
 func (s *segments) contains(seg uint64) bool {

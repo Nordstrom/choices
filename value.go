@@ -20,6 +20,7 @@ import "fmt"
 // for parsing params in storage.
 type ValueType int
 
+// Constants for ValueTypes
 const (
 	ValueTypeBad ValueType = iota
 	ValueTypeUniform
@@ -37,6 +38,7 @@ type Uniform struct {
 	Choices []string
 }
 
+// Value implements the Value interface for Uniform choices.
 func (u *Uniform) Value(i uint64) (string, error) {
 	choice := int(i % uint64(len(u.Choices)))
 	return u.Choices[choice], nil
@@ -49,6 +51,7 @@ type Weighted struct {
 	Weights []float64
 }
 
+// Value implements the Value interface for Weighted choices.
 func (w *Weighted) Value(i uint64) (string, error) {
 	if len(w.Choices) != len(w.Weights) {
 		return "", fmt.Errorf(
