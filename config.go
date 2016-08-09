@@ -22,6 +22,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// ElwinConfig is the configuration struct used in an elwin server.
 type ElwinConfig struct {
 	globalSalt     string
 	Storage        Storage
@@ -79,7 +80,7 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 	return e, nil
 }
 
-// WithGlobalSalt sets the salt used in hashing users.
+// GlobalSalt sets the salt used in hashing users.
 func GlobalSalt(salt string) func(*ElwinConfig) error {
 	return func(ec *ElwinConfig) error {
 		ec.globalSalt = salt
