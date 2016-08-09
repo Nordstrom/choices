@@ -172,6 +172,9 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
 		return
 	}
+	if r.Body != nil {
+		defer r.Body.Close()
+	}
 	enc := json.NewEncoder(w)
 	if err := enc.Encode(resp); err != nil {
 		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't encode json: %v", err)
