@@ -35,7 +35,7 @@ import (
 )
 
 var config = struct {
-	ec              *choices.ElwinConfig
+	ec              *choices.ChoicesConfig
 	grpcAddr        string
 	jsonAddr        string
 	mongoAddr       string
@@ -88,7 +88,7 @@ func main() {
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	ec, err := choices.NewElwin(
+	ec, err := choices.NewChoices(
 		ctx,
 		mongo.WithMongoStorage(config.mongoAddr, config.mongoDB, config.mongoCollection),
 		choices.UpdateInterval(time.Minute),

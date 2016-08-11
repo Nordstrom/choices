@@ -22,8 +22,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-// ElwinConfig is the configuration struct used in an elwin server.
-type ElwinConfig struct {
+// ChoicesConfig is the configuration struct used in an elwin server.
+type ChoicesConfig struct {
 	globalSalt     string
 	Storage        Storage
 	updateInterval time.Duration
@@ -35,12 +35,12 @@ const (
 	defaultUpdateInterval time.Duration = 5 * time.Minute
 )
 
-// NewElwin sets the storage engine. It starts a ticker that will call
+// NewChoices sets the storage engine. It starts a ticker that will call
 // s.Update() until the context is cancelled. To change the tick interval call
 // SetUpdateInterval(d time.Duration). Must cancel the context before calling
-// NewElwin again otherwise you will leak go routines.
-func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConfig, error) {
-	e := &ElwinConfig{
+// NewChoices again otherwise you will leak go routines.
+func NewChoices(ctx context.Context, opts ...func(*ChoicesConfig) error) (*ChoicesConfig, error) {
+	e := &ChoicesConfig{
 		globalSalt:     defaultSalt,
 		updateInterval: defaultUpdateInterval,
 		ErrChan:        make(chan error, 1),
@@ -56,7 +56,7 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 		return nil, fmt.Errorf("must supply a storage option")
 	}
 
-	go func(e *ElwinConfig) {
+	go func(e *ChoicesConfig) {
 		err := e.Storage.Update()
 		if err != nil {
 			log.Fatal(err)
@@ -81,8 +81,8 @@ func NewElwin(ctx context.Context, opts ...func(*ElwinConfig) error) (*ElwinConf
 }
 
 // GlobalSalt sets the salt used in hashing users.
-func GlobalSalt(salt string) func(*ElwinConfig) error {
-	return func(ec *ElwinConfig) error {
+func GlobalSalt(salt string) func(*ChoicesConfig) error {
+	return func(ec *ChoicesConfig) error {
 		ec.globalSalt = salt
 		return nil
 	}
@@ -91,8 +91,8 @@ func GlobalSalt(salt string) func(*ElwinConfig) error {
 // UpdateInterval changes the update interval for Storage. Must call
 // SetStorage after this or cancel context of the current Storage and call
 // SetStorage again.
-func UpdateInterval(dur time.Duration) func(*ElwinConfig) error {
-	return func(ec *ElwinConfig) error {
+func UpdateInterval(dur time.Duration) func(*ChoicesConfig) error {
+	return func(ec *ChoicesConfig) error {
 		ec.updateInterval = dur
 		return nil
 	}

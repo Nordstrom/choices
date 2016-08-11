@@ -34,7 +34,7 @@ func BenchmarkNamespaces(b *testing.B) {
 	ms.AddNamespace(ns)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	elwin, err := choices.NewElwin(ctx, mem.WithMemStore(ms))
+	elwin, err := choices.NewChoices(ctx, mem.WithMemStore(ms))
 	if err != nil {
 		b.Fatalf("elwin err: %v", err)
 		return
