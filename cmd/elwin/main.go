@@ -15,8 +15,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -167,16 +167,76 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
+	if r.Body != nil {
+		defer r.Body.Close()
+	}
 	resp, err := config.ec.Namespaces(r.Form.Get("teamid"), r.Form.Get("userid"))
 	if err != nil {
 		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
 		return
 	}
-	if r.Body != nil {
-		defer r.Body.Close()
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if err := elwinJSON(resp, w); err != nil {
+		config.ec.ErrChan <- err
+		return
 	}
-	enc := json.NewEncoder(w)
-	if err := enc.Encode(resp); err != nil {
-		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't encode json: %v", err)
+}
+
+type errWriter struct {
+	w   io.Writer
+	err error
+}
+
+func (ew *errWriter) write(buf []byte) {
+	if ew.err != nil {
+		return
 	}
+	_, ew.err = ew.w.Write(buf)
+}
+
+var (
+	jsonQuote    = []byte{'"'}
+	jsonKeyEnd   = []byte{':', ' '}
+	jsonComma    = []byte{','}
+	jsonOpenObj  = []byte{'{'}
+	jsonCloseObj = []byte{'}'}
+)
+
+func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
+	ew := &errWriter{w: w}
+	ew.write(jsonOpenObj)
+	ew.write(jsonQuote)
+	ew.write([]byte("experiments"))
+	ew.write(jsonQuote)
+	ew.write(jsonKeyEnd)
+	ew.write(jsonOpenObj)
+	for i, v := range er {
+		ew.write(jsonQuote)
+		ew.write([]byte(v.Name))
+		ew.write(jsonQuote)
+		ew.write(jsonKeyEnd)
+		ew.write(jsonOpenObj)
+		for j, param := range v.Params {
+			ew.write(jsonQuote)
+			ew.write([]byte(param.Name))
+			ew.write(jsonQuote)
+			ew.write(jsonKeyEnd)
+			ew.write(jsonQuote)
+			ew.write([]byte(param.Value))
+			ew.write(jsonQuote)
+			if j < len(v.Params)-1 {
+				ew.write(jsonComma)
+			}
+		}
+		ew.write(jsonCloseObj)
+		if i < len(er)-1 {
+			ew.write(jsonComma)
+		}
+	}
+	ew.write(jsonCloseObj)
+	ew.write(jsonCloseObj)
+	if ew.err != nil {
+		return ew.err
+	}
+	return nil
 }
