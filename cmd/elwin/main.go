@@ -31,6 +31,7 @@ import (
 	"github.com/foolusion/choices"
 	"github.com/foolusion/choices/elwin"
 	"github.com/foolusion/choices/storage/mongo"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
 
@@ -49,8 +50,32 @@ var config = struct {
 	mongoCollection: "test",
 }
 
+var (
+	jsonRequests = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "nordstrom",
+		Subsystem: "elwin",
+		Name:      "json_requests",
+		Help:      "The number of json requests recieved.",
+	})
+	jsonDurations = prometheus.NewSummary(prometheus.SummaryOpts{
+		Namespace: "nordstrom",
+		Subsystem: "elwin",
+		Name:      "json_durations_nanoseconds",
+		Help:      "json latency distributions.",
+	})
+	paramCounts = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "nordstrom",
+		Subsystem: "elwin",
+		Name:      "param_counts",
+		Help:      "Params served to users.",
+	}, []string{"exp", "param", "value"})
+)
+
 func init() {
 	http.HandleFunc("/", rootHandler)
+	prometheus.MustRegister(jsonRequests)
+	prometheus.MustRegister(jsonDurations)
+	prometheus.MustRegister(paramCounts)
 }
 
 const (
@@ -101,6 +126,8 @@ func main() {
 	// TODO: remove when deployed
 	m := ec.Storage.(*mongo.Mongo)
 	m.LoadExampleData()
+
+	http.Handle("/metrics", prometheus.Handler())
 
 	go func() {
 		config.ec.ErrChan <- http.ListenAndServe(config.jsonAddr, nil)
@@ -166,6 +193,7 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	r.ParseForm()
 	if r.Body != nil {
 		defer r.Body.Close()
@@ -180,6 +208,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		config.ec.ErrChan <- err
 		return
 	}
+	jsonRequests.Inc()
+	jsonDurations.Observe(float64(time.Since(start)))
 }
 
 type errWriter struct {
@@ -210,13 +240,13 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 	ew.write(jsonQuote)
 	ew.write(jsonKeyEnd)
 	ew.write(jsonOpenObj)
-	for i, v := range er {
+	for i, exp := range er {
 		ew.write(jsonQuote)
-		ew.write([]byte(v.Name))
+		ew.write([]byte(exp.Name))
 		ew.write(jsonQuote)
 		ew.write(jsonKeyEnd)
 		ew.write(jsonOpenObj)
-		for j, param := range v.Params {
+		for j, param := range exp.Params {
 			ew.write(jsonQuote)
 			ew.write([]byte(param.Name))
 			ew.write(jsonQuote)
@@ -224,9 +254,10 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 			ew.write(jsonQuote)
 			ew.write([]byte(param.Value))
 			ew.write(jsonQuote)
-			if j < len(v.Params)-1 {
+			if j < len(exp.Params)-1 {
 				ew.write(jsonComma)
 			}
+			paramCounts.With(prometheus.Labels{"exp": exp.Name, "param": param.Name, "value": param.Value}).Inc()
 		}
 		ew.write(jsonCloseObj)
 		if i < len(er)-1 {
