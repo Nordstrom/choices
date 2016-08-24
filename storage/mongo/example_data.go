@@ -107,5 +107,50 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
+		&MongoNamespaceInput{
+			Name:     "snbmow1",
+			Segments: [16]byte{},
+			TeamID:   []string{"mobilesearch"},
+			Experiments: []MongoExperimentInput{
+				{
+					Name:     "mobileResultTest",
+					Segments: choices.SegmentsAll,
+					Params: []MongoParamInput{
+						{
+							Name: "resultCount",
+							Type: choices.ValueTypeUniform,
+							Value: choices.Uniform{
+								Choices: []string{"24", "48", "72"},
+							},
+						},
+					},
+				},
+			},
+		},
+		&MongoNamespaceInput{
+			Name:     "snb1",
+			Segments: [16]byte{},
+			TeamID:   []string{"search"},
+			Experiments: []MongoExperimentInput{
+				{
+					Name:     "categoryHeaderFilterTest",
+					Segments: choices.SegmentsAll,
+					Params: []MongoParamInput{
+						{
+							Name: "headerExperience",
+							Type: choices.ValueTypeUniform,
+							Value: choices.Uniform{
+								Choices: []string{
+									"headers",
+									"suppressHeaders",
+									"suppressHeadersAlignNav",
+									"headersAlignNav",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	)
 }
