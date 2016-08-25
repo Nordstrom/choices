@@ -15,6 +15,7 @@
 package mongo
 
 import (
+	"encoding/hex"
 	"sync"
 
 	"github.com/foolusion/choices"
@@ -45,14 +46,14 @@ func WithMongoStorage(url, db, collection string) func(*choices.ChoicesConfig) e
 
 type MongoNamespace struct {
 	Name        string
-	Segments    [16]byte
+	Segments    string
 	TeamID      []string
 	Experiments []MongoExperiment
 }
 
 type MongoExperiment struct {
 	Name     string
-	Segments [16]byte
+	Segments string
 	Params   []MongoParam
 }
 
@@ -73,9 +74,31 @@ func (m *Mongo) Update() error {
 
 	namespaces := make([]choices.Namespace, len(mongoNamespaces))
 	for i, n := range mongoNamespaces {
-		namespaces[i] = choices.Namespace{Name: n.Name, Segments: n.Segments, TeamID: n.TeamID, Experiments: make([]choices.Experiment, len(n.Experiments))}
+		namespaces[i] = choices.Namespace{
+			Name:        n.Name,
+			TeamID:      n.TeamID,
+			Experiments: make([]choices.Experiment, len(n.Experiments)),
+		}
+		nsSeg, err := hex.DecodeString(n.Segments)
+		if err != nil {
+			return err
+		}
+		var nss [16]byte
+		copy(nss[:], nsSeg[:16])
+		namespaces[i].Segments = nss
 		for j, e := range n.Experiments {
-			namespaces[i].Experiments[j] = choices.Experiment{Name: e.Name, Segments: e.Segments, Params: make([]choices.Param, len(e.Params))}
+			namespaces[i].Experiments[j] = choices.Experiment{
+				Name:   e.Name,
+				Params: make([]choices.Param, len(e.Params)),
+			}
+			expSeg, err := hex.DecodeString(e.Segments)
+			if err != nil {
+				return err
+			}
+			var exps [16]byte
+			copy(exps[:], expSeg[:16])
+			namespaces[i].Experiments[j].Segments = exps
+
 			for k, p := range e.Params {
 				namespaces[i].Experiments[j].Params[k] = choices.Param{Name: p.Name}
 				switch p.Type {
