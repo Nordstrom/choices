@@ -74,11 +74,18 @@ func (m *Mongo) LoadExampleData() {
 					Segments: allSegments,
 					Params: []MongoParamInput{
 						{
+							Name: "emojiSize",
+							Type: choices.ValueTypeUniform,
+							Value: choices.Uniform{
+								Choices: []string{"small", "big"},
+							},
+						},
+						{
 							Name: "emoji",
 							Type: choices.ValueTypeWeighted,
 							Value: choices.Weighted{
 								Choices: []string{"💩", "😘", "😱"},
-								Weights: []float64{1, 8, 7},
+								Weights: []float64{1, 2, 3},
 							},
 						},
 					},
