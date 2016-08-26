@@ -73,6 +73,7 @@ var (
 
 func init() {
 	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/healthz", healthzHandler)
 	prometheus.MustRegister(jsonRequests)
 	prometheus.MustRegister(jsonDurations)
 	prometheus.MustRegister(paramCounts)
@@ -270,4 +271,10 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 		return ew.err
 	}
 	return nil
+}
+
+func healthzHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/plain")
+	w.Write([]byte("I’ve taken on enough new tech in this project, and still need to integrate with SnowPlow. I can’t afford the time to work through the growing pains of a new code base when there is only one engineer3 backing it and they’re using completely unsupported infrastructure.\n\nLove,\nPaul McCallick"))
 }
