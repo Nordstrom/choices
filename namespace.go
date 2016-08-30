@@ -14,7 +14,14 @@
 
 package choices
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrSegmentNotInExperiment = errors.New("Segment is not assigned to an experiment")
+)
 
 // Namespace is a container for experiments. Segments in the namespace divide
 // traffic. Units are the keys that will hash experiments.
@@ -60,7 +67,7 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
 	if n.Segments.contains(uint64(segment)) {
-		return ExperimentResponse{}, nil
+		return ExperimentResponse{}, ErrSegmentNotInExperiment
 	}
 
 	for _, exp := range n.Experiments {
@@ -76,7 +83,7 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 	}
 
 	// unreachable
-	return ExperimentResponse{}, nil
+	return ExperimentResponse{}, fmt.Errorf("unreachable code Namespace.eval")
 }
 
 // ExperimentResponse holds the data for an evaluated expeiment.
@@ -96,6 +103,9 @@ func (ec *ChoicesConfig) Namespaces(teamID, userID string) ([]ExperimentResponse
 	var response []ExperimentResponse
 	for _, ns := range TeamNamespaces(ec.Storage, teamID) {
 		eResp, err := ns.eval(h)
+		if err == ErrSegmentNotInExperiment {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
