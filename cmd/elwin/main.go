@@ -165,6 +165,7 @@ func main() {
 type elwinServer struct{}
 
 func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
+	log.Printf("GetNamespaces: %v", id)
 	if id == nil {
 		return nil, fmt.Errorf("GetNamespaces: no Identifier recieved")
 	}
@@ -199,7 +200,20 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil {
 		defer r.Body.Close()
 	}
-	resp, err := config.ec.Namespaces(r.Form.Get("teamid"), r.Form.Get("userid"))
+
+	var label string
+	switch {
+	case r.Form.Get("label") != "":
+		label = r.Form.Get("label")
+	case r.Form.Get("teamid") != "":
+		label = r.Form.Get("teamid")
+	case r.Form.Get("group-id") != "":
+		label = r.Form.Get("group-id")
+	default:
+		label = ""
+	}
+
+	resp, err := config.ec.Namespaces(label, r.Form.Get("userid"))
 	if err != nil {
 		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
 		return
@@ -228,7 +242,7 @@ func (ew *errWriter) write(buf []byte) {
 var (
 	jsonQuote    = []byte{'"'}
 	jsonKeyEnd   = []byte{':', ' '}
-	jsonComma    = []byte{','}
+	jsonComma    = []byte{',', ' '}
 	jsonOpenObj  = []byte{'{'}
 	jsonCloseObj = []byte{'}'}
 )
