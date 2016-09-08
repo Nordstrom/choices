@@ -63,6 +63,10 @@ type MongoParam struct {
 	Value bson.Raw
 }
 
+func (m *Mongo) Ready() error {
+	return m.sess.Ping()
+}
+
 func (m *Mongo) Update() error {
 	c := m.sess.DB(m.db).C(m.coll)
 	iter := c.Find(bson.M{}).Iter()

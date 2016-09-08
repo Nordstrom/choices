@@ -162,26 +162,6 @@ func (m *Mongo) LoadExampleData() {
 			},
 		},
 		&MongoNamespaceInput{
-			Name:     "snb2",
-			Segments: noSegments,
-			TeamID:   []string{"search"},
-			Experiments: []MongoExperimentInput{
-				{
-					Name:     "searchResultTest",
-					Segments: allSegments,
-					Params: []MongoParamInput{
-						{
-							Name: "resultCount",
-							Type: choices.ValueTypeUniform,
-							Value: choices.Uniform{
-								Choices: []string{"66", "99"},
-							},
-						},
-					},
-				},
-			},
-		},
-		&MongoNamespaceInput{
 			Name:     "snbmow1",
 			Segments: noSegments,
 			TeamID:   []string{"mobilesearch"},

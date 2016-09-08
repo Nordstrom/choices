@@ -22,6 +22,7 @@ package choices
 type Storage interface {
 	Update() error
 	Read() []Namespace
+	Ready() error
 }
 
 // TeamNamespaces filters the namespaces from storage based on teamID.

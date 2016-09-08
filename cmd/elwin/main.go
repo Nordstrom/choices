@@ -74,6 +74,7 @@ var (
 func init() {
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/healthz", healthzHandler)
+	http.HandleFunc("/readiness", readinessHandler)
 	prometheus.MustRegister(jsonRequests)
 	prometheus.MustRegister(jsonDurations)
 	prometheus.MustRegister(paramCounts)
@@ -87,29 +88,20 @@ const (
 	envMongoColl = "MONGO_COLLECTION"
 )
 
+func env(dst *string, src string) {
+	if os.Getenv(src) != "" {
+		*dst = os.Getenv(src)
+	}
+}
+
 func main() {
 	log.Println("Starting elwin...")
 
-	// TODO: read environment variables for config
-	if os.Getenv(envJSONAddr) != "" {
-		config.jsonAddr = os.Getenv(envJSONAddr)
-	}
-
-	if os.Getenv(envGRPCAddr) != "" {
-		config.grpcAddr = os.Getenv(envGRPCAddr)
-	}
-
-	if os.Getenv(envMongoAddr) != "" {
-		config.mongoAddr = os.Getenv(envMongoAddr)
-	}
-
-	if os.Getenv(envMongoDB) != "" {
-		config.mongoDB = os.Getenv(envMongoDB)
-	}
-
-	if os.Getenv(envMongoColl) != "" {
-		config.mongoCollection = os.Getenv(envMongoColl)
-	}
+	env(&config.jsonAddr, envJSONAddr)
+	env(&config.grpcAddr, envGRPCAddr)
+	env(&config.mongoAddr, envMongoAddr)
+	env(&config.mongoDB, envMongoDB)
+	env(&config.mongoCollection, envMongoColl)
 
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
@@ -123,10 +115,6 @@ func main() {
 		log.Fatal(err)
 	}
 	config.ec = ec
-
-	// TODO: remove when deployed
-	m := ec.Storage.(*mongo.Mongo)
-	m.LoadExampleData()
 
 	http.Handle("/metrics", prometheus.Handler())
 
@@ -194,11 +182,27 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 	return exp, nil
 }
 
+func logCloseErr(c io.Closer) {
+	if err := c.Close(); err != nil {
+		log.Printf("could not close response body: %s", err)
+	}
+}
+
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	r.ParseForm()
+	defer jsonRequests.Inc()
+	defer jsonDurations.Observe(float64(time.Since(start)))
+	if err := r.ParseForm(); err != nil {
+		log.Printf("could not parse form: %s", err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Set("Content-type", "text/plain")
+		if _, err := w.Write([]byte("invalid form data")); err != nil {
+			log.Printf("could not write to root connection: %s", err)
+		}
+		return
+	}
 	if r.Body != nil {
-		defer r.Body.Close()
+		defer logCloseErr(r.Body)
 	}
 
 	var label string
@@ -223,8 +227,6 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		config.ec.ErrChan <- err
 		return
 	}
-	jsonRequests.Inc()
-	jsonDurations.Observe(float64(time.Since(start)))
 }
 
 type errWriter struct {
@@ -290,5 +292,15 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 func healthzHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("I’ve taken on enough new tech in this project, and still need to integrate with SnowPlow. I can’t afford the time to work through the growing pains of a new code base when there is only one engineer3 backing it and they’re using completely unsupported infrastructure.\n\nLove,\nPaul McCallick"))
+	if _, err := w.Write([]byte("I’ve taken on enough new tech in this project, and still need to integrate with SnowPlow. I can’t afford the time to work through the growing pains of a new code base when there is only one engineer3 backing it and they’re using completely unsupported infrastructure.\n\nLove,\nPaul McCallick")); err != nil {
+		log.Printf("could not write to healthz connection: %s", err)
+	}
+}
+
+func readinessHandler(w http.ResponseWriter, r *http.Request) {
+	if err := config.ec.Storage.Ready(); err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

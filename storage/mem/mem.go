@@ -43,6 +43,10 @@ func (m *MemStore) Read() []choices.Namespace {
 	return ns
 }
 
+func (m *MemStore) Ready() error {
+	return nil
+}
+
 func (m *MemStore) Update() error {
 	m.nextmu.RLock()
 	if !m.changed {
