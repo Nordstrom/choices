@@ -18,15 +18,19 @@ import "testing"
 
 func BenchmarkNamespaceEval(b *testing.B) {
 	ns := NewNamespace("t1", "test")
-	ns.AddExperiment(
+	if err := ns.AddExperiment(
 		"aTest",
 		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
 		128,
-	)
+	); err != nil {
+		b.Fatal(err)
+	}
 	h := hashConfig{}
 	h.setSalt(defaultSalt)
 	h.setUserID("my-user-id")
 	for i := 0; i < b.N; i++ {
-		ns.eval(h)
+		if _, err := ns.eval(h); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

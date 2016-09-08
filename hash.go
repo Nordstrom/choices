@@ -22,11 +22,6 @@ import (
 
 const longScale = float64(0xFFFFFFFFFFFFFFFF)
 
-type unit struct {
-	key   string
-	value []string
-}
-
 type hashConfig struct {
 	salt   [4]string
 	userID string
@@ -52,34 +47,49 @@ func (h *hashConfig) setUserID(u string) {
 	h.userID = u
 }
 
-func (h *hashConfig) Bytes() []byte {
-	var buf bytes.Buffer
-
-	for i, v := range h.salt {
-		buf.WriteString(v)
-		if i < len(h.salt)-1 {
-			buf.WriteByte('.')
-		}
-	}
-
-	buf.WriteByte('@')
-
-	buf.WriteString(h.userID)
-
-	return buf.Bytes()
+type errWriter struct {
+	buf bytes.Buffer
+	err error
 }
 
-func addString(buf *bytes.Buffer, s string) {
-	if s != "" {
-		if buf.Len() != 0 {
-			buf.WriteByte('.')
-		}
-		buf.WriteString(s)
+func (e *errWriter) writeString(s string) {
+	if e.err == nil {
+		_, e.err = e.buf.WriteString(s)
 	}
+}
+
+func (e *errWriter) writeByte(b byte) {
+	if e.err == nil {
+		e.err = e.buf.WriteByte(b)
+	}
+}
+
+func (h *hashConfig) Bytes() ([]byte, error) {
+	ew := errWriter{}
+
+	for i, v := range h.salt {
+		ew.writeString(v)
+		if i < len(h.salt)-1 {
+			ew.writeByte('.')
+		}
+	}
+
+	ew.writeByte('@')
+
+	ew.writeString(h.userID)
+
+	if ew.err != nil {
+		return nil, ew.err
+	}
+	return ew.buf.Bytes(), nil
 }
 
 func hash(h hashConfig) (uint64, error) {
-	hash := sha1.Sum(h.Bytes())
+	b, err := h.Bytes()
+	if err != nil {
+		return 0, err
+	}
+	hash := sha1.Sum(b)
 	i := binary.BigEndian.Uint64(hash[:8])
 	return i, nil
 }

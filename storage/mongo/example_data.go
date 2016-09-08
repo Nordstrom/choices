@@ -37,6 +37,8 @@ type MongoParamInput struct {
 
 const (
 	noSegments  = "00000000000000000000000000000000"
+	firstHalf   = "ffffffffffffffff0000000000000000"
+	secondHalf  = "0000000000000000ffffffffffffffff"
 	allSegments = "ffffffffffffffffffffffffffffffff"
 )
 
@@ -44,6 +46,46 @@ func (m *Mongo) LoadExampleData() {
 	coll := m.sess.DB(m.db).C(m.coll)
 	coll.RemoveAll(nil)
 	coll.Insert(
+		&MongoNamespaceInput{
+			Name:     "rands1",
+			Segments: noSegments,
+			TeamID:   []string{"rands"},
+			Experiments: []MongoExperimentInput{
+				{
+					Name:     "personalizedSort",
+					Segments: allSegments,
+					Params: []MongoParamInput{
+						{
+							Name: "value",
+							Type: choices.ValueTypeUniform,
+							Value: choices.Uniform{
+								Choices: []string{"True", "False"},
+							},
+						},
+					},
+				},
+			},
+		},
+		&MongoNamespaceInput{
+			Name:     "rands2",
+			Segments: noSegments,
+			TeamID:   []string{"rands"},
+			Experiments: []MongoExperimentInput{
+				{
+					Name:     "categorySort",
+					Segments: allSegments,
+					Params: []MongoParamInput{
+						{
+							Name: "value",
+							Type: choices.ValueTypeUniform,
+							Value: choices.Uniform{
+								Choices: []string{"Default", "Test1"},
+							},
+						},
+					},
+				},
+			},
+		},
 		&MongoNamespaceInput{
 			Name:     "ns1",
 			Segments: noSegments,
@@ -173,11 +215,44 @@ func (m *Mongo) LoadExampleData() {
 							Type: choices.ValueTypeUniform,
 							Value: choices.Uniform{
 								Choices: []string{
-									"headers",
+									"control",
 									"suppressHeaders",
-									"suppressHeadersAlignNav",
-									"headersAlignNav",
+									"alignNav",
 								},
+							},
+						},
+					},
+				},
+			},
+		},
+		&MongoNamespaceInput{
+			Name:     "john",
+			Segments: noSegments,
+			TeamID:   []string{"test"},
+			Experiments: []MongoExperimentInput{
+				{
+					Name:     "johnHeight",
+					Segments: firstHalf,
+					Params: []MongoParamInput{
+						{
+							Name: "height",
+							Type: choices.ValueTypeUniform,
+							Value: choices.Uniform{
+								Choices: []string{"short", "medium", "tall"},
+							},
+						},
+					},
+				},
+				{
+					Name:     "johnWeight",
+					Segments: secondHalf,
+					Params: []MongoParamInput{
+						{
+							Name: "weight",
+							Type: choices.ValueTypeUniform,
+							Value: choices.Weighted{
+								Choices: []string{"skinny", "average", "300"},
+								Weights: []float64{1, 2, 3},
 							},
 						},
 					},

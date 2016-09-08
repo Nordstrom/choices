@@ -97,20 +97,26 @@ func BenchmarkHash(b *testing.B) {
 		userID: "abcdef1234567890",
 	}
 	for i := 0; i < b.N; i++ {
-		hash(h)
+		if _, err := hash(h); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
 func BenchmarkHashBytes(b *testing.B) {
 	h := hashConfig{}
 	for i := 0; i < b.N; i++ {
-		h.Bytes()
+		if _, err := h.Bytes(); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
 func BenchmarkHashBytesAll(b *testing.B) {
 	h := hashConfig{salt: [4]string{"salt", "namespace", "experiment", "param"}, userID: "value"}
 	for i := 0; i < b.N; i++ {
-		h.Bytes()
+		if _, err := h.Bytes(); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

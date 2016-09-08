@@ -67,17 +67,11 @@ func (w *Weighted) Value(i uint64) (string, error) {
 		selection[ii] = cumSum
 	}
 	choice := uniform(i, 0, cumSum)
-	selected := -1
+
 	for ii, v := range selection {
-		if choice < v {
-			selected = ii
-			break
+		if choice <= v {
+			return w.Choices[ii], nil
 		}
 	}
-
-	if selected < 0 {
-		return "", fmt.Errorf("no selection was made")
-	}
-
-	return w.Choices[selected], nil
+	return "", fmt.Errorf("no selection was made")
 }

@@ -43,9 +43,12 @@ func TestValueWeighted(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got, _ := w.Value(test.in)
+		got, err := w.Value(test.in)
+		if err != nil {
+			fmt.Println(err)
+		}
 		if got != test.want {
-			fmt.Errorf("%v.Value(%v) = %v, want %v", *w, test.in, got, test.want)
+			t.Errorf("%v.Value(%v) = %v, want %v", *w, test.in, got, test.want)
 		}
 	}
 }

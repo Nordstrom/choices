@@ -22,8 +22,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-// ChoicesConfig is the configuration struct used in an elwin server.
-type ChoicesConfig struct {
+// Config is the configuration struct used in an elwin server.
+type Config struct {
 	globalSalt     string
 	Storage        Storage
 	updateInterval time.Duration
@@ -39,8 +39,8 @@ const (
 // s.Update() until the context is cancelled. To change the tick interval call
 // SetUpdateInterval(d time.Duration). Must cancel the context before calling
 // NewChoices again otherwise you will leak go routines.
-func NewChoices(ctx context.Context, opts ...func(*ChoicesConfig) error) (*ChoicesConfig, error) {
-	e := &ChoicesConfig{
+func NewChoices(ctx context.Context, opts ...func(*Config) error) (*Config, error) {
+	e := &Config{
 		globalSalt:     defaultSalt,
 		updateInterval: defaultUpdateInterval,
 		ErrChan:        make(chan error, 1),
@@ -56,7 +56,7 @@ func NewChoices(ctx context.Context, opts ...func(*ChoicesConfig) error) (*Choic
 		return nil, fmt.Errorf("must supply a storage option")
 	}
 
-	go func(e *ChoicesConfig) {
+	go func(e *Config) {
 		err := e.Storage.Update()
 		if err != nil {
 			log.Fatal(err)
@@ -81,8 +81,8 @@ func NewChoices(ctx context.Context, opts ...func(*ChoicesConfig) error) (*Choic
 }
 
 // GlobalSalt sets the salt used in hashing users.
-func GlobalSalt(salt string) func(*ChoicesConfig) error {
-	return func(ec *ChoicesConfig) error {
+func GlobalSalt(salt string) func(*Config) error {
+	return func(ec *Config) error {
 		ec.globalSalt = salt
 		return nil
 	}
@@ -91,8 +91,8 @@ func GlobalSalt(salt string) func(*ChoicesConfig) error {
 // UpdateInterval changes the update interval for Storage. Must call
 // SetStorage after this or cancel context of the current Storage and call
 // SetStorage again.
-func UpdateInterval(dur time.Duration) func(*ChoicesConfig) error {
-	return func(ec *ChoicesConfig) error {
+func UpdateInterval(dur time.Duration) func(*Config) error {
+	return func(ec *Config) error {
 		ec.updateInterval = dur
 		return nil
 	}

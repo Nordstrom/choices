@@ -36,7 +36,7 @@ import (
 )
 
 var config = struct {
-	ec              *choices.ChoicesConfig
+	ec              *choices.Config
 	grpcAddr        string
 	jsonAddr        string
 	mongoAddr       string

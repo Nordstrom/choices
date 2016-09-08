@@ -20,8 +20,8 @@ import (
 	"github.com/foolusion/choices"
 )
 
-func WithMemStore(m *MemStore) func(*choices.ChoicesConfig) error {
-	return func(e *choices.ChoicesConfig) error {
+func WithMemStore(m *MemStore) func(*choices.Config) error {
+	return func(e *choices.Config) error {
 		e.Storage = m
 		return nil
 	}

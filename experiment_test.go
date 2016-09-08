@@ -32,11 +32,11 @@ func TestExperiment(t *testing.T) {
 				},
 				Segments: seg,
 			},
-			want: []ParamValue{{Name: "p1", Value: "a"}, {Name: "p2", Value: "a"}},
+			want: []ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}},
 			err:  nil,
 		},
 	}
-	h := hashConfig{salt: [4]string{"salt", "", "", ""}}
+	h := hashConfig{}
 	for _, test := range tests {
 		got, err := test.exp.eval(h)
 		if err != test.err {
@@ -95,6 +95,8 @@ func BenchmarkExperimentEval(b *testing.B) {
 		salt: [4]string{"salt", "namespace", "", ""},
 	}
 	for i := 0; i < b.N; i++ {
-		e.eval(h)
+		if _, err := e.eval(h); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

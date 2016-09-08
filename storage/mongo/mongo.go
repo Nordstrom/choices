@@ -31,8 +31,8 @@ type Mongo struct {
 	mu            sync.RWMutex
 }
 
-func WithMongoStorage(url, db, collection string) func(*choices.ChoicesConfig) error {
-	return func(ec *choices.ChoicesConfig) error {
+func WithMongoStorage(url, db, collection string) func(*choices.Config) error {
+	return func(ec *choices.Config) error {
 		m := &Mongo{url: url, db: db, coll: collection}
 		sess, err := mgo.Dial(url)
 		if err != nil {

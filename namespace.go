@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	// ErrSegmentNotInExperiment occurs when a user is hashed into a segment that has not been claimed by an experiment.
 	ErrSegmentNotInExperiment = errors.New("Segment is not assigned to an experiment")
 )
 
@@ -95,7 +96,7 @@ type ExperimentResponse struct {
 // Namespaces determines the assignments for the a given users units based on
 // the current set of namespaces and experiments. It returns a Response object
 // if it is successful or an error if something went wrong.
-func (ec *ChoicesConfig) Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
+func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
 	h := hashConfig{}
 	h.setSalt(ec.globalSalt)
 	h.setUserID(userID)
