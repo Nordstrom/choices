@@ -44,23 +44,31 @@ func WithMongoStorage(url, db, collection string) func(*choices.Config) error {
 	}
 }
 
-type MongoNamespace struct {
+type Namespace struct {
+	ID          bson.ObjectId `bson:"_id,omitempty"`
 	Name        string
 	Segments    string
 	TeamID      []string
-	Experiments []MongoExperiment
+	Experiments []Experiment
 }
 
-type MongoExperiment struct {
+type Experiment struct {
 	Name     string
 	Segments string
-	Params   []MongoParam
+	Params   []Param
 }
 
-type MongoParam struct {
+type Param struct {
 	Name  string
 	Type  choices.ValueType
 	Value bson.Raw
+}
+
+func (m *Mongo) Read() []choices.Namespace {
+	m.mu.RLock()
+	ns := m.namespaces
+	m.mu.RUnlock()
+	return ns
 }
 
 func (m *Mongo) Ready() error {
@@ -70,7 +78,7 @@ func (m *Mongo) Ready() error {
 func (m *Mongo) Update() error {
 	c := m.sess.DB(m.db).C(m.coll)
 	iter := c.Find(bson.M{}).Iter()
-	var mongoNamespaces []MongoNamespace
+	var mongoNamespaces []Namespace
 	err := iter.All(&mongoNamespaces)
 	if err != nil {
 		return err
@@ -78,44 +86,9 @@ func (m *Mongo) Update() error {
 
 	namespaces := make([]choices.Namespace, len(mongoNamespaces))
 	for i, n := range mongoNamespaces {
-		namespaces[i] = choices.Namespace{
-			Name:        n.Name,
-			TeamID:      n.TeamID,
-			Experiments: make([]choices.Experiment, len(n.Experiments)),
-		}
-		nsSeg, err := hex.DecodeString(n.Segments)
+		namespaces[i], err = parseNamespace(n)
 		if err != nil {
 			return err
-		}
-		var nss [16]byte
-		copy(nss[:], nsSeg[:16])
-		namespaces[i].Segments = nss
-		for j, e := range n.Experiments {
-			namespaces[i].Experiments[j] = choices.Experiment{
-				Name:   e.Name,
-				Params: make([]choices.Param, len(e.Params)),
-			}
-			expSeg, err := hex.DecodeString(e.Segments)
-			if err != nil {
-				return err
-			}
-			var exps [16]byte
-			copy(exps[:], expSeg[:16])
-			namespaces[i].Experiments[j].Segments = exps
-
-			for k, p := range e.Params {
-				namespaces[i].Experiments[j].Params[k] = choices.Param{Name: p.Name}
-				switch p.Type {
-				case choices.ValueTypeUniform:
-					var uniform choices.Uniform
-					p.Value.Unmarshal(&uniform)
-					namespaces[i].Experiments[j].Params[k].Value = &uniform
-				case choices.ValueTypeWeighted:
-					var weighted choices.Weighted
-					p.Value.Unmarshal(&weighted)
-					namespaces[i].Experiments[j].Params[k].Value = &weighted
-				}
-			}
 		}
 	}
 
@@ -125,9 +98,69 @@ func (m *Mongo) Update() error {
 	return nil
 }
 
-func (m *Mongo) Read() []choices.Namespace {
-	m.mu.RLock()
-	ns := m.namespaces
-	m.mu.RUnlock()
-	return ns
+func NamespaceToChoicesNamespace(n Namespace) (choices.Namespace, error) {
+	return parseNamespace(n)
+}
+
+func decodeSegments(seg string) ([16]byte, error) {
+	segBytes, err := hex.DecodeString(seg)
+	if err != nil {
+		return [16]byte{}, err
+	}
+	var segArr [16]byte
+	copy(segArr[:], segBytes[:16])
+	return segArr, nil
+}
+
+func parseNamespace(n Namespace) (choices.Namespace, error) {
+	namespace := choices.Namespace{
+		Name:        n.Name,
+		TeamID:      n.TeamID,
+		Experiments: make([]choices.Experiment, len(n.Experiments)),
+	}
+	nss, err := decodeSegments(n.Segments)
+	if err != nil {
+		return choices.Namespace{}, err
+	}
+	namespace.Segments = nss
+	for i, e := range n.Experiments {
+		namespace.Experiments[i], err = parseExperiment(e)
+		if err != nil {
+			return choices.Namespace{}, err
+		}
+	}
+	return namespace, nil
+}
+
+func parseExperiment(e Experiment) (choices.Experiment, error) {
+	experiment := choices.Experiment{
+		Name:   e.Name,
+		Params: make([]choices.Param, len(e.Params)),
+	}
+	ess, err := decodeSegments(e.Segments)
+	if err != nil {
+		return choices.Experiment{}, err
+	}
+	experiment.Segments = ess
+
+	for i, p := range e.Params {
+		experiment.Params[i] = parseParam(p)
+	}
+	return experiment, nil
+}
+
+func parseParam(p Param) choices.Param {
+	var param choices.Param
+	param = choices.Param{Name: p.Name}
+	switch p.Type {
+	case choices.ValueTypeUniform:
+		var uniform choices.Uniform
+		p.Value.Unmarshal(&uniform)
+		param.Value = &uniform
+	case choices.ValueTypeWeighted:
+		var weighted choices.Weighted
+		p.Value.Unmarshal(&weighted)
+		param.Value = &weighted
+	}
+	return param
 }
