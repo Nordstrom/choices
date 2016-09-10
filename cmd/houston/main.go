@@ -12,12 +12,23 @@ import (
 	"github.com/foolusion/choices/storage/mongo"
 
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+)
+
+const (
+	rootEndpoint      = "/"
+	healthEndpoint    = "/healtz"
+	readinessEndpoint = "readiness"
+	launchPrefix      = "/launch/"
+	deletePrefix      = "/delete/"
 )
 
 func init() {
-	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/healthz", healthHandler)
-	http.HandleFunc("/readiness", readinessHandler)
+	http.HandleFunc(rootEndpoint, rootHandler)
+	http.HandleFunc(launchPrefix, launchHandler)
+	http.HandleFunc(deletePrefix, deleteHandler)
+	http.HandleFunc(healthEndpoint, healthHandler)
+	http.HandleFunc(readinessEndpoint, readinessHandler)
 }
 
 type config struct {
@@ -186,7 +197,6 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s", buf)
 
 	var test []Namespace
-	cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection).Find(nil).All(&test)
 	var prod []Namespace
 	cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection).Find(nil).All(&prod)
 
@@ -217,6 +227,7 @@ const rootTmpl = `<!doctype html>
 <h1>Houston</h1>
 <div>
 {{with .Test}}
+<h2>Test</h2>
 <table>
 <tr>
   <th>Namespace</th>
@@ -242,6 +253,7 @@ const rootTmpl = `<!doctype html>
 {{end}}
 
 {{with .Prod}}
+<h2>Prod</h2>
 <table>
 <tr>
   <th>Namespace</th>
@@ -270,6 +282,34 @@ const rootTmpl = `<!doctype html>
 </body>
 </html>
 `
+
+func launchHandler(w http.ResponseWriter, r *http.Request) {
+	experiment := r.URL.Path[len(launchPrefix):]
+
+	// get the namespace from test
+	var test Namespace
+	if err := cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection).Find(bson.M{"experiments.name": experiment}).One(&test); err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte("not found"))
+		return
+	}
+
+	// check for namespace in prod
+	var prod Namespace
+	if err := cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection).Find(bson.M{"name": test.Name}).One(&prod); err == mgo.ErrNotFound {
+		// namespace not found in prod so create namespace and add
+		// experiment
+		return
+	}
+
+	// subtract segments from prod namespace and add experiment
+
+}
+
+func deleteHandler(w http.ResponseWriter, r *http.Request) {
+}
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
