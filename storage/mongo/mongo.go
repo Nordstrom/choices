@@ -164,3 +164,30 @@ func parseParam(p Param) choices.Param {
 	}
 	return param
 }
+
+func QueryAll(c *mgo.Collection, query interface{}) ([]choices.Namespace, error) {
+	iter := c.Find(query).Iter()
+	var mongoNamespaces []Namespace
+	err := iter.All(&mongoNamespaces)
+	if err != nil {
+		return nil, err
+	}
+
+	namespaces := make([]choices.Namespace, len(mongoNamespaces))
+	for i, n := range mongoNamespaces {
+		namespaces[i], err = parseNamespace(n)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return namespaces, nil
+}
+
+func QueryOne(c *mgo.Collection, query interface{}) (choices.Namespace, error) {
+	var mongoNamespace Namespace
+	if err := c.Find(query).One(&mongoNamespace); err != nil {
+		return choices.Namespace{}, err
+	}
+	return parseNamespace(mongoNamespace)
+}
