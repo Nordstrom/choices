@@ -287,8 +287,8 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	experiment := r.URL.Path[len(launchPrefix):]
 
 	// get the namespace from test
-	var test Namespace
-	if err := cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection).Find(bson.M{"experiments.name": experiment}).One(&test); err != nil {
+	test, err := mongo.QueryAll(cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection), bson.M{"experiments.name": experiment})
+	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -297,10 +297,16 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check for namespace in prod
-	var prod Namespace
-	if err := cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection).Find(bson.M{"name": test.Name}).One(&prod); err == mgo.ErrNotFound {
+	prod, err := mongo.QueryOne(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), bson.M{"name": test.Name})
+	if err == mgo.ErrNotFound {
 		// namespace not found in prod so create namespace and add
 		// experiment
+		return
+	} else if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte("something went wrong"))
 		return
 	}
 
