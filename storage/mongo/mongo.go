@@ -191,3 +191,37 @@ func QueryOne(c *mgo.Collection, query interface{}) (choices.Namespace, error) {
 	}
 	return parseNamespace(mongoNamespace)
 }
+
+func Insert(c *mgo.Collection, name string, namespace choices.Namespace) error {
+	nsi := NamespaceInput{
+		Name:        namespace.Name,
+		TeamID:      namespace.TeamID,
+		Segments:    hex.EncodeToString(namespace.Segments),
+		Experiments: make([]ExperimentInput, len(namespace.Experiments)),
+	}
+	for i, exp := range namespace.Experiments {
+		nsi.Experiments[i] = ExperimentInput{
+			Name:     exp.Name,
+			Segments: hex.EncodeToString(exp.Segments),
+			Params:   make([]ParamInput, len(exp.Params)),
+		}
+		for j, param := range exp.Params {
+			nsi.Experiments[i].Params[j] = ParamInput{
+				Name:  param.Name,
+				Value: param.Value,
+			}
+			switch nsi.Value.(type) {
+			case choices.Uniform:
+				nsi.Experiments[i].Params[j].Type = choices.ValueTypeUniform
+			case choices.Weighted:
+				nsi.Experiments[i].Params[j].Type = choices.ValueTypeWeighted
+			default:
+				return
+			}
+		}
+	}
+	if err := c.Insert(nsi); err != nil {
+		return err
+	}
+	return nil
+}
