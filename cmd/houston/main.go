@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -287,7 +288,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	experiment := r.URL.Path[len(launchPrefix):]
 
 	// get the namespace from test
-	test, err := mongo.QueryAll(cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection), bson.M{"experiments.name": experiment})
+	test, err := mongo.QueryOne(cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection), bson.M{"experiments.name": experiment})
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
@@ -295,12 +296,24 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("not found"))
 		return
 	}
+	var exp choices.Experiment
+	for _, v := range test.Experiments {
+		if v.Name == experiment {
+			exp = v
+			break
+		}
+	}
 
 	// check for namespace in prod
 	prod, err := mongo.QueryOne(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), bson.M{"name": test.Name})
 	if err == mgo.ErrNotFound {
-		// namespace not found in prod so create namespace and add
-		// experiment
+		newProd := choices.Namespace{Name: test.Name, TeamID: test.TeamID, Experiments: []choices.Experiment{exp}}
+		copy(newProd.Segments[:], choices.SegmentsAll[:])
+		if err := newProd.Segments.Remove(&exp.Segments); err != nil {
+			// this should never happen
+			log.Println(err)
+		}
+		fmt.Println(newProd)
 		return
 	} else if err != nil {
 		log.Println(err)
@@ -311,6 +324,15 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// subtract segments from prod namespace and add experiment
+	if err := prod.Segments.Remove(&exp.Segments); err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusNotFound)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte("not found"))
+		return
+	}
+	prod.Experiments = append(prod.Experiments, exp)
+	fmt.Println(prod)
 
 }
 
