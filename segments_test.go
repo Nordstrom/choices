@@ -17,50 +17,22 @@ package choices
 import "testing"
 
 func TestSegmentContains(t *testing.T) {
-	tests := []struct {
+	tests := map[string]struct {
 		seg  segments
 		n    uint64
 		want bool
 	}{
-		{
-			seg:  segments{},
-			n:    0,
-			want: false,
-		},
-		{
-			seg:  segments{},
-			n:    1,
-			want: false,
-		},
-		{
-			seg:  segments{1},
-			n:    0,
-			want: true,
-		},
-		{
-			seg:  segments{1 << 7},
-			n:    7,
-			want: true,
-		},
-		{
-			seg:  segments{0, 1<<7 | 1<<4},
-			n:    12,
-			want: true,
-		},
-		{
-			seg:  segments{0, 1 << 7},
-			n:    14,
-			want: false,
-		},
+		"empty contains 0":   {seg: segments{}, n: 0, want: false},
+		"empty contains 1":   {seg: segments{}, n: 1, want: false},
+		"[1] contains 0":     {seg: segments{1}, n: 0, want: true},
+		"[1] contanis 7":     {seg: segments{1 << 7}, n: 7, want: true},
+		"[7,12] contains 12": {seg: segments{0, 1<<7 | 1<<4}, n: 12, want: true},
+		"[7] contains 17":    {seg: segments{0, 1 << 7}, n: 14, want: false},
 	}
-	for _, test := range tests {
+	for k, test := range tests {
 		got := test.seg.contains(test.n)
 		if test.want != got {
-			t.Errorf("%v.contains(%v) = %v, want %v",
-				test.seg,
-				test.n,
-				got,
-				test.want)
+			t.Errorf("%s: %v.contains(%v) = %v, want %v", k, test.seg, test.n, got, test.want)
 		}
 	}
 }
@@ -102,66 +74,64 @@ func TestSegmentsAvailable(t *testing.T) {
 }
 
 func TestSegmentsSet(t *testing.T) {
-	tests := []struct {
+	tests := map[string]struct {
 		seg   segments
 		index int
 		value bit
 		want  segments
 	}{
-		{
-			seg:   segments{},
-			index: 0,
-			value: one,
-			want:  segments{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		},
-		{
-			seg:   segments{},
-			index: 13,
-			value: one,
-			want:  segments{0, 1 << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		},
-		{
-			seg:   SegmentsAll,
-			index: 15,
-			value: zero,
-			want:  segments{255, 127, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-		},
+		"set one":      {seg: segments{}, index: 0, value: one, want: segments{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		"set thirteen": {seg: segments{}, index: 13, value: one, want: segments{0, 1 << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		"unset 15":     {seg: SegmentsAll, index: 15, value: zero, want: segments{255, 127, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
 	}
 
-	for _, test := range tests {
+	for k, test := range tests {
 		test.seg.set(test.index, test.value)
-		for i, v := range test.seg {
-			if v != test.want[i] {
-				t.Errorf("test.set(%v, %v) = %v, want %v", test.index, test.value, test.seg, test.want)
-			}
+		if test.seg != test.want {
+			t.Errorf("%s: test.set(%v, %v) = %v, want %v", k, test.index, test.value, test.seg, test.want)
 		}
 	}
 }
 
 func TestSegmentsSample(t *testing.T) {
-	tests := []struct {
+	tests := map[string]struct {
 		seg  segments
 		num  int
 		want segments
 	}{
-		{
-			seg:  SegmentsAll,
-			num:  0,
-			want: segments{},
-		},
-		{
-			seg:  SegmentsAll,
-			num:  1,
-			want: segments{0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0},
-		},
+		"sample none": {seg: SegmentsAll, num: 0, want: segments{}},
+		"sample one":  {seg: SegmentsAll, num: 1, want: segments{0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}},
 	}
 
-	for _, test := range tests {
+	for k, test := range tests {
 		got := test.seg.sample(test.num)
-		for i, v := range got {
-			if v != test.want[i] {
-				t.Errorf("test.sample() = %v %v, want %v", got, test.seg, test.want)
-			}
+		if got != test.want {
+			t.Errorf("%s: test.sample() = %v, %v, want %v", k, got, test.seg, test.want)
+		}
+	}
+}
+
+func TestSegmentsRemove(t *testing.T) {
+	tests := map[string]struct {
+		seg  segments
+		out  segments
+		want segments
+		err  error
+	}{
+		"remove none":          {seg: SegmentsAll, out: segments{}, want: SegmentsAll, err: nil},
+		"remove all":           {seg: SegmentsAll, out: SegmentsAll, want: segments{}, err: nil},
+		"remove all from none": {seg: segments{}, out: SegmentsAll, want: segments{}, err: ErrSegmentUnavailable},
+		"remove some":          {seg: SegmentsAll, out: segments{255}, want: segments{0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, err: nil},
+		"bad remove some":      {seg: segments{0, 255}, out: segments{255, 0}, want: segments{0, 255}, err: ErrSegmentUnavailable},
+	}
+
+	for k, test := range tests {
+		got := test.seg.Remove(&test.out)
+		if test.seg != test.want {
+			t.Errorf("%s: test.Remove(%v) = %v, want %v", k, test.out, test.seg, test.want)
+		}
+		if got != test.err {
+			t.Errorf("%s: %v.Remove(%v) = %v, want %v", k, test.seg, test.out, got, test.err)
 		}
 	}
 }

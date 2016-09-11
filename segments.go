@@ -14,12 +14,32 @@
 
 package choices
 
-import "math/rand"
+import (
+	"errors"
+	"math/rand"
+)
 
 type segments [16]byte
 
 // SegmentsAll is a value where every segment is available
 var SegmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
+
+var (
+	ErrSegmentUnavailable = errors.New("segment unavailable")
+)
+
+// Remove removes the segments in del from s and throws an error if the
+func (s *segments) Remove(out *segments) error {
+	var seg segments
+	for i := range seg {
+		seg[i] = s[i] ^ out[i]
+		if seg[i]&out[i] > 0 {
+			return ErrSegmentUnavailable
+		}
+	}
+	*s = seg
+	return nil
+}
 
 func (s *segments) contains(seg uint64) bool {
 	index, pos := seg/8, seg%8
