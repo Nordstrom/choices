@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -141,7 +140,7 @@ type TableData struct {
 	}
 }
 
-type RootTmplData struct {
+type rootTmplData struct {
 	TestRaw []Namespace
 	ProdRaw []Namespace
 	Test    []TableData
@@ -201,7 +200,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	var prod []Namespace
 	cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection).Find(nil).All(&prod)
 
-	data := RootTmplData{
+	data := rootTmplData{
 		TestRaw: test,
 		ProdRaw: prod,
 		Test:    namespaceToTableData(test),
@@ -313,7 +312,12 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 			// this should never happen
 			log.Println(err)
 		}
-		fmt.Println(newProd)
+		if err := mongo.Upsert(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), newProd.Name, newProd); err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Write([]byte("error launching to prod"))
+		}
 		return
 	} else if err != nil {
 		log.Println(err)
@@ -332,8 +336,12 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	prod.Experiments = append(prod.Experiments, exp)
-	fmt.Println(prod)
-
+	if err := mongo.Upsert(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), prod.Name, prod); err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte("error launching to prod"))
+	}
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
