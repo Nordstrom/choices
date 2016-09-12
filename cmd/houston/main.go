@@ -317,6 +317,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.Write([]byte("error launching to prod"))
 		}
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	} else if err != nil {
 		log.Println(err)
@@ -340,7 +341,9 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte("error launching to prod"))
+		return
 	}
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
