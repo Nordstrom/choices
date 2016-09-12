@@ -16,6 +16,7 @@ package mongo
 
 import "github.com/foolusion/choices"
 
+// NamespaceInput is a helper type for loading a Namespace into mongo.
 type NamespaceInput struct {
 	Name        string
 	Segments    string
@@ -23,12 +24,14 @@ type NamespaceInput struct {
 	Experiments []ExperimentInput
 }
 
+// ExperimentInput is a helper type for loading a Experiment into mongo.
 type ExperimentInput struct {
 	Name     string
 	Segments string
 	Params   []ParamInput
 }
 
+// ParamInput is a helper type for loading a Param into mongo.
 type ParamInput struct {
 	Name  string
 	Type  choices.ValueType
@@ -42,6 +45,7 @@ const (
 	allSegments = "ffffffffffffffffffffffffffffffff"
 )
 
+// LoadExampleData loads the test data into the database.
 func (m *Mongo) LoadExampleData() {
 	coll := m.sess.DB(m.db).C(m.coll)
 	coll.RemoveAll(nil)

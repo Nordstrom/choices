@@ -16,6 +16,7 @@ package mongo
 
 import (
 	"encoding/hex"
+	"fmt"
 	"sync"
 
 	"github.com/foolusion/choices"
@@ -24,6 +25,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// Mongo implements the storage interface.
 type Mongo struct {
 	namespaces    []choices.Namespace
 	sess          *mgo.Session
@@ -31,6 +33,7 @@ type Mongo struct {
 	mu            sync.RWMutex
 }
 
+// WithMongoStorage is a helper func to create a mongo connection and add the data to the choices.Config
 func WithMongoStorage(url, db, collection string) func(*choices.Config) error {
 	return func(ec *choices.Config) error {
 		m := &Mongo{url: url, db: db, coll: collection}
@@ -44,6 +47,7 @@ func WithMongoStorage(url, db, collection string) func(*choices.Config) error {
 	}
 }
 
+// Namespace is a helper type to read Namespace data.
 type Namespace struct {
 	ID          bson.ObjectId `bson:"_id,omitempty"`
 	Name        string
@@ -52,18 +56,21 @@ type Namespace struct {
 	Experiments []Experiment
 }
 
+// Experiment is a helper type to read Experiment data.
 type Experiment struct {
 	Name     string
 	Segments string
 	Params   []Param
 }
 
+// Param is a helper type to read Param data.
 type Param struct {
 	Name  string
 	Type  choices.ValueType
 	Value bson.Raw
 }
 
+// Read returns the current namespaces stored in the mongo object.
 func (m *Mongo) Read() []choices.Namespace {
 	m.mu.RLock()
 	ns := m.namespaces
@@ -71,10 +78,12 @@ func (m *Mongo) Read() []choices.Namespace {
 	return ns
 }
 
+// Ready returns whether the mongo database is available.
 func (m *Mongo) Ready() error {
 	return m.sess.Ping()
 }
 
+// Update updates the data in the mongo object.
 func (m *Mongo) Update() error {
 	c := m.sess.DB(m.db).C(m.coll)
 	iter := c.Find(bson.M{}).Iter()
@@ -98,6 +107,7 @@ func (m *Mongo) Update() error {
 	return nil
 }
 
+// NamespaceToChoicesNamespace converts the data read from mongo into a proper choices data structure.
 func NamespaceToChoicesNamespace(n Namespace) (choices.Namespace, error) {
 	return parseNamespace(n)
 }
@@ -165,6 +175,7 @@ func parseParam(p Param) choices.Param {
 	return param
 }
 
+// QueryAll querys the namespaces using the given query and returns all matches.
 func QueryAll(c *mgo.Collection, query interface{}) ([]choices.Namespace, error) {
 	iter := c.Find(query).Iter()
 	var mongoNamespaces []Namespace
@@ -184,6 +195,7 @@ func QueryAll(c *mgo.Collection, query interface{}) ([]choices.Namespace, error)
 	return namespaces, nil
 }
 
+// QueryOne querys the namespace using the given query and returns the first match.
 func QueryOne(c *mgo.Collection, query interface{}) (choices.Namespace, error) {
 	var mongoNamespace Namespace
 	if err := c.Find(query).One(&mongoNamespace); err != nil {
@@ -192,17 +204,18 @@ func QueryOne(c *mgo.Collection, query interface{}) (choices.Namespace, error) {
 	return parseNamespace(mongoNamespace)
 }
 
-func Insert(c *mgo.Collection, name string, namespace choices.Namespace) error {
+// Upsert inserts a namespace into the database if it does not exist or updates the namespace if it does exist.
+func Upsert(c *mgo.Collection, name string, namespace choices.Namespace) error {
 	nsi := NamespaceInput{
 		Name:        namespace.Name,
 		TeamID:      namespace.TeamID,
-		Segments:    hex.EncodeToString(namespace.Segments),
+		Segments:    hex.EncodeToString(namespace.Segments[:]),
 		Experiments: make([]ExperimentInput, len(namespace.Experiments)),
 	}
 	for i, exp := range namespace.Experiments {
 		nsi.Experiments[i] = ExperimentInput{
 			Name:     exp.Name,
-			Segments: hex.EncodeToString(exp.Segments),
+			Segments: hex.EncodeToString(exp.Segments[:]),
 			Params:   make([]ParamInput, len(exp.Params)),
 		}
 		for j, param := range exp.Params {
@@ -210,17 +223,17 @@ func Insert(c *mgo.Collection, name string, namespace choices.Namespace) error {
 				Name:  param.Name,
 				Value: param.Value,
 			}
-			switch nsi.Value.(type) {
-			case choices.Uniform:
+			switch param.Value.(type) {
+			case *choices.Uniform:
 				nsi.Experiments[i].Params[j].Type = choices.ValueTypeUniform
-			case choices.Weighted:
+			case *choices.Weighted:
 				nsi.Experiments[i].Params[j].Type = choices.ValueTypeWeighted
 			default:
-				return
+				return fmt.Errorf("bad param type")
 			}
 		}
 	}
-	if err := c.Insert(nsi); err != nil {
+	if _, err := c.Upsert(bson.M{"name": name}, nsi); err != nil {
 		return err
 	}
 	return nil
