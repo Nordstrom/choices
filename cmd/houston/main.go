@@ -197,6 +197,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s", buf)
 
 	var test []Namespace
+	cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection).Find(nil).All(&test)
 	var prod []Namespace
 	cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection).Find(nil).All(&prod)
 
@@ -206,8 +207,6 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		Test:    namespaceToTableData(test),
 		Prod:    namespaceToTableData(prod),
 	}
-
-	log.Println(data)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
