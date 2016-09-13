@@ -178,7 +178,7 @@ func (m *Mongo) LoadExampleData() {
 							Name: "resultCount",
 							Type: choices.ValueTypeUniform,
 							Value: choices.Uniform{
-								Choices: []string{"24", "48", "72"},
+								Choices: []string{"24", "36", "48"},
 							},
 						},
 					},
