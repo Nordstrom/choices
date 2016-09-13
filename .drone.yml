@@ -1,9 +1,11 @@
 workspace:
-  base: /go/github.com/foolusion
+  base: /go
 
 pipeline:
   build:
     image: golang:1.7.1
     commands:
+      - go install github.com/foolusion/choices
+      - cd cmd/elwin
       - go test ./... -bench=. -benchmem
       - go build
