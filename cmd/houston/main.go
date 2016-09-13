@@ -227,7 +227,7 @@ const rootTmpl = `<!doctype html>
 <div>
 {{with .Test}}
 <h2>Test</h2>
-<table>
+<table class="table table-striped">
 <tr>
   <th>Namespace</th>
   <th>Labels</th>
@@ -253,7 +253,7 @@ const rootTmpl = `<!doctype html>
 
 {{with .Prod}}
 <h2>Prod</h2>
-<table>
+<table class="table table-striped">
 <tr>
   <th>Namespace</th>
   <th>Labels</th>
