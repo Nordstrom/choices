@@ -5,7 +5,7 @@ pipeline:
   build:
     image: golang:1.7.1
     commands:
-      - go get -u github.com/foolusion/choices
+      - go get -u github.com/foolusion/choices/cmd/elwin
       - cd cmd/elwin
       - go test ./... -bench=. -benchmem
       - go build
