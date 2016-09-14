@@ -17,8 +17,8 @@ import (
 
 const (
 	rootEndpoint      = "/"
-	healthEndpoint    = "/healtz"
-	readinessEndpoint = "readiness"
+	healthEndpoint    = "/healthz"
+	readinessEndpoint = "/readiness"
 	launchPrefix      = "/launch/"
 	deletePrefix      = "/delete/"
 )
