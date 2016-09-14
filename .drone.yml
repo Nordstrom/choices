@@ -6,8 +6,8 @@ pipeline:
   build:
     image: golang:1.7.1
     commands:
-      - cd cmd/elwin
-      - go install
+      - go get -d foolusion/choices/...
+      - go install ./...
   test:
     image: golang:1.7.1
     commands:
