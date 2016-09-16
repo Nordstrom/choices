@@ -25,6 +25,8 @@ type segments [16]byte
 var SegmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
 
 var (
+	// ErrSegmentUnavailable is thrown when you request an a segment set to
+	// 0, an unavailable segment.
 	ErrSegmentUnavailable = errors.New("segment unavailable")
 )
 
