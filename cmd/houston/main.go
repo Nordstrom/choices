@@ -62,33 +62,26 @@ const (
 	envAddr                = "ADDRESS"
 )
 
+func configFromEnv(dst *string, env string) {
+	if dst == nil {
+		return
+	}
+	if os.Getenv(env) != "" {
+		*dst = os.Getenv(env)
+		log.Printf("Setting %s: %q", env, *dst)
+	}
+}
+
 func main() {
 	log.Println("Starting Houston...")
 
-	if os.Getenv(envMongoAddress) != "" {
-		cfg.mongoAddr = os.Getenv(envMongoAddress)
-		log.Printf("Setting Mongo Address: %q", cfg.mongoAddr)
-	}
-	if os.Getenv(envMongoDatabase) != "" {
-		cfg.mongoDB = os.Getenv(envMongoDatabase)
-		log.Printf("Setting Mongo Database: %q", cfg.mongoDB)
-	}
-	if os.Getenv(envMongoTestCollection) != "" {
-		cfg.testCollection = os.Getenv(envMongoTestCollection)
-		log.Printf("Setting Mongo Test Collection: %q", cfg.testCollection)
-	}
-	if os.Getenv(envMongoProdCollection) != "" {
-		cfg.prodCollection = os.Getenv(envMongoProdCollection)
-		log.Printf("Setting Mongo Prod Collection: %q", cfg.prodCollection)
-	}
-	if os.Getenv(envUsername) != "" {
-		cfg.username = os.Getenv(envUsername)
-		log.Printf("Setting Username: %q", cfg.username)
-	}
-	if os.Getenv(envPassword) != "" {
-		cfg.password = os.Getenv(envPassword)
-		log.Printf("Setting Password: %q", cfg.password)
-	}
+	configFromEnv(&cfg.mongoAddr, envMongoAddress)
+	configFromEnv(&cfg.mongoDB, envMongoDatabase)
+	configFromEnv(&cfg.testCollection, envMongoTestCollection)
+	configFromEnv(&cfg.prodCollection, envMongoProdCollection)
+	configFromEnv(&cfg.username, envUsername)
+	configFromEnv(&cfg.password, envPassword)
+	configFromEnv(&cfg.addr, envAddr)
 
 	errCh := make(chan error, 1)
 
@@ -307,11 +300,11 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	if err == mgo.ErrNotFound {
 		newProd := choices.Namespace{Name: test.Name, TeamID: test.TeamID, Experiments: []choices.Experiment{exp}}
 		copy(newProd.Segments[:], choices.SegmentsAll[:])
-		if err := newProd.Segments.Remove(&exp.Segments); err != nil {
+		if err = newProd.Segments.Remove(&exp.Segments); err != nil {
 			// this should never happen
 			log.Println(err)
 		}
-		if err := mongo.Upsert(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), newProd.Name, newProd); err != nil {
+		if err = mongo.Upsert(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), newProd.Name, newProd); err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
