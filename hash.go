@@ -27,6 +27,15 @@ type hashConfig struct {
 	userID string
 }
 
+func (cfg *Config) HashExperience(namespace, experiment, param, userID string) (uint64, error) {
+	h := hashConfig{userID: userID}
+	h.setSalt(cfg.globalSalt)
+	h.setNs(namespace)
+	h.setExp(experiment)
+	h.setParam(param)
+	return hash(h)
+}
+
 func (h *hashConfig) setSalt(s string) {
 	h.salt[0] = s
 }
