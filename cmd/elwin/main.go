@@ -73,6 +73,7 @@ var (
 
 func init() {
 	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/gen", genHandler)
 	http.HandleFunc("/healthz", healthzHandler)
 	http.HandleFunc("/readiness", readinessHandler)
 	prometheus.MustRegister(jsonRequests)
@@ -283,6 +284,7 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 	}
 	ew.write(jsonCloseObj)
 	ew.write(jsonCloseObj)
+	ew.write([]byte{'\n'})
 	if ew.err != nil {
 		return ew.err
 	}
