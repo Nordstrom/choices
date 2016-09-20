@@ -14,29 +14,10 @@
 
 package mongo
 
-import "github.com/foolusion/choices"
-
-// NamespaceInput is a helper type for loading a Namespace into mongo.
-type NamespaceInput struct {
-	Name        string
-	Segments    string
-	TeamID      []string
-	Experiments []ExperimentInput
-}
-
-// ExperimentInput is a helper type for loading a Experiment into mongo.
-type ExperimentInput struct {
-	Name     string
-	Segments string
-	Params   []ParamInput
-}
-
-// ParamInput is a helper type for loading a Param into mongo.
-type ParamInput struct {
-	Name  string
-	Type  choices.ValueType
-	Value interface{}
-}
+import (
+	"github.com/foolusion/choices"
+	"github.com/foolusion/choices/storage/mongo/internal/types"
+)
 
 const (
 	noSegments  = "00000000000000000000000000000000"
@@ -50,15 +31,15 @@ func (m *Mongo) LoadExampleData() {
 	coll := m.sess.DB(m.db).C(m.coll)
 	coll.RemoveAll(nil)
 	coll.Insert(
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "rands1",
 			Segments: noSegments,
 			TeamID:   []string{"rands"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "personalizedSort",
 					Segments: allSegments,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "value",
 							Type: choices.ValueTypeUniform,
@@ -70,15 +51,15 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "rands2",
 			Segments: noSegments,
 			TeamID:   []string{"rands"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "categorySort",
 					Segments: allSegments,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "value",
 							Type: choices.ValueTypeUniform,
@@ -90,15 +71,15 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "ns1",
 			Segments: noSegments,
 			TeamID:   []string{"test"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "exp1",
 					Segments: allSegments,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "buttonColor",
 							Type: choices.ValueTypeUniform,
@@ -110,15 +91,15 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "ns2",
 			Segments: noSegments,
 			TeamID:   []string{"test"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "exp2",
 					Segments: allSegments,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "emojiSize",
 							Type: choices.ValueTypeUniform,
@@ -138,15 +119,15 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "ns3",
 			Segments: noSegments,
 			TeamID:   []string{"test"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "exp3",
 					Segments: allSegments,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "first",
 							Type: choices.ValueTypeUniform,
@@ -165,15 +146,15 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "snbmow1",
 			Segments: noSegments,
 			TeamID:   []string{"mobilesearch"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "mobileResultTest",
 					Segments: allSegments,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "resultCount",
 							Type: choices.ValueTypeUniform,
@@ -185,15 +166,15 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "snb1",
 			Segments: noSegments,
 			TeamID:   []string{"search"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "categoryHeaderFilterTest",
 					Segments: allSegments,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "headerExperience",
 							Type: choices.ValueTypeUniform,
@@ -209,15 +190,15 @@ func (m *Mongo) LoadExampleData() {
 				},
 			},
 		},
-		&NamespaceInput{
+		&types.NamespaceInput{
 			Name:     "john",
 			Segments: noSegments,
 			TeamID:   []string{"test"},
-			Experiments: []ExperimentInput{
+			Experiments: []types.ExperimentInput{
 				{
 					Name:     "johnHeight",
 					Segments: firstHalf,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "height",
 							Type: choices.ValueTypeUniform,
@@ -230,7 +211,7 @@ func (m *Mongo) LoadExampleData() {
 				{
 					Name:     "johnWeight",
 					Segments: secondHalf,
-					Params: []ParamInput{
+					Params: []types.ParamInput{
 						{
 							Name: "weight",
 							Type: choices.ValueTypeUniform,
