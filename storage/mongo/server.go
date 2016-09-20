@@ -16,12 +16,13 @@ package mongo
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/foolusion/choices"
-	"github.com/foolusion/choices/elwinstorage"
+	storage "github.com/foolusion/choices/elwinstorage"
 	"github.com/foolusion/choices/storage/mongo/internal/types"
 	"github.com/pkg/errors"
 )
@@ -62,8 +63,20 @@ func (s *server) All(ctx context.Context, r *storage.AllRequest) (*storage.Names
 	}, nil
 }
 
-func (s *server) CreateExperiment(ctx context.Context, r *storage.Experiment) (*storage.Namespace, error) {
-	return nil, nil
+func (s *server) CreateExperiment(ctx context.Context, r *storage.CreateExperimentRequest) (*storage.Namespace, error) {
+	if r == nil {
+		return nil, fmt.Errorf("bad request")
+	}
+
+	var nsi types.NamespaceInput
+	if r.Namespace == "" {
+		nsi = types.NamespaceInput{
+			Name:     randomName(6),
+			Segments: allSegments,
+		}
+	}
+	err := s.DB.C(environmentStaging).Insert(nsi)
+	return nil, err
 }
 
 func (s *server) DeleteExperiment(ctx context.Context, r *storage.DeleteExperimentRequest) (*storage.Namespace, error) {
@@ -150,4 +163,19 @@ func pToP(p types.Param) *storage.Experiment_Param {
 		param.Value = val
 	}
 	return param
+}
+
+var alphaNum = []byte{
+	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+}
+
+func randomName(n int) string {
+	buf := make([]byte, n)
+	rand.Read(buf)
+	for i, v := range buf {
+		buf[i] = alphaNum[int(v)%len(alphaNum)]
+	}
+	return string(buf)
 }

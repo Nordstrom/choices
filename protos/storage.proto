@@ -8,7 +8,7 @@ service ElwinStorage {
   // Creates an experiment in the staging environment and returns the current
   // namespace uses a new namespace unless a namespace is defined in the
   // request.
-  rpc CreateExperiment(Experiment) returns (Namespace) {}
+  rpc CreateExperiment(CreateExperimentRequest) returns (Namespace) {}
 
   // DeleteExperiment will delete an experiment if it is not in prod
   // environment. It returns the staging namespace's current state.
