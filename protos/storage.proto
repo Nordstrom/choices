@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+// The ElwinStorage service definition
+service ElwinStorage {
+  // All returns all the namespaces for a given environment.
+  rpc All(AllRequest) returns (NamespacesReply) {}
+
+  // Creates an experiment in the staging environment and returns the current
+  // namespace uses a new namespace unless a namespace is defined in the
+  // request.
+  rpc CreateExperiment(Experiment) returns (Namespace) {}
+
+  // DeleteExperiment will delete an experiment if it is not in prod
+  // environment. It returns the staging namespace's current state.
+  rpc DeleteExperiment(DeleteExperimentRequest) returns (Namespace) {}
+
+  // PublishExperiment will copy an experiment from staging to prod. This will
+  // create a new namespace in prod if it does not currently exist. It returns
+  // the prod namespace's current state.
+  rpc PublishExperiment(PublishExperimentRequest) returns (Namespace) {}
+
+  // UnpublishExperiment will remove an experiment from prod. It returns the
+  // prod Namespace if it still exists.
+  rpc UnpublishExperiment(UnpublishExperimentRequest) returns (Namespace) {}
+}
+
+message AllRequest {
+  Environment environment = 1;
+}
+
+// The request message containing labels and environment.
+message NamespacesRequest {
+  string label = 1;
+  Environment environment = 2;
+}
+
+// CreateExperimentRequest is the request used for creating experiments. If the
+// namespace is not included then a new namespace will be used.
+message CreateExperimentRequest {
+  Experiment experiment = 1;
+  string namespace = 2;
+}
+
+// DeleteExperimentRequest is the request used to delete experiments.
+message DeleteExperimentRequest {
+  string name = 1;
+}
+
+// PublishExperimentRequest
+message PublishExperimentRequest {
+  string name = 1;
+}
+
+// UnpublishExperimentRequest
+message UnpublishExperimentRequest {
+  string name = 1;
+}
+
+// The response message containing the Namespaces
+message NamespacesReply {
+  repeated Namespace namespaces = 1;
+}
+
+// Environment structure
+enum Environment {
+  BAD_ENVIRONMENT = 0;
+  STAGING = 1;
+  PRODUCTION = 2;
+}
+
+// Namespace structure
+message Namespace {
+  string name = 1;
+  bytes segments = 2;
+  repeated Experiment experiments = 3;
+}
+
+// Experiment structure
+message Experiment {
+  message Param {
+    message Value {
+      enum ValueType {
+	BAD_VALUE = 0;
+        UNIFORM = 1;
+        WEIGHTED = 2;
+      }
+      ValueType valueType = 1;
+      repeated string choices = 2;
+      repeated double weights = 3;
+    }
+    string name = 1;
+    Value value = 2;
+  }
+  string name = 1;
+  bytes segments = 2;
+  repeated Param params = 3;
+}
