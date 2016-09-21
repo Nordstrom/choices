@@ -17,15 +17,14 @@ package mongo
 import "github.com/foolusion/choices/storage/mongo/internal/types"
 
 const (
-	noSegments  = "00000000000000000000000000000000"
 	firstHalf   = "ffffffffffffffff0000000000000000"
 	secondHalf  = "0000000000000000ffffffffffffffff"
 	allSegments = "ffffffffffffffffffffffffffffffff"
 )
 
 // LoadExampleData loads the test data into the database.
-func (m *Mongo) LoadExampleData() {
-	coll := m.sess.DB(m.db).C(m.coll)
+func (m *Server) LoadExampleData() {
+	coll := m.sess.DB(m.db).C(environmentStaging)
 	coll.RemoveAll(nil)
 	coll.Insert(
 		&types.Namespace{

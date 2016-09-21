@@ -15,7 +15,6 @@
 package choices
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -25,7 +24,7 @@ import (
 // Config is the configuration struct used in an elwin server.
 type Config struct {
 	globalSalt     string
-	Storage        Storage
+	Storage        *NamespaceStore
 	updateInterval time.Duration
 	ErrChan        chan error
 }
@@ -50,10 +49,6 @@ func NewChoices(ctx context.Context, opts ...func(*Config) error) (*Config, erro
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if e.Storage == nil {
-		return nil, fmt.Errorf("must supply a storage option")
 	}
 
 	go func(e *Config) {

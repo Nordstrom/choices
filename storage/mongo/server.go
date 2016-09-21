@@ -15,9 +15,10 @@
 package mongo
 
 import (
-	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+
+	"google.golang.org/grpc"
 
 	"golang.org/x/net/context"
 
@@ -35,10 +36,19 @@ const (
 )
 
 type Server struct {
-	DB *mgo.Database
+	sess *mgo.Session
+	db   string
 }
 
-func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllReply, error) {
+func NewServer(addr, db string) (*Server, error) {
+	sess, err := mgo.Dial(addr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not dial %q", addr)
+	}
+	return &Server{sess: sess, db: db}, nil
+}
+
+func (s *Server) All(ctx context.Context, r *storage.AllRequest, opts ...grpc.CallOption) (*storage.AllReply, error) {
 	var env string
 	switch {
 	case r == nil:
@@ -52,7 +62,7 @@ func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllRe
 	}
 
 	var results []types.Namespace
-	err := s.DB.C(env).Find(nil).All(&results)
+	err := s.sess.DB(s.db).C(env).Find(nil).All(&results)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not decode data from mongo")
 	}
@@ -67,7 +77,7 @@ func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllRe
 	}, nil
 }
 
-func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage.CreateReply, error) {
+func (s *Server) Create(ctx context.Context, r *storage.CreateRequest, opts ...grpc.CallOption) (*storage.CreateReply, error) {
 	if r == nil || r.Namespace == nil {
 		return nil, fmt.Errorf("bad request")
 	}
@@ -82,14 +92,14 @@ func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage
 		env = environmentProduction
 	}
 
-	if err := s.DB.C(env).Insert(nsi); err != nil {
+	if err := s.sess.DB(s.db).C(env).Insert(nsi); err != nil {
 		return nil, errors.Wrap(err, "unable to insert experiment into database")
 	}
 	ns, err := s.getNamespace(r.Namespace.Name, env)
 	return &storage.CreateReply{Namespace: ns}, err
 }
 
-func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.ReadReply, error) {
+func (s *Server) Read(ctx context.Context, r *storage.ReadRequest, opts ...grpc.CallOption) (*storage.ReadReply, error) {
 	if r == nil || r.Name == "" {
 		return nil, fmt.Errorf("bad request")
 	}
@@ -105,11 +115,11 @@ func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.Rea
 	return &storage.ReadReply{Namespace: ns}, err
 }
 
-func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage.UpdateReply, error) {
+func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest, opts ...grpc.CallOption) (*storage.UpdateReply, error) {
 	return nil, nil
 }
 
-func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage.DeleteReply, error) {
+func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest, opts ...grpc.CallOption) (*storage.DeleteReply, error) {
 	return nil, nil
 }
 
@@ -127,7 +137,7 @@ func parseNamespaces(namespaces []types.Namespace) ([]*storage.Namespace, error)
 
 func (s *Server) getNamespace(name, environment string) (*storage.Namespace, error) {
 	var n types.Namespace
-	if err := s.DB.C(environment).Find(bson.M{"name": name}).One(&n); err != nil {
+	if err := s.sess.DB(s.db).C(environment).Find(bson.M{"name": name}).One(&n); err != nil {
 		return nil, errors.Wrapf(err, "could not find namespace %v", name)
 	}
 	return nToSN(n)
@@ -206,19 +216,4 @@ func spToP(p *storage.Param) types.Param {
 			Weights: p.Value.Weights,
 		},
 	}
-}
-
-var alphaNum = []byte{
-	'1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-}
-
-func randomName(n int) string {
-	buf := make([]byte, n)
-	rand.Read(buf)
-	for i, v := range buf {
-		buf[i] = alphaNum[int(v)%len(alphaNum)]
-	}
-	return string(buf)
 }

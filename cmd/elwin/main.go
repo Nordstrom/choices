@@ -109,7 +109,7 @@ func main() {
 	defer cancel()
 	ec, err := choices.NewChoices(
 		ctx,
-		mongo.WithMongoStorage(config.mongoAddr, config.mongoDB, config.mongoCollection),
+		mongo.WithMongoStorage(config.mongoAddr, config.mongoDB, choices.StorageEnvironmentDev),
 		choices.UpdateInterval(time.Minute),
 	)
 	if err != nil {
