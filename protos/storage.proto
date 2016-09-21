@@ -3,95 +3,106 @@ syntax = "proto3";
 // The ElwinStorage service definition
 service ElwinStorage {
   // All returns all the namespaces for a given environment.
-  rpc All(AllRequest) returns (NamespacesReply) {}
+  rpc All(AllRequest) returns (AllReply) {}
 
-  // Creates an experiment in the staging environment and returns the current
-  // namespace uses a new namespace unless a namespace is defined in the
-  // request.
-  rpc CreateExperiment(CreateExperimentRequest) returns (Namespace) {}
+  // Create creates a namespace in the given environment.
+  rpc Create(CreateRequest) returns (CreateReply) {}
 
-  // DeleteExperiment will delete an experiment if it is not in prod
-  // environment. It returns the staging namespace's current state.
-  rpc DeleteExperiment(DeleteExperimentRequest) returns (Namespace) {}
+  // Read returns the namespace matching the supplied name from the given
+  // environment.
+  rpc Read(ReadRequest) returns (ReadReply) {}
 
-  // PublishExperiment will copy an experiment from staging to prod. This will
-  // create a new namespace in prod if it does not currently exist. It returns
-  // the prod namespace's current state.
-  rpc PublishExperiment(PublishExperimentRequest) returns (Namespace) {}
+  // Update replaces the namespace in the given environment with the namespace
+  // supplied.
+  rpc Update(UpdateRequest) returns (UpdateReply) {}
 
-  // UnpublishExperiment will remove an experiment from prod. It returns the
-  // prod Namespace if it still exists.
-  rpc UnpublishExperiment(UnpublishExperimentRequest) returns (Namespace) {}
+  // Delete deletes the namespace from the given environment.
+  rpc Delete(DeleteRequest) returns (DeleteReply) {}
 }
 
+// AllRequest retuns all the experiments from the given environment.
 message AllRequest {
   Environment environment = 1;
 }
 
-// The request message containing labels and environment.
-message NamespacesRequest {
-  string label = 1;
+// The response message containing the Namespaces
+message AllReply {
+  repeated Namespace namespaces = 1;
+}
+
+// CreateRequest request message to create a new namespace in an environment.
+message CreateRequest {
+  Namespace namespace = 1;
   Environment environment = 2;
 }
 
-// CreateExperimentRequest is the request used for creating experiments. If the
-// namespace is not included then a new namespace will be used.
-message CreateExperimentRequest {
-  Experiment experiment = 1;
-  string namespace = 2;
+// CreateReply response containing the newly created Namespace.
+message CreateReply {
+  Namespace namespace = 1;
 }
 
-// DeleteExperimentRequest is the request used to delete experiments.
-message DeleteExperimentRequest {
+// ReadRequest request message to get a namespace by name.
+message ReadRequest {
   string name = 1;
+  Environment environment = 2;
 }
 
-// PublishExperimentRequest
-message PublishExperimentRequest {
+// ReadReply response containing the namespace requested.
+message ReadReply {
+  Namespace namespace = 1;
+}
+
+// UpdateRequest request message to update an existing namespace in an
+// environment.
+message UpdateRequest {
+  Namespace namespace = 1;
+  Environment environment = 2;
+}
+
+// UpdateReply response containing the updated namespace.
+message UpdateReply {
+  Namespace namespace = 1;
+}
+
+// DeleteRequest request message to delete an existing namespace from an
+// environment.
+message DeleteRequest {
   string name = 1;
+  Environment environment = 2;
 }
 
-// UnpublishExperimentRequest
-message UnpublishExperimentRequest {
-  string name = 1;
-}
-
-// The response message containing the Namespaces
-message NamespacesReply {
-  repeated Namespace namespaces = 1;
+// DeleteReply response containing the deleted namespace.
+message DeleteReply {
+  Namespace namespace = 1;
 }
 
 // Environment structure
 enum Environment {
-  BAD_ENVIRONMENT = 0;
-  STAGING = 1;
-  PRODUCTION = 2;
+  Staging = 0;
+  Production = 1;
 }
 
 // Namespace structure
 message Namespace {
   string name = 1;
-  bytes segments = 2;
   repeated Experiment experiments = 3;
 }
 
 // Experiment structure
 message Experiment {
-  message Param {
-    message Value {
-      enum ValueType {
-	BAD_VALUE = 0;
-        UNIFORM = 1;
-        WEIGHTED = 2;
-      }
-      ValueType valueType = 1;
-      repeated string choices = 2;
-      repeated double weights = 3;
-    }
-    string name = 1;
-    Value value = 2;
-  }
   string name = 1;
   bytes segments = 2;
   repeated Param params = 3;
+}
+
+// Param structure
+message Param {
+  string name = 1;
+  Value value = 2;
+}
+
+// Value structure
+message Value {
+  repeated string choices = 1;
+  repeated double weights = 2;
 }

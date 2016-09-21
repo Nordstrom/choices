@@ -16,6 +16,7 @@ package choices
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 )
 
@@ -29,6 +30,20 @@ var (
 	// 0, an unavailable segment.
 	ErrSegmentUnavailable = errors.New("segment unavailable")
 )
+
+func Remove(orig, rem []byte) ([]byte, error) {
+	if len(orig) != len(rem) {
+		return nil, fmt.Errorf("different length slices")
+	}
+	seg := make([]byte, len(orig))
+	for i := range seg {
+		seg[i] = orig[i] ^ rem[i]
+		if seg[i]&rem[i] > 0 {
+			return nil, ErrSegmentUnavailable
+		}
+	}
+	return seg, nil
+}
 
 // Remove removes the segments in del from s and throws an error if the
 func (s *segments) Remove(out *segments) error {

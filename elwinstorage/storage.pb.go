@@ -10,14 +10,19 @@ It is generated from these files:
 
 It has these top-level messages:
 	AllRequest
-	NamespacesRequest
-	CreateExperimentRequest
-	DeleteExperimentRequest
-	PublishExperimentRequest
-	UnpublishExperimentRequest
-	NamespacesReply
+	AllReply
+	CreateRequest
+	CreateReply
+	ReadRequest
+	ReadReply
+	UpdateRequest
+	UpdateReply
+	DeleteRequest
+	DeleteReply
 	Namespace
 	Experiment
+	Param
+	Value
 */
 package storage
 
@@ -45,20 +50,17 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 type Environment int32
 
 const (
-	Environment_BAD_ENVIRONMENT Environment = 0
-	Environment_STAGING         Environment = 1
-	Environment_PRODUCTION      Environment = 2
+	Environment_Staging    Environment = 0
+	Environment_Production Environment = 1
 )
 
 var Environment_name = map[int32]string{
-	0: "BAD_ENVIRONMENT",
-	1: "STAGING",
-	2: "PRODUCTION",
+	0: "Staging",
+	1: "Production",
 }
 var Environment_value = map[string]int32{
-	"BAD_ENVIRONMENT": 0,
-	"STAGING":         1,
-	"PRODUCTION":      2,
+	"Staging":    0,
+	"Production": 1,
 }
 
 func (x Environment) String() string {
@@ -66,32 +68,7 @@ func (x Environment) String() string {
 }
 func (Environment) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-type Experiment_Param_Value_ValueType int32
-
-const (
-	Experiment_Param_Value_BAD_VALUE Experiment_Param_Value_ValueType = 0
-	Experiment_Param_Value_UNIFORM   Experiment_Param_Value_ValueType = 1
-	Experiment_Param_Value_WEIGHTED  Experiment_Param_Value_ValueType = 2
-)
-
-var Experiment_Param_Value_ValueType_name = map[int32]string{
-	0: "BAD_VALUE",
-	1: "UNIFORM",
-	2: "WEIGHTED",
-}
-var Experiment_Param_Value_ValueType_value = map[string]int32{
-	"BAD_VALUE": 0,
-	"UNIFORM":   1,
-	"WEIGHTED":  2,
-}
-
-func (x Experiment_Param_Value_ValueType) String() string {
-	return proto.EnumName(Experiment_Param_Value_ValueType_name, int32(x))
-}
-func (Experiment_Param_Value_ValueType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor0, []int{8, 0, 0, 0}
-}
-
+// AllRequest retuns all the experiments from the given environment.
 type AllRequest struct {
 	Environment Environment `protobuf:"varint,1,opt,name=environment,enum=Environment" json:"environment,omitempty"`
 }
@@ -101,79 +78,147 @@ func (m *AllRequest) String() string            { return proto.CompactTextString
 func (*AllRequest) ProtoMessage()               {}
 func (*AllRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-// The request message containing labels and environment.
-type NamespacesRequest struct {
-	Label       string      `protobuf:"bytes,1,opt,name=label" json:"label,omitempty"`
-	Environment Environment `protobuf:"varint,2,opt,name=environment,enum=Environment" json:"environment,omitempty"`
+// The response message containing the Namespaces
+type AllReply struct {
+	Namespaces []*Namespace `protobuf:"bytes,1,rep,name=namespaces" json:"namespaces,omitempty"`
 }
 
-func (m *NamespacesRequest) Reset()                    { *m = NamespacesRequest{} }
-func (m *NamespacesRequest) String() string            { return proto.CompactTextString(m) }
-func (*NamespacesRequest) ProtoMessage()               {}
-func (*NamespacesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (m *AllReply) Reset()                    { *m = AllReply{} }
+func (m *AllReply) String() string            { return proto.CompactTextString(m) }
+func (*AllReply) ProtoMessage()               {}
+func (*AllReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-// CreateExperimentRequest is the request used for creating experiments. If the
-// namespace is not included then a new namespace will be used.
-type CreateExperimentRequest struct {
-	Experiment *Experiment `protobuf:"bytes,1,opt,name=experiment" json:"experiment,omitempty"`
-	Namespace  string      `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-}
-
-func (m *CreateExperimentRequest) Reset()                    { *m = CreateExperimentRequest{} }
-func (m *CreateExperimentRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateExperimentRequest) ProtoMessage()               {}
-func (*CreateExperimentRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *CreateExperimentRequest) GetExperiment() *Experiment {
+func (m *AllReply) GetNamespaces() []*Namespace {
 	if m != nil {
-		return m.Experiment
+		return m.Namespaces
 	}
 	return nil
 }
 
-// DeleteExperimentRequest is the request used to delete experiments.
-type DeleteExperimentRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+// CreateRequest request message to create a new namespace in an environment.
+type CreateRequest struct {
+	Namespace   *Namespace  `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
+	Environment Environment `protobuf:"varint,2,opt,name=environment,enum=Environment" json:"environment,omitempty"`
 }
 
-func (m *DeleteExperimentRequest) Reset()                    { *m = DeleteExperimentRequest{} }
-func (m *DeleteExperimentRequest) String() string            { return proto.CompactTextString(m) }
-func (*DeleteExperimentRequest) ProtoMessage()               {}
-func (*DeleteExperimentRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (m *CreateRequest) Reset()                    { *m = CreateRequest{} }
+func (m *CreateRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateRequest) ProtoMessage()               {}
+func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
-// PublishExperimentRequest
-type PublishExperimentRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-}
-
-func (m *PublishExperimentRequest) Reset()                    { *m = PublishExperimentRequest{} }
-func (m *PublishExperimentRequest) String() string            { return proto.CompactTextString(m) }
-func (*PublishExperimentRequest) ProtoMessage()               {}
-func (*PublishExperimentRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-// UnpublishExperimentRequest
-type UnpublishExperimentRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-}
-
-func (m *UnpublishExperimentRequest) Reset()                    { *m = UnpublishExperimentRequest{} }
-func (m *UnpublishExperimentRequest) String() string            { return proto.CompactTextString(m) }
-func (*UnpublishExperimentRequest) ProtoMessage()               {}
-func (*UnpublishExperimentRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-// The response message containing the Namespaces
-type NamespacesReply struct {
-	Namespaces []*Namespace `protobuf:"bytes,1,rep,name=namespaces" json:"namespaces,omitempty"`
-}
-
-func (m *NamespacesReply) Reset()                    { *m = NamespacesReply{} }
-func (m *NamespacesReply) String() string            { return proto.CompactTextString(m) }
-func (*NamespacesReply) ProtoMessage()               {}
-func (*NamespacesReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
-
-func (m *NamespacesReply) GetNamespaces() []*Namespace {
+func (m *CreateRequest) GetNamespace() *Namespace {
 	if m != nil {
-		return m.Namespaces
+		return m.Namespace
+	}
+	return nil
+}
+
+// CreateReply response containing the newly created Namespace.
+type CreateReply struct {
+	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
+}
+
+func (m *CreateReply) Reset()                    { *m = CreateReply{} }
+func (m *CreateReply) String() string            { return proto.CompactTextString(m) }
+func (*CreateReply) ProtoMessage()               {}
+func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *CreateReply) GetNamespace() *Namespace {
+	if m != nil {
+		return m.Namespace
+	}
+	return nil
+}
+
+// ReadRequest request message to get a namespace by name.
+type ReadRequest struct {
+	Name        string      `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Environment Environment `protobuf:"varint,2,opt,name=environment,enum=Environment" json:"environment,omitempty"`
+}
+
+func (m *ReadRequest) Reset()                    { *m = ReadRequest{} }
+func (m *ReadRequest) String() string            { return proto.CompactTextString(m) }
+func (*ReadRequest) ProtoMessage()               {}
+func (*ReadRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+// ReadReply response containing the namespace requested.
+type ReadReply struct {
+	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
+}
+
+func (m *ReadReply) Reset()                    { *m = ReadReply{} }
+func (m *ReadReply) String() string            { return proto.CompactTextString(m) }
+func (*ReadReply) ProtoMessage()               {}
+func (*ReadReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *ReadReply) GetNamespace() *Namespace {
+	if m != nil {
+		return m.Namespace
+	}
+	return nil
+}
+
+// UpdateRequest request message to update an existing namespace in an
+// environment.
+type UpdateRequest struct {
+	Namespace   *Namespace  `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
+	Environment Environment `protobuf:"varint,2,opt,name=environment,enum=Environment" json:"environment,omitempty"`
+}
+
+func (m *UpdateRequest) Reset()                    { *m = UpdateRequest{} }
+func (m *UpdateRequest) String() string            { return proto.CompactTextString(m) }
+func (*UpdateRequest) ProtoMessage()               {}
+func (*UpdateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *UpdateRequest) GetNamespace() *Namespace {
+	if m != nil {
+		return m.Namespace
+	}
+	return nil
+}
+
+// UpdateReply response containing the updated namespace.
+type UpdateReply struct {
+	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
+}
+
+func (m *UpdateReply) Reset()                    { *m = UpdateReply{} }
+func (m *UpdateReply) String() string            { return proto.CompactTextString(m) }
+func (*UpdateReply) ProtoMessage()               {}
+func (*UpdateReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+func (m *UpdateReply) GetNamespace() *Namespace {
+	if m != nil {
+		return m.Namespace
+	}
+	return nil
+}
+
+// DeleteRequest request message to delete an existing namespace from an
+// environment.
+type DeleteRequest struct {
+	Name        string      `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Environment Environment `protobuf:"varint,2,opt,name=environment,enum=Environment" json:"environment,omitempty"`
+}
+
+func (m *DeleteRequest) Reset()                    { *m = DeleteRequest{} }
+func (m *DeleteRequest) String() string            { return proto.CompactTextString(m) }
+func (*DeleteRequest) ProtoMessage()               {}
+func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+// DeleteReply response containing the deleted namespace.
+type DeleteReply struct {
+	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
+}
+
+func (m *DeleteReply) Reset()                    { *m = DeleteReply{} }
+func (m *DeleteReply) String() string            { return proto.CompactTextString(m) }
+func (*DeleteReply) ProtoMessage()               {}
+func (*DeleteReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+func (m *DeleteReply) GetNamespace() *Namespace {
+	if m != nil {
+		return m.Namespace
 	}
 	return nil
 }
@@ -181,14 +226,13 @@ func (m *NamespacesReply) GetNamespaces() []*Namespace {
 // Namespace structure
 type Namespace struct {
 	Name        string        `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Segments    []byte        `protobuf:"bytes,2,opt,name=segments,proto3" json:"segments,omitempty"`
 	Experiments []*Experiment `protobuf:"bytes,3,rep,name=experiments" json:"experiments,omitempty"`
 }
 
 func (m *Namespace) Reset()                    { *m = Namespace{} }
 func (m *Namespace) String() string            { return proto.CompactTextString(m) }
 func (*Namespace) ProtoMessage()               {}
-func (*Namespace) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*Namespace) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 func (m *Namespace) GetExperiments() []*Experiment {
 	if m != nil {
@@ -199,65 +243,68 @@ func (m *Namespace) GetExperiments() []*Experiment {
 
 // Experiment structure
 type Experiment struct {
-	Name     string              `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Segments []byte              `protobuf:"bytes,2,opt,name=segments,proto3" json:"segments,omitempty"`
-	Params   []*Experiment_Param `protobuf:"bytes,3,rep,name=params" json:"params,omitempty"`
+	Name     string   `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Segments []byte   `protobuf:"bytes,2,opt,name=segments,proto3" json:"segments,omitempty"`
+	Params   []*Param `protobuf:"bytes,3,rep,name=params" json:"params,omitempty"`
 }
 
 func (m *Experiment) Reset()                    { *m = Experiment{} }
 func (m *Experiment) String() string            { return proto.CompactTextString(m) }
 func (*Experiment) ProtoMessage()               {}
-func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
-func (m *Experiment) GetParams() []*Experiment_Param {
+func (m *Experiment) GetParams() []*Param {
 	if m != nil {
 		return m.Params
 	}
 	return nil
 }
 
-type Experiment_Param struct {
-	Name  string                  `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Value *Experiment_Param_Value `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
+// Param structure
+type Param struct {
+	Name  string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Value *Value `protobuf:"bytes,2,opt,name=value" json:"value,omitempty"`
 }
 
-func (m *Experiment_Param) Reset()                    { *m = Experiment_Param{} }
-func (m *Experiment_Param) String() string            { return proto.CompactTextString(m) }
-func (*Experiment_Param) ProtoMessage()               {}
-func (*Experiment_Param) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8, 0} }
+func (m *Param) Reset()                    { *m = Param{} }
+func (m *Param) String() string            { return proto.CompactTextString(m) }
+func (*Param) ProtoMessage()               {}
+func (*Param) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
 
-func (m *Experiment_Param) GetValue() *Experiment_Param_Value {
+func (m *Param) GetValue() *Value {
 	if m != nil {
 		return m.Value
 	}
 	return nil
 }
 
-type Experiment_Param_Value struct {
-	ValueType Experiment_Param_Value_ValueType `protobuf:"varint,1,opt,name=valueType,enum=Experiment_Param_Value_ValueType" json:"valueType,omitempty"`
-	Choices   []string                         `protobuf:"bytes,2,rep,name=choices" json:"choices,omitempty"`
-	Weights   []float64                        `protobuf:"fixed64,3,rep,packed,name=weights" json:"weights,omitempty"`
+// Value structure
+type Value struct {
+	Choices []string  `protobuf:"bytes,1,rep,name=choices" json:"choices,omitempty"`
+	Weights []float64 `protobuf:"fixed64,2,rep,packed,name=weights" json:"weights,omitempty"`
 }
 
-func (m *Experiment_Param_Value) Reset()                    { *m = Experiment_Param_Value{} }
-func (m *Experiment_Param_Value) String() string            { return proto.CompactTextString(m) }
-func (*Experiment_Param_Value) ProtoMessage()               {}
-func (*Experiment_Param_Value) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8, 0, 0} }
+func (m *Value) Reset()                    { *m = Value{} }
+func (m *Value) String() string            { return proto.CompactTextString(m) }
+func (*Value) ProtoMessage()               {}
+func (*Value) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
 
 func init() {
 	proto.RegisterType((*AllRequest)(nil), "AllRequest")
-	proto.RegisterType((*NamespacesRequest)(nil), "NamespacesRequest")
-	proto.RegisterType((*CreateExperimentRequest)(nil), "CreateExperimentRequest")
-	proto.RegisterType((*DeleteExperimentRequest)(nil), "DeleteExperimentRequest")
-	proto.RegisterType((*PublishExperimentRequest)(nil), "PublishExperimentRequest")
-	proto.RegisterType((*UnpublishExperimentRequest)(nil), "UnpublishExperimentRequest")
-	proto.RegisterType((*NamespacesReply)(nil), "NamespacesReply")
+	proto.RegisterType((*AllReply)(nil), "AllReply")
+	proto.RegisterType((*CreateRequest)(nil), "CreateRequest")
+	proto.RegisterType((*CreateReply)(nil), "CreateReply")
+	proto.RegisterType((*ReadRequest)(nil), "ReadRequest")
+	proto.RegisterType((*ReadReply)(nil), "ReadReply")
+	proto.RegisterType((*UpdateRequest)(nil), "UpdateRequest")
+	proto.RegisterType((*UpdateReply)(nil), "UpdateReply")
+	proto.RegisterType((*DeleteRequest)(nil), "DeleteRequest")
+	proto.RegisterType((*DeleteReply)(nil), "DeleteReply")
 	proto.RegisterType((*Namespace)(nil), "Namespace")
 	proto.RegisterType((*Experiment)(nil), "Experiment")
-	proto.RegisterType((*Experiment_Param)(nil), "Experiment.Param")
-	proto.RegisterType((*Experiment_Param_Value)(nil), "Experiment.Param.Value")
+	proto.RegisterType((*Param)(nil), "Param")
+	proto.RegisterType((*Value)(nil), "Value")
 	proto.RegisterEnum("Environment", Environment_name, Environment_value)
-	proto.RegisterEnum("Experiment_Param_Value_ValueType", Experiment_Param_Value_ValueType_name, Experiment_Param_Value_ValueType_value)
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -272,21 +319,17 @@ const _ = grpc.SupportPackageIsVersion3
 
 type ElwinStorageClient interface {
 	// All returns all the namespaces for a given environment.
-	All(ctx context.Context, in *AllRequest, opts ...grpc.CallOption) (*NamespacesReply, error)
-	// Creates an experiment in the staging environment and returns the current
-	// namespace uses a new namespace unless a namespace is defined in the
-	// request.
-	CreateExperiment(ctx context.Context, in *CreateExperimentRequest, opts ...grpc.CallOption) (*Namespace, error)
-	// DeleteExperiment will delete an experiment if it is not in prod
-	// environment. It returns the staging namespace's current state.
-	DeleteExperiment(ctx context.Context, in *DeleteExperimentRequest, opts ...grpc.CallOption) (*Namespace, error)
-	// PublishExperiment will copy an experiment from staging to prod. This will
-	// create a new namespace in prod if it does not currently exist. It returns
-	// the prod namespace's current state.
-	PublishExperiment(ctx context.Context, in *PublishExperimentRequest, opts ...grpc.CallOption) (*Namespace, error)
-	// UnpublishExperiment will remove an experiment from prod. It returns the
-	// prod Namespace if it still exists.
-	UnpublishExperiment(ctx context.Context, in *UnpublishExperimentRequest, opts ...grpc.CallOption) (*Namespace, error)
+	All(ctx context.Context, in *AllRequest, opts ...grpc.CallOption) (*AllReply, error)
+	// Create creates a namespace in the given environment.
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error)
+	// Read returns the namespace matching the supplied name from the given
+	// environment.
+	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadReply, error)
+	// Update replaces the namespace in the given environment with the namespace
+	// supplied.
+	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateReply, error)
+	// Delete deletes the namespace from the given environment.
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
 }
 
 type elwinStorageClient struct {
@@ -297,8 +340,8 @@ func NewElwinStorageClient(cc *grpc.ClientConn) ElwinStorageClient {
 	return &elwinStorageClient{cc}
 }
 
-func (c *elwinStorageClient) All(ctx context.Context, in *AllRequest, opts ...grpc.CallOption) (*NamespacesReply, error) {
-	out := new(NamespacesReply)
+func (c *elwinStorageClient) All(ctx context.Context, in *AllRequest, opts ...grpc.CallOption) (*AllReply, error) {
+	out := new(AllReply)
 	err := grpc.Invoke(ctx, "/ElwinStorage/All", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -306,36 +349,36 @@ func (c *elwinStorageClient) All(ctx context.Context, in *AllRequest, opts ...gr
 	return out, nil
 }
 
-func (c *elwinStorageClient) CreateExperiment(ctx context.Context, in *CreateExperimentRequest, opts ...grpc.CallOption) (*Namespace, error) {
-	out := new(Namespace)
-	err := grpc.Invoke(ctx, "/ElwinStorage/CreateExperiment", in, out, c.cc, opts...)
+func (c *elwinStorageClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error) {
+	out := new(CreateReply)
+	err := grpc.Invoke(ctx, "/ElwinStorage/Create", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *elwinStorageClient) DeleteExperiment(ctx context.Context, in *DeleteExperimentRequest, opts ...grpc.CallOption) (*Namespace, error) {
-	out := new(Namespace)
-	err := grpc.Invoke(ctx, "/ElwinStorage/DeleteExperiment", in, out, c.cc, opts...)
+func (c *elwinStorageClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadReply, error) {
+	out := new(ReadReply)
+	err := grpc.Invoke(ctx, "/ElwinStorage/Read", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *elwinStorageClient) PublishExperiment(ctx context.Context, in *PublishExperimentRequest, opts ...grpc.CallOption) (*Namespace, error) {
-	out := new(Namespace)
-	err := grpc.Invoke(ctx, "/ElwinStorage/PublishExperiment", in, out, c.cc, opts...)
+func (c *elwinStorageClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateReply, error) {
+	out := new(UpdateReply)
+	err := grpc.Invoke(ctx, "/ElwinStorage/Update", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *elwinStorageClient) UnpublishExperiment(ctx context.Context, in *UnpublishExperimentRequest, opts ...grpc.CallOption) (*Namespace, error) {
-	out := new(Namespace)
-	err := grpc.Invoke(ctx, "/ElwinStorage/UnpublishExperiment", in, out, c.cc, opts...)
+func (c *elwinStorageClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error) {
+	out := new(DeleteReply)
+	err := grpc.Invoke(ctx, "/ElwinStorage/Delete", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -346,21 +389,17 @@ func (c *elwinStorageClient) UnpublishExperiment(ctx context.Context, in *Unpubl
 
 type ElwinStorageServer interface {
 	// All returns all the namespaces for a given environment.
-	All(context.Context, *AllRequest) (*NamespacesReply, error)
-	// Creates an experiment in the staging environment and returns the current
-	// namespace uses a new namespace unless a namespace is defined in the
-	// request.
-	CreateExperiment(context.Context, *CreateExperimentRequest) (*Namespace, error)
-	// DeleteExperiment will delete an experiment if it is not in prod
-	// environment. It returns the staging namespace's current state.
-	DeleteExperiment(context.Context, *DeleteExperimentRequest) (*Namespace, error)
-	// PublishExperiment will copy an experiment from staging to prod. This will
-	// create a new namespace in prod if it does not currently exist. It returns
-	// the prod namespace's current state.
-	PublishExperiment(context.Context, *PublishExperimentRequest) (*Namespace, error)
-	// UnpublishExperiment will remove an experiment from prod. It returns the
-	// prod Namespace if it still exists.
-	UnpublishExperiment(context.Context, *UnpublishExperimentRequest) (*Namespace, error)
+	All(context.Context, *AllRequest) (*AllReply, error)
+	// Create creates a namespace in the given environment.
+	Create(context.Context, *CreateRequest) (*CreateReply, error)
+	// Read returns the namespace matching the supplied name from the given
+	// environment.
+	Read(context.Context, *ReadRequest) (*ReadReply, error)
+	// Update replaces the namespace in the given environment with the namespace
+	// supplied.
+	Update(context.Context, *UpdateRequest) (*UpdateReply, error)
+	// Delete deletes the namespace from the given environment.
+	Delete(context.Context, *DeleteRequest) (*DeleteReply, error)
 }
 
 func RegisterElwinStorageServer(s *grpc.Server, srv ElwinStorageServer) {
@@ -385,74 +424,74 @@ func _ElwinStorage_All_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ElwinStorage_CreateExperiment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateExperimentRequest)
+func _ElwinStorage_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).CreateExperiment(ctx, in)
+		return srv.(ElwinStorageServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/CreateExperiment",
+		FullMethod: "/ElwinStorage/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).CreateExperiment(ctx, req.(*CreateExperimentRequest))
+		return srv.(ElwinStorageServer).Create(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ElwinStorage_DeleteExperiment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteExperimentRequest)
+func _ElwinStorage_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).DeleteExperiment(ctx, in)
+		return srv.(ElwinStorageServer).Read(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/DeleteExperiment",
+		FullMethod: "/ElwinStorage/Read",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).DeleteExperiment(ctx, req.(*DeleteExperimentRequest))
+		return srv.(ElwinStorageServer).Read(ctx, req.(*ReadRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ElwinStorage_PublishExperiment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PublishExperimentRequest)
+func _ElwinStorage_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).PublishExperiment(ctx, in)
+		return srv.(ElwinStorageServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/PublishExperiment",
+		FullMethod: "/ElwinStorage/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).PublishExperiment(ctx, req.(*PublishExperimentRequest))
+		return srv.(ElwinStorageServer).Update(ctx, req.(*UpdateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ElwinStorage_UnpublishExperiment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnpublishExperimentRequest)
+func _ElwinStorage_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).UnpublishExperiment(ctx, in)
+		return srv.(ElwinStorageServer).Delete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/UnpublishExperiment",
+		FullMethod: "/ElwinStorage/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).UnpublishExperiment(ctx, req.(*UnpublishExperimentRequest))
+		return srv.(ElwinStorageServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -466,20 +505,20 @@ var _ElwinStorage_serviceDesc = grpc.ServiceDesc{
 			Handler:    _ElwinStorage_All_Handler,
 		},
 		{
-			MethodName: "CreateExperiment",
-			Handler:    _ElwinStorage_CreateExperiment_Handler,
+			MethodName: "Create",
+			Handler:    _ElwinStorage_Create_Handler,
 		},
 		{
-			MethodName: "DeleteExperiment",
-			Handler:    _ElwinStorage_DeleteExperiment_Handler,
+			MethodName: "Read",
+			Handler:    _ElwinStorage_Read_Handler,
 		},
 		{
-			MethodName: "PublishExperiment",
-			Handler:    _ElwinStorage_PublishExperiment_Handler,
+			MethodName: "Update",
+			Handler:    _ElwinStorage_Update_Handler,
 		},
 		{
-			MethodName: "UnpublishExperiment",
-			Handler:    _ElwinStorage_UnpublishExperiment_Handler,
+			MethodName: "Delete",
+			Handler:    _ElwinStorage_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -489,40 +528,34 @@ var _ElwinStorage_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("storage.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 555 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x94, 0x54, 0x51, 0x6f, 0xd2, 0x50,
-	0x18, 0x5d, 0x8b, 0x6c, 0xeb, 0x29, 0xdb, 0xca, 0x9d, 0x09, 0xb5, 0xfa, 0x80, 0x7d, 0x30, 0x38,
-	0xc3, 0x8d, 0xc1, 0xf8, 0x62, 0x66, 0x26, 0x8e, 0x8a, 0x24, 0xae, 0x90, 0x3b, 0xc0, 0xf8, 0x64,
-	0xca, 0xbc, 0x81, 0x9a, 0x52, 0x6a, 0x0b, 0x9b, 0x7b, 0xf3, 0x17, 0xf9, 0xe2, 0xbf, 0xf2, 0x57,
-	0x98, 0xb6, 0xd0, 0x76, 0x1d, 0xc4, 0xed, 0x85, 0xf0, 0x7d, 0xe7, 0x9c, 0xef, 0x5c, 0xbe, 0x7b,
-	0x0f, 0xd8, 0x0b, 0xe6, 0x33, 0xdf, 0x1a, 0x73, 0xea, 0xf9, 0xb3, 0xf9, 0x4c, 0x3f, 0x06, 0x9a,
-	0x8e, 0xc3, 0xf8, 0x8f, 0x05, 0x0f, 0xe6, 0x84, 0x42, 0xe6, 0xee, 0xa5, 0xed, 0xcf, 0xdc, 0x29,
-	0x77, 0xe7, 0xaa, 0x50, 0x15, 0x6a, 0xfb, 0x8d, 0x12, 0x35, 0xd2, 0x1e, 0xcb, 0x12, 0xf4, 0x2f,
-	0x28, 0x9b, 0xd6, 0x94, 0x07, 0x9e, 0x75, 0xc1, 0x83, 0xd5, 0x90, 0x87, 0x28, 0x3a, 0xd6, 0x88,
-	0x3b, 0x91, 0x5c, 0x62, 0x71, 0x91, 0x1f, 0x2d, 0xfe, 0x6f, 0xf4, 0x37, 0x54, 0x4e, 0x7d, 0x6e,
-	0xcd, 0xb9, 0xf1, 0xd3, 0xe3, 0xbe, 0x1d, 0x11, 0x96, 0x06, 0x2f, 0x00, 0x9e, 0x34, 0x23, 0x17,
-	0xb9, 0x21, 0xd3, 0x0c, 0x2f, 0x03, 0x93, 0x27, 0x90, 0xdc, 0xd5, 0x11, 0x23, 0x57, 0x89, 0xa5,
-	0x0d, 0xbd, 0x8e, 0x4a, 0x8b, 0x3b, 0x7c, 0x9d, 0x0b, 0xc1, 0x83, 0x90, 0xb7, 0xfc, 0x15, 0xd1,
-	0x77, 0x9d, 0x42, 0xed, 0x2d, 0x46, 0x8e, 0x1d, 0x4c, 0xee, 0xc6, 0x7f, 0x09, 0x6d, 0xe0, 0x7a,
-	0xf7, 0x51, 0xbc, 0xc5, 0x41, 0x76, 0xa3, 0x9e, 0x73, 0x4d, 0x8e, 0x80, 0xe4, 0xc0, 0x81, 0x2a,
-	0x54, 0x0b, 0x35, 0xb9, 0x01, 0x9a, 0xb0, 0x58, 0x06, 0xd5, 0xbf, 0x43, 0x4a, 0x80, 0x75, 0xf3,
-	0x89, 0x86, 0xdd, 0x80, 0x8f, 0xc3, 0x53, 0x04, 0xd1, 0x36, 0x4a, 0x2c, 0xa9, 0x49, 0x1d, 0x72,
-	0xba, 0xb8, 0x40, 0x2d, 0x44, 0x4e, 0x37, 0x16, 0x9b, 0xc5, 0xf5, 0xbf, 0x22, 0x90, 0x62, 0xf7,
-	0x76, 0x7b, 0x8e, 0x6d, 0xcf, 0xf2, 0xad, 0xe9, 0xca, 0xa8, 0x9c, 0x31, 0xa2, 0xbd, 0x10, 0x61,
-	0x4b, 0x82, 0xf6, 0x4b, 0x44, 0x31, 0xea, 0xac, 0x35, 0xa9, 0xa3, 0x78, 0x69, 0x39, 0x8b, 0xf8,
-	0x76, 0xe5, 0x46, 0xe5, 0xd6, 0x1c, 0x3a, 0x0c, 0x61, 0x16, 0xb3, 0xb4, 0x3f, 0x02, 0x8a, 0x51,
-	0x83, 0x9c, 0x40, 0x8a, 0x5a, 0xfd, 0x6b, 0x8f, 0x2f, 0xdf, 0xfa, 0xd3, 0x0d, 0xe2, 0xf8, 0x33,
-	0x24, 0xb2, 0x54, 0x43, 0x54, 0xec, 0x5c, 0x4c, 0x66, 0x76, 0x78, 0x2d, 0x62, 0xb5, 0x50, 0x93,
-	0xd8, 0xaa, 0x0c, 0x91, 0x2b, 0x6e, 0x8f, 0x27, 0xcb, 0x35, 0x0a, 0x6c, 0x55, 0xea, 0xaf, 0x21,
-	0x25, 0xb3, 0xc8, 0x1e, 0xa4, 0xf7, 0xcd, 0xd6, 0xd7, 0x61, 0xf3, 0xd3, 0xc0, 0x50, 0xb6, 0x88,
-	0x8c, 0x9d, 0x81, 0xd9, 0xf9, 0xd0, 0x65, 0x67, 0x8a, 0x40, 0x4a, 0xd8, 0xfd, 0x6c, 0x74, 0xda,
-	0x1f, 0xfb, 0x46, 0x4b, 0x11, 0x8f, 0x4e, 0x20, 0x67, 0xa2, 0x42, 0x0e, 0x71, 0x10, 0x0a, 0x0d,
-	0x73, 0xd8, 0x61, 0x5d, 0xf3, 0xcc, 0x30, 0xfb, 0xb1, 0xfc, 0xbc, 0xdf, 0x6c, 0x77, 0xcc, 0xb6,
-	0x22, 0x90, 0x7d, 0xa0, 0xc7, 0xba, 0xad, 0xc1, 0x69, 0xbf, 0xd3, 0x35, 0x15, 0xb1, 0xf1, 0x5b,
-	0x44, 0xc9, 0x70, 0xae, 0x6c, 0xf7, 0x3c, 0xce, 0x3f, 0x79, 0x86, 0x42, 0xd3, 0x71, 0x88, 0x4c,
-	0xd3, 0xfc, 0x6b, 0x0a, 0xcd, 0x3d, 0x3e, 0x7d, 0x8b, 0xbc, 0x81, 0x92, 0x0f, 0x22, 0x51, 0xe9,
-	0x86, 0x6c, 0x6a, 0x99, 0x87, 0x19, 0x6b, 0xf3, 0xf1, 0x22, 0x2a, 0xdd, 0x90, 0xb8, 0x9c, 0xf6,
-	0x18, 0xe5, 0x5b, 0x59, 0x23, 0x8f, 0xe8, 0xa6, 0xfc, 0xe5, 0xd4, 0xef, 0x70, 0xb8, 0x26, 0x79,
-	0xe4, 0x31, 0xdd, 0x9c, 0xc7, 0x9b, 0x13, 0x46, 0xdb, 0xd1, 0x1f, 0xe4, 0xab, 0x7f, 0x01, 0x00,
-	0x00, 0xff, 0xff, 0x88, 0x94, 0x30, 0xc8, 0x31, 0x05, 0x00, 0x00,
+	// 464 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xbc, 0x54, 0x41, 0x8f, 0xd3, 0x3c,
+	0x14, 0x6c, 0xbe, 0x6e, 0xbb, 0x9b, 0x71, 0x1a, 0xad, 0x7c, 0xaa, 0xa2, 0x4f, 0xb0, 0xf2, 0x29,
+	0xaa, 0x84, 0x0f, 0x45, 0xb0, 0x42, 0x70, 0x59, 0x41, 0xaf, 0xab, 0xc5, 0x15, 0x9c, 0xb8, 0x98,
+	0xd6, 0xca, 0x5a, 0x4a, 0x93, 0x90, 0xa4, 0xbb, 0xf0, 0x33, 0xf9, 0x47, 0xc8, 0x36, 0x4e, 0x52,
+	0x54, 0x09, 0x2a, 0x21, 0x6e, 0x7d, 0x6f, 0xf2, 0x66, 0xa6, 0xd6, 0x9b, 0x87, 0x59, 0xd3, 0x96,
+	0xb5, 0xcc, 0x14, 0xaf, 0xea, 0xb2, 0x2d, 0xd9, 0x1b, 0xe0, 0x26, 0xcf, 0x85, 0xfa, 0xb2, 0x57,
+	0x4d, 0x4b, 0x39, 0x88, 0x2a, 0x1e, 0x74, 0x5d, 0x16, 0x3b, 0x55, 0xb4, 0xf3, 0xe0, 0x2a, 0x48,
+	0xe3, 0x65, 0xc4, 0x57, 0x7d, 0x4f, 0x0c, 0x3f, 0x60, 0x2f, 0x71, 0x61, 0xa7, 0xab, 0xfc, 0x1b,
+	0x5d, 0x00, 0x85, 0xdc, 0xa9, 0xa6, 0x92, 0x1b, 0xd5, 0xcc, 0x83, 0xab, 0x71, 0x4a, 0x96, 0xe0,
+	0xb7, 0xbe, 0x25, 0x06, 0x28, 0xd3, 0x98, 0xbd, 0xad, 0x95, 0x6c, 0x95, 0x17, 0x4e, 0x11, 0x76,
+	0xb0, 0x95, 0x3d, 0x9c, 0xed, 0xc1, 0x5f, 0x2d, 0xfe, 0xf7, 0x3b, 0x8b, 0xd7, 0x20, 0x5e, 0xca,
+	0xb8, 0xfc, 0x63, 0x21, 0xf6, 0x1e, 0x44, 0x28, 0xb9, 0xf5, 0x0e, 0x29, 0xce, 0x0c, 0x66, 0x67,
+	0x42, 0x61, 0x7f, 0x9f, 0xec, 0xe5, 0x05, 0x42, 0x47, 0x79, 0x9a, 0x13, 0x8d, 0xd9, 0x87, 0x6a,
+	0xfb, 0xaf, 0x5e, 0xcb, 0x4b, 0x9d, 0xe6, 0x71, 0x8d, 0xd9, 0x3b, 0x95, 0xab, 0xde, 0xe3, 0xdf,
+	0x78, 0xaf, 0x6b, 0x10, 0x4f, 0x7a, 0x9a, 0x9b, 0x5b, 0x84, 0x5d, 0xff, 0xa8, 0x93, 0x67, 0x20,
+	0xea, 0x6b, 0xa5, 0x6a, 0x6d, 0x74, 0x9a, 0xf9, 0xd8, 0x6e, 0x2b, 0xe1, 0xab, 0xae, 0x27, 0x86,
+	0x38, 0xfb, 0x04, 0xf4, 0xd0, 0x51, 0xc2, 0x04, 0x17, 0x8d, 0xca, 0x1c, 0x9b, 0xf9, 0x5f, 0x91,
+	0xe8, 0x6a, 0xfa, 0x04, 0xd3, 0x4a, 0xd6, 0x72, 0xe7, 0x75, 0xa6, 0xfc, 0xce, 0x94, 0xe2, 0x67,
+	0x97, 0xbd, 0xc2, 0xc4, 0x36, 0x8e, 0x12, 0xff, 0x8f, 0xc9, 0x83, 0xcc, 0xf7, 0xca, 0xb2, 0x9a,
+	0xd9, 0x8f, 0xa6, 0x12, 0xae, 0xc9, 0x5e, 0x63, 0x62, 0x6b, 0x3a, 0xc7, 0xf9, 0xe6, 0xbe, 0xd4,
+	0x3e, 0x7a, 0xa1, 0xf0, 0xa5, 0x41, 0x1e, 0x95, 0xce, 0xee, 0xad, 0xb1, 0x71, 0x1a, 0x08, 0x5f,
+	0x2e, 0x16, 0x20, 0x83, 0xa7, 0xa7, 0x04, 0xe7, 0xeb, 0x56, 0x66, 0xba, 0xc8, 0x2e, 0x47, 0x34,
+	0x06, 0xee, 0xea, 0x72, 0xbb, 0xdf, 0xb4, 0xba, 0x2c, 0x2e, 0x83, 0xe5, 0xf7, 0x00, 0xd1, 0x2a,
+	0x7f, 0xd4, 0xc5, 0xda, 0x9d, 0x0f, 0xfa, 0x14, 0xe3, 0x9b, 0x3c, 0xa7, 0x84, 0xf7, 0xe7, 0x23,
+	0x09, 0xb9, 0xbf, 0x06, 0x6c, 0x44, 0x53, 0x4c, 0x5d, 0xf0, 0x68, 0xcc, 0x0f, 0xc2, 0x9e, 0x44,
+	0x7c, 0x90, 0x48, 0x36, 0xa2, 0x0c, 0x67, 0x26, 0x16, 0x34, 0xe2, 0x83, 0xc0, 0x25, 0xe0, 0x5d,
+	0x56, 0x1c, 0x9b, 0x5b, 0x4c, 0x1a, 0xf3, 0x83, 0x30, 0x24, 0x11, 0x1f, 0x6c, 0xac, 0xfb, 0xd2,
+	0x2d, 0x0d, 0x8d, 0xf9, 0xc1, 0x4a, 0x26, 0x11, 0x1f, 0x6c, 0x13, 0x1b, 0x7d, 0x9e, 0xda, 0x13,
+	0xf8, 0xfc, 0x47, 0x00, 0x00, 0x00, 0xff, 0xff, 0x43, 0x10, 0x37, 0xb7, 0x13, 0x05, 0x00, 0x00,
 }

@@ -104,14 +104,9 @@ func parseNamespace(n types.Namespace) (choices.Namespace, error) {
 		TeamID:      n.TeamID,
 		Experiments: make([]choices.Experiment, len(n.Experiments)),
 	}
-	nss, err := decodeSegments(n.Segments)
-	if err != nil {
-		return choices.Namespace{}, err
-	}
-	var buf [16]byte
-	copy(buf[:], nss[:16])
-	namespace.Segments = buf
+
 	for i, e := range n.Experiments {
+		var err error
 		namespace.Experiments[i], err = parseExperiment(e)
 		if err != nil {
 			return choices.Namespace{}, err
@@ -129,9 +124,7 @@ func parseExperiment(e types.Experiment) (choices.Experiment, error) {
 	if err != nil {
 		return choices.Experiment{}, err
 	}
-	var buf [16]byte
-	copy(buf[:], ess[:16])
-	experiment.Segments = buf
+	copy(experiment.Segments[:], ess[:16])
 
 	for i, p := range e.Params {
 		experiment.Params[i] = parseParam(p)
@@ -142,15 +135,16 @@ func parseExperiment(e types.Experiment) (choices.Experiment, error) {
 func parseParam(p types.Param) choices.Param {
 	var param choices.Param
 	param = choices.Param{Name: p.Name}
-	switch p.Type {
-	case choices.ValueTypeUniform:
-		var uniform choices.Uniform
-		p.Value.Unmarshal(&uniform)
-		param.Value = &uniform
-	case choices.ValueTypeWeighted:
-		var weighted choices.Weighted
-		p.Value.Unmarshal(&weighted)
-		param.Value = &weighted
+	switch {
+	case len(p.Value.Weights) == 0:
+		param.Value = &choices.Uniform{
+			Choices: p.Value.Choices,
+		}
+	case len(p.Value.Weights) == len(p.Value.Choices):
+		param.Value = &choices.Weighted{
+			Choices: p.Value.Choices,
+			Weights: p.Value.Weights,
+		}
 	}
 	return param
 }
@@ -186,28 +180,26 @@ func QueryOne(c *mgo.Collection, query interface{}) (choices.Namespace, error) {
 
 // Upsert inserts a namespace into the database if it does not exist or updates the namespace if it does exist.
 func Upsert(c *mgo.Collection, name string, namespace choices.Namespace) error {
-	nsi := types.NamespaceInput{
+	nsi := types.Namespace{
 		Name:        namespace.Name,
 		TeamID:      namespace.TeamID,
-		Segments:    hex.EncodeToString(namespace.Segments[:]),
-		Experiments: make([]types.ExperimentInput, len(namespace.Experiments)),
+		Experiments: make([]types.Experiment, len(namespace.Experiments)),
 	}
 	for i, exp := range namespace.Experiments {
-		nsi.Experiments[i] = types.ExperimentInput{
+		nsi.Experiments[i] = types.Experiment{
 			Name:     exp.Name,
 			Segments: hex.EncodeToString(exp.Segments[:]),
-			Params:   make([]types.ParamInput, len(exp.Params)),
+			Params:   make([]types.Param, len(exp.Params)),
 		}
 		for j, param := range exp.Params {
-			nsi.Experiments[i].Params[j] = types.ParamInput{
-				Name:  param.Name,
-				Value: param.Value,
+			nsi.Experiments[i].Params[j] = types.Param{
+				Name: param.Name,
 			}
-			switch param.Value.(type) {
+			switch val := param.Value.(type) {
 			case *choices.Uniform:
-				nsi.Experiments[i].Params[j].Type = choices.ValueTypeUniform
+				nsi.Experiments[i].Params[j].Value = types.Value{Choices: val.Choices}
 			case *choices.Weighted:
-				nsi.Experiments[i].Params[j].Type = choices.ValueTypeWeighted
+				nsi.Experiments[i].Params[j].Value = types.Value{Choices: val.Choices, Weights: val.Weights}
 			default:
 				return fmt.Errorf("bad param type")
 			}

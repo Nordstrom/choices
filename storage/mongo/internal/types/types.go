@@ -1,51 +1,27 @@
 package types
 
-import (
-	"github.com/foolusion/choices"
-	"gopkg.in/mgo.v2/bson"
-)
-
-// Namespace is a helper type to read Namespace data.
+// Namespace is a helper type for loading a Namespace into mongo.
 type Namespace struct {
-	ID          bson.ObjectId `bson:"_id,omitempty"`
 	Name        string
-	Segments    string
 	TeamID      []string
 	Experiments []Experiment
 }
 
-// Experiment is a helper type to read Experiment data.
+// Experiment is a helper type for loading a Experiment into mongo.
 type Experiment struct {
 	Name     string
 	Segments string
 	Params   []Param
 }
 
-// Param is a helper type to read Param data.
+// Param is a helper type for loading a Param into mongo.
 type Param struct {
 	Name  string
-	Type  choices.ValueType
-	Value bson.Raw
+	Value Value
 }
 
-// NamespaceInput is a helper type for loading a Namespace into mongo.
-type NamespaceInput struct {
-	Name        string
-	Segments    string
-	TeamID      []string
-	Experiments []ExperimentInput
-}
-
-// ExperimentInput is a helper type for loading a Experiment into mongo.
-type ExperimentInput struct {
-	Name     string
-	Segments string
-	Params   []ParamInput
-}
-
-// ParamInput is a helper type for loading a Param into mongo.
-type ParamInput struct {
-	Name  string
-	Type  choices.ValueType
-	Value interface{}
+// Value is a helper type for loading a Value into mongo.
+type Value struct {
+	Choices []string
+	Weights []float64
 }

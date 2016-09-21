@@ -15,34 +15,38 @@
 package mongo
 
 import (
-	"context"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 
-	mgo "gopkg.in/mgo.v2"
+	"golang.org/x/net/context"
 
-	"github.com/foolusion/choices"
+	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+
 	storage "github.com/foolusion/choices/elwinstorage"
 	"github.com/foolusion/choices/storage/mongo/internal/types"
 	"github.com/pkg/errors"
 )
 
 const (
-	environmentStaging = "staging"
-	environmentProd    = "production"
+	environmentStaging    = "staging"
+	environmentProduction = "production"
 )
 
-type server struct {
+type Server struct {
 	DB *mgo.Database
 }
 
-func (s *server) All(ctx context.Context, r *storage.AllRequest) (*storage.NamespacesReply, error) {
+func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllReply, error) {
 	var env string
-	switch r.Environment {
-	case storage.Environment_BAD_ENVIRONMENT:
+	switch {
+	case r == nil:
 		env = environmentStaging
-	case storage.Environment_PRODUCTION:
-		env = environmentProd
+	case r.Environment == storage.Environment_Staging:
+		env = environmentStaging
+	case r.Environment == storage.Environment_Production:
+		env = environmentProduction
 	default:
 		return nil, fmt.Errorf("bad environment requested")
 	}
@@ -58,43 +62,61 @@ func (s *server) All(ctx context.Context, r *storage.AllRequest) (*storage.Names
 		return nil, errors.Wrap(err, "could not parse namespaces")
 	}
 
-	return &storage.NamespacesReply{
+	return &storage.AllReply{
 		Namespaces: resp,
 	}, nil
 }
 
-func (s *server) CreateExperiment(ctx context.Context, r *storage.CreateExperimentRequest) (*storage.Namespace, error) {
-	if r == nil {
+func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage.CreateReply, error) {
+	if r == nil || r.Namespace == nil {
 		return nil, fmt.Errorf("bad request")
 	}
 
-	var nsi types.NamespaceInput
-	if r.Namespace == "" {
-		nsi = types.NamespaceInput{
-			Name:     randomName(6),
-			Segments: allSegments,
-		}
+	nsi := snToN(r.Namespace)
+
+	var env string
+	switch r.Environment {
+	case storage.Environment_Staging:
+		env = environmentStaging
+	case storage.Environment_Production:
+		env = environmentProduction
 	}
-	err := s.DB.C(environmentStaging).Insert(nsi)
-	return nil, err
+
+	if err := s.DB.C(env).Insert(nsi); err != nil {
+		return nil, errors.Wrap(err, "unable to insert experiment into database")
+	}
+	ns, err := s.getNamespace(r.Namespace.Name, env)
+	return &storage.CreateReply{Namespace: ns}, err
 }
 
-func (s *server) DeleteExperiment(ctx context.Context, r *storage.DeleteExperimentRequest) (*storage.Namespace, error) {
+func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.ReadReply, error) {
+	if r == nil || r.Name == "" {
+		return nil, fmt.Errorf("bad request")
+	}
+	var env string
+	switch r.Environment {
+	case storage.Environment_Staging:
+		env = environmentStaging
+	case storage.Environment_Production:
+		env = environmentProduction
+	}
+
+	ns, err := s.getNamespace(r.Name, env)
+	return &storage.ReadReply{Namespace: ns}, err
+}
+
+func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage.UpdateReply, error) {
 	return nil, nil
 }
 
-func (s *server) PublishExperiment(ctx context.Context, r *storage.PublishExperimentRequest) (*storage.Namespace, error) {
-	return nil, nil
-}
-
-func (s *server) UnpublishExperiment(ctx context.Context, r *storage.UnpublishExperimentRequest) (*storage.Namespace, error) {
+func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage.DeleteReply, error) {
 	return nil, nil
 }
 
 func parseNamespaces(namespaces []types.Namespace) ([]*storage.Namespace, error) {
 	results := make([]*storage.Namespace, len(namespaces))
 	for i, mns := range namespaces {
-		ns, err := nToN(mns)
+		ns, err := nToSN(mns)
 		if err != nil {
 			return nil, errors.Wrap(err, "could not transform mongo namespace")
 		}
@@ -103,66 +125,87 @@ func parseNamespaces(namespaces []types.Namespace) ([]*storage.Namespace, error)
 	return results, nil
 }
 
-func nToN(n types.Namespace) (*storage.Namespace, error) {
+func (s *Server) getNamespace(name, environment string) (*storage.Namespace, error) {
+	var n types.Namespace
+	if err := s.DB.C(environment).Find(bson.M{"name": name}).One(&n); err != nil {
+		return nil, errors.Wrapf(err, "could not find namespace %v", name)
+	}
+	return nToSN(n)
+}
+
+func nToSN(n types.Namespace) (*storage.Namespace, error) {
 	ns := &storage.Namespace{
 		Name:        n.Name,
 		Experiments: make([]*storage.Experiment, len(n.Experiments)),
 	}
-	var err error
-	ns.Segments, err = decodeSegments(n.Segments)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not decode namespace segments")
-	}
-	for j, mexp := range n.Experiments {
-		exp, err := eToE(mexp)
+	for i, mexp := range n.Experiments {
+		exp, err := eToSE(mexp)
 		if err != nil {
 			return nil, errors.Wrap(err, "cound not transform mongo experiment")
 		}
-		ns.Experiments[j] = exp
+		ns.Experiments[i] = exp
 	}
 	return ns, nil
 }
 
-func eToE(e types.Experiment) (*storage.Experiment, error) {
+func eToSE(e types.Experiment) (*storage.Experiment, error) {
 	exp := &storage.Experiment{
 		Name:   e.Name,
-		Params: make([]*storage.Experiment_Param, len(e.Params)),
+		Params: make([]*storage.Param, len(e.Params)),
 	}
 	var err error
 	exp.Segments, err = decodeSegments(e.Segments)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not decode experiment segments")
 	}
-	for k, mparam := range e.Params {
-		exp.Params[k] = pToP(mparam)
+	for i, mparam := range e.Params {
+		exp.Params[i] = pToSP(mparam)
 	}
 	return exp, nil
 }
 
-func pToP(p types.Param) *storage.Experiment_Param {
-	param := &storage.Experiment_Param{
+func pToSP(p types.Param) *storage.Param {
+	param := &storage.Param{
 		Name: p.Name,
-	}
-	switch p.Type {
-	case choices.ValueTypeUniform:
-		var u choices.Uniform
-		p.Value.Unmarshal(&u)
-		val := &storage.Experiment_Param_Value{
-			ValueType: storage.Experiment_Param_Value_UNIFORM,
-			Choices:   u.Choices,
-		}
-		param.Value = val
-	case choices.ValueTypeWeighted:
-		var w choices.Weighted
-		p.Value.Unmarshal(&w)
-		val := &storage.Experiment_Param_Value{
-			ValueType: storage.Experiment_Param_Value_WEIGHTED,
-			Choices:   w.Choices,
-			Weights:   w.Weights,
-		}
-		param.Value = val
+		Value: &storage.Value{
+			Choices: p.Value.Choices,
+			Weights: p.Value.Weights,
+		},
 	}
 	return param
+}
+
+func snToN(n *storage.Namespace) types.Namespace {
+	ns := types.Namespace{
+		Name:        n.Name,
+		Experiments: make([]types.Experiment, len(n.Experiments)),
+	}
+	for i, exp := range n.Experiments {
+		ns.Experiments[i] = seToE(exp)
+	}
+	return ns
+}
+
+func seToE(e *storage.Experiment) types.Experiment {
+	exp := types.Experiment{
+		Name:     e.Name,
+		Segments: hex.EncodeToString(e.Segments),
+		Params:   make([]types.Param, len(e.Params)),
+	}
+	for i, param := range e.Params {
+		exp.Params[i] = spToP(param)
+	}
+	return exp
+}
+
+func spToP(p *storage.Param) types.Param {
+	return types.Param{
+		Name: p.Name,
+		Value: types.Value{
+			Choices: p.Value.Choices,
+			Weights: p.Value.Weights,
+		},
+	}
 }
 
 var alphaNum = []byte{
