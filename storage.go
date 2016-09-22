@@ -15,8 +15,9 @@
 package choices
 
 import (
-	"context"
 	"sync"
+
+	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 
@@ -29,6 +30,17 @@ const (
 	StorageEnvironmentDev
 	StorageEnvironmentProd
 )
+
+func WithStorageConfig(addr string, env int) func(*Config) error {
+	return func(c *Config) error {
+		cc, err := grpc.Dial(addr, grpc.WithInsecure())
+		if err != nil {
+			return errors.Wrap(err, "could not dial storage service")
+		}
+		c.Storage = NewNamespaceStore(cc, StorageEnvironmentDev)
+		return nil
+	}
+}
 
 type NamespaceStore struct {
 	mu    sync.RWMutex

@@ -18,8 +18,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"google.golang.org/grpc"
-
 	"golang.org/x/net/context"
 
 	mgo "gopkg.in/mgo.v2"
@@ -48,7 +46,7 @@ func NewServer(addr, db string) (*Server, error) {
 	return &Server{sess: sess, db: db}, nil
 }
 
-func (s *Server) All(ctx context.Context, r *storage.AllRequest, opts ...grpc.CallOption) (*storage.AllReply, error) {
+func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllReply, error) {
 	var env string
 	switch {
 	case r == nil:
@@ -77,7 +75,7 @@ func (s *Server) All(ctx context.Context, r *storage.AllRequest, opts ...grpc.Ca
 	}, nil
 }
 
-func (s *Server) Create(ctx context.Context, r *storage.CreateRequest, opts ...grpc.CallOption) (*storage.CreateReply, error) {
+func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage.CreateReply, error) {
 	if r == nil || r.Namespace == nil {
 		return nil, fmt.Errorf("bad request")
 	}
@@ -99,7 +97,7 @@ func (s *Server) Create(ctx context.Context, r *storage.CreateRequest, opts ...g
 	return &storage.CreateReply{Namespace: ns}, err
 }
 
-func (s *Server) Read(ctx context.Context, r *storage.ReadRequest, opts ...grpc.CallOption) (*storage.ReadReply, error) {
+func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.ReadReply, error) {
 	if r == nil || r.Name == "" {
 		return nil, fmt.Errorf("bad request")
 	}
@@ -115,11 +113,11 @@ func (s *Server) Read(ctx context.Context, r *storage.ReadRequest, opts ...grpc.
 	return &storage.ReadReply{Namespace: ns}, err
 }
 
-func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest, opts ...grpc.CallOption) (*storage.UpdateReply, error) {
+func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage.UpdateReply, error) {
 	return nil, nil
 }
 
-func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest, opts ...grpc.CallOption) (*storage.DeleteReply, error) {
+func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage.DeleteReply, error) {
 	return nil, nil
 }
 
