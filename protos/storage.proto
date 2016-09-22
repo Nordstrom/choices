@@ -85,6 +85,7 @@ enum Environment {
 // Namespace structure
 message Namespace {
   string name = 1;
+  repeated string labels = 2;
   repeated Experiment experiments = 3;
 }
 

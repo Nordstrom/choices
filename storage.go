@@ -15,6 +15,7 @@
 package choices
 
 import (
+	"fmt"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -37,7 +38,10 @@ func WithStorageConfig(addr string, env int) func(*Config) error {
 		if err != nil {
 			return errors.Wrap(err, "could not dial storage service")
 		}
-		c.Storage = NewNamespaceStore(cc, StorageEnvironmentDev)
+		if env == StorageEnvironmentBad {
+			return fmt.Errorf("bad storage environment set")
+		}
+		c.Storage = NewNamespaceStore(cc, env)
 		return nil
 	}
 }
@@ -98,6 +102,7 @@ func (n *NamespaceStore) Update() error {
 func snToN(s *storage.Namespace) (Namespace, error) {
 	ns := Namespace{
 		Name:        s.Name,
+		TeamID:      s.Labels,
 		Experiments: make([]Experiment, len(s.Experiments)),
 		Segments:    SegmentsAll,
 	}

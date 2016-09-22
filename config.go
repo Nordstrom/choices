@@ -15,8 +15,9 @@
 package choices
 
 import (
-	"log"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"golang.org/x/net/context"
 )
@@ -54,7 +55,7 @@ func NewChoices(ctx context.Context, opts ...func(*Config) error) (*Config, erro
 	go func(e *Config) {
 		err := e.Storage.Update()
 		if err != nil {
-			log.Fatal(err)
+			e.ErrChan <- errors.Wrap(err, "could not update strorage")
 		}
 		ticker := time.NewTicker(e.updateInterval)
 		for {

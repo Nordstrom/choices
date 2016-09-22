@@ -115,6 +115,8 @@ func main() {
 		env = choices.StorageEnvironmentDev
 	case "production", "prod":
 		env = choices.StorageEnvironmentProd
+	default:
+		env = choices.StorageEnvironmentDev
 	}
 
 	// create elwin config

@@ -3,7 +3,7 @@ package types
 // Namespace is a helper type for loading a Namespace into mongo.
 type Namespace struct {
 	Name        string
-	TeamID      []string
+	Labels      []string
 	Experiments []Experiment
 }
 

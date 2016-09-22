@@ -144,6 +144,7 @@ func (s *Server) getNamespace(name, environment string) (*storage.Namespace, err
 func nToSN(n types.Namespace) (*storage.Namespace, error) {
 	ns := &storage.Namespace{
 		Name:        n.Name,
+		Labels:      n.Labels,
 		Experiments: make([]*storage.Experiment, len(n.Experiments)),
 	}
 	for i, mexp := range n.Experiments {
@@ -186,6 +187,7 @@ func pToSP(p types.Param) *storage.Param {
 func snToN(n *storage.Namespace) types.Namespace {
 	ns := types.Namespace{
 		Name:        n.Name,
+		Labels:      n.Labels,
 		Experiments: make([]types.Experiment, len(n.Experiments)),
 	}
 	for i, exp := range n.Experiments {

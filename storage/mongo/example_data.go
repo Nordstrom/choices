@@ -29,7 +29,7 @@ func (m *Server) LoadExampleData() {
 	coll.Insert(
 		&types.Namespace{
 			Name:   "rands1",
-			TeamID: []string{"rands"},
+			Labels: []string{"rands"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "personalizedSort",
@@ -47,7 +47,7 @@ func (m *Server) LoadExampleData() {
 		},
 		&types.Namespace{
 			Name:   "rands2",
-			TeamID: []string{"rands"},
+			Labels: []string{"rands"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "categorySort",
@@ -65,7 +65,7 @@ func (m *Server) LoadExampleData() {
 		},
 		&types.Namespace{
 			Name:   "ns1",
-			TeamID: []string{"test"},
+			Labels: []string{"test"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "exp1",
@@ -83,7 +83,7 @@ func (m *Server) LoadExampleData() {
 		},
 		&types.Namespace{
 			Name:   "ns2",
-			TeamID: []string{"test"},
+			Labels: []string{"test"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "exp2",
@@ -108,7 +108,7 @@ func (m *Server) LoadExampleData() {
 		},
 		&types.Namespace{
 			Name:   "ns3",
-			TeamID: []string{"test"},
+			Labels: []string{"test"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "exp3",
@@ -132,7 +132,7 @@ func (m *Server) LoadExampleData() {
 		},
 		&types.Namespace{
 			Name:   "snbmow1",
-			TeamID: []string{"mobilesearch"},
+			Labels: []string{"mobilesearch"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "mobileResultTest",
@@ -150,7 +150,7 @@ func (m *Server) LoadExampleData() {
 		},
 		&types.Namespace{
 			Name:   "snb1",
-			TeamID: []string{"search"},
+			Labels: []string{"search"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "categoryHeaderFilterTest",
@@ -172,7 +172,7 @@ func (m *Server) LoadExampleData() {
 		},
 		&types.Namespace{
 			Name:   "john",
-			TeamID: []string{"test"},
+			Labels: []string{"test"},
 			Experiments: []types.Experiment{
 				{
 					Name:     "johnHeight",
