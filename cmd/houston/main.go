@@ -34,35 +34,29 @@ func init() {
 }
 
 type config struct {
-	mongoAddr      string
-	mongoDB        string
-	testCollection string
-	prodCollection string
-	username       string
-	password       string
-	addr           string
-	conn           *grpc.ClientConn
-	esc            storage.ElwinStorageClient
+	storageAddr string
+	mongoDB     string
+	username    string
+	password    string
+	addr        string
+	conn        *grpc.ClientConn
+	esc         storage.ElwinStorageClient
 }
 
 var cfg = config{
-	mongoAddr:      "elwin-storage",
-	mongoDB:        "elwin",
-	testCollection: "test",
-	prodCollection: "prod",
-	username:       "elwin",
-	password:       "philologist",
-	addr:           ":8080",
+	storageAddr: "elwin-storage:80",
+	mongoDB:     "elwin",
+	username:    "elwin",
+	password:    "philologist",
+	addr:        ":8080",
 }
 
 const (
-	envMongoAddress        = "MONGO_ADDRESS"
-	envMongoDatabase       = "MONGO_DATABASE"
-	envMongoTestCollection = "MONGO_TEST_COLLECTION"
-	envMongoProdCollection = "MONGO_PROD_COLLECTION"
-	envUsername            = "USERNAME"
-	envPassword            = "PASSWORD"
-	envAddr                = "ADDRESS"
+	envStorageAddress = "STORAGE_ADDRESS"
+	envMongoDatabase  = "MONGO_DATABASE"
+	envUsername       = "USERNAME"
+	envPassword       = "PASSWORD"
+	envAddr           = "ADDRESS"
 )
 
 func configFromEnv(dst *string, env string) {
@@ -78,10 +72,8 @@ func configFromEnv(dst *string, env string) {
 func main() {
 	log.Println("Starting Houston...")
 
-	configFromEnv(&cfg.mongoAddr, envMongoAddress)
+	configFromEnv(&cfg.storageAddr, envStorageAddress)
 	configFromEnv(&cfg.mongoDB, envMongoDatabase)
-	configFromEnv(&cfg.testCollection, envMongoTestCollection)
-	configFromEnv(&cfg.prodCollection, envMongoProdCollection)
 	configFromEnv(&cfg.username, envUsername)
 	configFromEnv(&cfg.password, envPassword)
 	configFromEnv(&cfg.addr, envAddr)
@@ -91,7 +83,7 @@ func main() {
 	// setup grpc
 	go func(c *config) {
 		var err error
-		c.conn, err = grpc.Dial(cfg.addr, grpc.WithInsecure())
+		c.conn, err = grpc.Dial(cfg.storageAddr, grpc.WithInsecure())
 		if err != nil {
 			log.Printf("could not dial grpc storage: %s", err)
 			errCh <- err
@@ -266,7 +258,7 @@ const rootTmpl = `<!doctype html>
 
 func launchHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		log.Println("could not parse form: %s", err)
+		logAndWriteError(err, "could not parse form", w, http.StatusBadRequest)
 		return
 	}
 	namespace := r.Form.Get("namespace")
@@ -326,32 +318,43 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prodNS, err := choices.FromNamespace(prod)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte("something went wrong"))
+		return
+	}
+
 	// subtract segments from prod namespace and add experiment
-	if err := prod.Segments.Remove(&exp.Segments); err != nil {
+	if err := prodNS.Segments.Remove(&exp.Segments); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte("not found"))
 		return
 	}
-	prod.Experiments = append(prod.Experiments, exp)
-	if err := mongo.Upsert(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), prod.Name, prod); err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("error launching to prod"))
+	prodNS.Experiments = append(prodNS.Experiments, exp)
+	ureq := &storage.UpdateRequest{
+		Namespace:   prodNS.ToNamespace(),
+		Environment: storage.Environment_Production,
+	}
+	_, err = cfg.esc.Update(context.TODO(), ureq)
+	if err != nil {
+		logAndWriteError(err, "error launching to prod", w, http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func createNamespace(name string, labels []string, exp choices.Experiment) error {
-	newProd := choices.Namespace{Name: ns.Name, TeamID: ns.Labels, Experiments: []choices.Experiment{exp}}
+	newProd := choices.Namespace{Name: name, TeamID: labels, Experiments: []choices.Experiment{exp}}
 	copy(newProd.Segments[:], choices.SegmentsAll[:])
 	if err := newProd.Segments.Remove(&exp.Segments); err != nil {
 		return errors.Wrap(err, "error removing segments, this should never happen...")
 	}
-	createReply, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{Namespace: newProd.ToNamespace()})
+	_, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{Namespace: newProd.ToNamespace()})
 
 	return err
 }
@@ -366,13 +369,14 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func readinessHandler(w http.ResponseWriter, r *http.Request) {
-	if err := cfg.mongo.Ping(); err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("Not Ready"))
-		return
-	}
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("OK"))
+}
+
+func logAndWriteError(err error, errMsg string, w http.ResponseWriter, httpStatus int) {
+	log.Println(errors.Wrap(err, errMsg))
+	w.WriteHeader(httpStatus)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(errMsg))
 }
