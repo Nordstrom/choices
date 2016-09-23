@@ -18,6 +18,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+
 	"golang.org/x/net/context"
 
 	mgo "gopkg.in/mgo.v2"
@@ -32,19 +35,6 @@ const (
 	environmentStaging    = "staging"
 	environmentProduction = "production"
 )
-
-type NotFound struct {
-	namespace string
-	err       error
-}
-
-func (n *NotFound) Error() string {
-	return fmt.Sprintf("namespace not found: %s", n.namespace)
-}
-
-func (n *NotFound) Cause() error {
-	return n.err
-}
 
 type Server struct {
 	sess *mgo.Session
@@ -150,10 +140,16 @@ func (s *Server) getNamespace(name, environment string) (*storage.Namespace, err
 	var n types.Namespace
 	err := s.sess.DB(s.db).C(environment).Find(bson.M{"name": name}).One(&n)
 	if err == mgo.ErrNotFound {
-		return nil, &NotFound{namespace: name, err: err}
+		return nil, grpc.Errorf(codes.NotFound, "namespace not found: %s", name)
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "could not find namespace %v", name)
+		switch err := err.(type) {
+		case *mgo.QueryError:
+			return nil, grpc.Errorf(codes.Unknown, "namespace not found: %s", err)
+		default:
+			return nil, errors.Wrapf(err, "could not find namespace %v", name)
+		}
 	}
+
 	return nToSN(n)
 }
 
