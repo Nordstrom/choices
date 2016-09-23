@@ -33,6 +33,19 @@ const (
 	environmentProduction = "production"
 )
 
+type NotFound struct {
+	namespace string
+	err       error
+}
+
+func (n *NotFound) Error() string {
+	return fmt.Sprintf("namespace not found: %s", n.namespace)
+}
+
+func (n *NotFound) Cause() error {
+	return n.err
+}
+
 type Server struct {
 	sess *mgo.Session
 	db   string
@@ -135,7 +148,10 @@ func parseNamespaces(namespaces []types.Namespace) ([]*storage.Namespace, error)
 
 func (s *Server) getNamespace(name, environment string) (*storage.Namespace, error) {
 	var n types.Namespace
-	if err := s.sess.DB(s.db).C(environment).Find(bson.M{"name": name}).One(&n); err != nil {
+	err := s.sess.DB(s.db).C(environment).Find(bson.M{"name": name}).One(&n)
+	if err == mgo.ErrNotFound {
+		return nil, &NotFound{namespace: name, err: err}
+	} else if err != nil {
 		return nil, errors.Wrapf(err, "could not find namespace %v", name)
 	}
 	return nToSN(n)

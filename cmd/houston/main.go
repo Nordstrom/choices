@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"html/template"
 	"log"
 	"net/http"
@@ -8,11 +9,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/foolusion/choices"
-	"github.com/foolusion/choices/storage/mongo"
+	"google.golang.org/grpc"
 
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/foolusion/choices"
+	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/choices/storage/mongo"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -39,7 +41,8 @@ type config struct {
 	username       string
 	password       string
 	addr           string
-	mongo          *mgo.Session
+	conn           *grpc.ClientConn
+	esc            storage.ElwinStorageClient
 }
 
 var cfg = config{
@@ -85,14 +88,15 @@ func main() {
 
 	errCh := make(chan error, 1)
 
-	// setup mongo
+	// setup grpc
 	go func(c *config) {
 		var err error
-		c.mongo, err = mgo.Dial(c.mongoAddr)
+		c.conn, err = grpc.Dial(cfg.addr, grpc.WithInsecure())
 		if err != nil {
-			log.Printf("could not dial mongo database: %s", err)
+			log.Printf("could not dial grpc storage: %s", err)
 			errCh <- err
 		}
+		c.esc = storage.NewElwinStorageClient(c.conn)
 	}(&cfg)
 
 	go func() {
@@ -110,16 +114,6 @@ func main() {
 	}
 }
 
-// Namespace container for data from mongo.
-type Namespace struct {
-	Name        string
-	Labels      []string `bson:"teamid"`
-	Experiments []struct {
-		Name   string
-		Params []mongo.Param
-	}
-}
-
 // TableData container for data to be output.
 type TableData struct {
 	Name        string
@@ -134,13 +128,13 @@ type TableData struct {
 }
 
 type rootTmplData struct {
-	TestRaw []Namespace
-	ProdRaw []Namespace
+	TestRaw []*storage.Namespace
+	ProdRaw []*storage.Namespace
 	Test    []TableData
 	Prod    []TableData
 }
 
-func namespaceToTableData(ns []Namespace) []TableData {
+func namespaceToTableData(ns []*storage.Namespace) []TableData {
 	tableData := make([]TableData, len(ns))
 	for i, v := range ns {
 		tableData[i].Name = v.Name
@@ -163,16 +157,7 @@ func namespaceToTableData(ns []Namespace) []TableData {
 				}, len(e.Params))
 			for k, p := range e.Params {
 				params[k].Name = p.Name
-				switch p.Type {
-				case choices.ValueTypeUniform:
-					var uniform choices.Uniform
-					p.Value.Unmarshal(&uniform)
-					params[k].Values = strings.Join(uniform.Choices, ", ")
-				case choices.ValueTypeWeighted:
-					var weighted choices.Weighted
-					p.Value.Unmarshal(&weighted)
-					params[k].Values = strings.Join(weighted.Choices, ", ")
-				}
+				params[k].Values = strings.Join(p.Value.Choices, ", ")
 			}
 			tableData[i].Experiments[j].Params = params
 		}
@@ -189,16 +174,20 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("%s", buf)
 
-	var test []Namespace
-	cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection).Find(nil).All(&test)
-	var prod []Namespace
-	cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection).Find(nil).All(&prod)
+	stagingReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Environment_Staging})
+	if err != nil {
+		log.Printf("AllRequest failed: %s", err)
+	}
+	productionReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Environment_Production})
+	if err != nil {
+		log.Printf("AllRequest failed: %s", err)
+	}
 
 	data := rootTmplData{
-		TestRaw: test,
-		ProdRaw: prod,
-		Test:    namespaceToTableData(test),
-		Prod:    namespaceToTableData(prod),
+		TestRaw: stagingReply.GetNamespaces(),
+		ProdRaw: productionReply.GetNamespaces(),
+		Test:    namespaceToTableData(stagingReply.GetNamespaces()),
+		Prod:    namespaceToTableData(productionReply.GetNamespaces()),
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -276,10 +265,18 @@ const rootTmpl = `<!doctype html>
 `
 
 func launchHandler(w http.ResponseWriter, r *http.Request) {
-	experiment := r.URL.Path[len(launchPrefix):]
+	if err := r.ParseForm(); err != nil {
+		log.Println("could not parse form: %s", err)
+		return
+	}
+	namespace := r.Form.Get("namespace")
+	experiment := r.Form.Get("experiment")
 
 	// get the namespace from test
-	test, err := mongo.QueryOne(cfg.mongo.DB(cfg.mongoDB).C(cfg.testCollection), bson.M{"experiments.name": experiment})
+	stagingReply, err := cfg.esc.Read(
+		context.TODO(),
+		&storage.ReadRequest{Name: namespace, Environment: storage.Environment_Staging},
+	)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
@@ -288,35 +285,44 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var exp choices.Experiment
-	for _, v := range test.Experiments {
+	ns := stagingReply.GetNamespace()
+	if ns == nil {
+		return
+	}
+	for _, v := range ns.Experiments {
 		if v.Name == experiment {
-			exp = v
+			exp = choices.FromExperiment(v)
 			break
 		}
 	}
 
 	// check for namespace in prod
-	prod, err := mongo.QueryOne(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), bson.M{"name": test.Name})
-	if err == mgo.ErrNotFound {
-		newProd := choices.Namespace{Name: test.Name, TeamID: test.TeamID, Experiments: []choices.Experiment{exp}}
-		copy(newProd.Segments[:], choices.SegmentsAll[:])
-		if err = newProd.Segments.Remove(&exp.Segments); err != nil {
-			// this should never happen
-			log.Println(err)
-		}
-		if err = mongo.Upsert(cfg.mongo.DB(cfg.mongoDB).C(cfg.prodCollection), newProd.Name, newProd); err != nil {
+	productionReply, err := cfg.esc.Read(
+		context.TODO(),
+		&storage.ReadRequest{Name: namespace, Environment: storage.Environment_Production},
+	)
+	switch err := errors.Cause(err).(type) {
+	case *mongo.NotFound:
+		createErr := createNamespace(ns.Name, ns.Labels, exp)
+		if createErr != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.Write([]byte("error launching to prod"))
+			return
 		}
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
-	} else if err != nil {
+	default:
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte("something went wrong"))
+		return
+	}
+
+	prod := productionReply.GetNamespace()
+	if prod == nil {
 		return
 	}
 
@@ -337,6 +343,17 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func createNamespace(name string, labels []string, exp choices.Experiment) error {
+	newProd := choices.Namespace{Name: ns.Name, TeamID: ns.Labels, Experiments: []choices.Experiment{exp}}
+	copy(newProd.Segments[:], choices.SegmentsAll[:])
+	if err := newProd.Segments.Remove(&exp.Segments); err != nil {
+		return errors.Wrap(err, "error removing segments, this should never happen...")
+	}
+	createReply, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{Namespace: newProd.ToNamespace()})
+
+	return err
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {

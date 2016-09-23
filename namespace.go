@@ -17,6 +17,8 @@ package choices
 import (
 	"errors"
 	"fmt"
+
+	storage "github.com/foolusion/choices/elwinstorage"
 )
 
 var (
@@ -42,6 +44,18 @@ func NewNamespace(name, teamID string) *Namespace {
 		Segments: SegmentsAll,
 	}
 	return n
+}
+
+func (n *Namespace) ToNamespace() *storage.Namespace {
+	ns := &storage.Namespace{
+		Name:        n.Name,
+		Labels:      n.TeamID,
+		Experiments: make([]*storage.Experiment, len(n.Experiments)),
+	}
+	for i, e := range n.Experiments {
+		ns.Experiments[i] = e.ToExperiment()
+	}
+	return ns
 }
 
 // AddExperiment adds an experiment to the namespace. It takes the the given number of

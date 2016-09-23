@@ -88,7 +88,7 @@ func (n *NamespaceStore) Update() error {
 	cache := make([]Namespace, len(ar.GetNamespaces()))
 	for i, ns := range ar.GetNamespaces() {
 		var err error
-		cache[i], err = snToN(ns)
+		cache[i], err = FromNamespace(ns)
 		if err != nil {
 			return errors.Wrap(err, "could not parse Namespace")
 		}
@@ -99,7 +99,7 @@ func (n *NamespaceStore) Update() error {
 	return nil
 }
 
-func snToN(s *storage.Namespace) (Namespace, error) {
+func FromNamespace(s *storage.Namespace) (Namespace, error) {
 	ns := Namespace{
 		Name:        s.Name,
 		TeamID:      s.Labels,
@@ -107,7 +107,7 @@ func snToN(s *storage.Namespace) (Namespace, error) {
 		Segments:    SegmentsAll,
 	}
 	for i, e := range s.Experiments {
-		ns.Experiments[i] = seToE(e)
+		ns.Experiments[i] = FromExperiment(e)
 		err := ns.Segments.Remove(&ns.Experiments[i].Segments)
 		if err != nil {
 			return Namespace{}, errors.Wrap(err, "could not remove segments from namespaces")
@@ -116,7 +116,7 @@ func snToN(s *storage.Namespace) (Namespace, error) {
 	return ns, nil
 }
 
-func seToE(s *storage.Experiment) Experiment {
+func FromExperiment(s *storage.Experiment) Experiment {
 	exp := Experiment{
 		Name:   s.Name,
 		Params: make([]Param, len(s.Params)),
@@ -124,13 +124,13 @@ func seToE(s *storage.Experiment) Experiment {
 	copy(exp.Segments[:], s.Segments[:16])
 
 	for i, p := range s.Params {
-		exp.Params[i] = spToP(p)
+		exp.Params[i] = FromParam(p)
 	}
 
 	return exp
 }
 
-func spToP(s *storage.Param) Param {
+func FromParam(s *storage.Param) Param {
 	par := Param{
 		Name: s.Name,
 	}

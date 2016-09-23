@@ -14,6 +14,8 @@
 
 package choices
 
+import storage "github.com/foolusion/choices/elwinstorage"
+
 // ParamValue is a key value pair returned from an evalated experiment
 // parameter.
 type ParamValue struct {
@@ -28,6 +30,18 @@ type Experiment struct {
 	Name     string
 	Params   []Param
 	Segments segments
+}
+
+func (e *Experiment) ToExperiment() *storage.Experiment {
+	exp := &storage.Experiment{
+		Name:     e.Name,
+		Segments: e.Segments[:],
+		Params:   make([]*storage.Param, len(e.Params)),
+	}
+	for i, p := range e.Params {
+		exp.Params[i] = p.ToParam()
+	}
+	return exp
 }
 
 func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
@@ -48,6 +62,24 @@ func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 type Param struct {
 	Name  string
 	Value Value
+}
+
+func (p *Param) ToParam() *storage.Param {
+	param := &storage.Param{
+		Name: p.Name,
+	}
+	switch val := p.Value.(type) {
+	case *Uniform:
+		param.Value = &storage.Value{
+			Choices: val.Choices,
+		}
+	case *Weighted:
+		param.Value = &storage.Value{
+			Choices: val.Choices,
+			Weights: val.Weights,
+		}
+	}
+	return param
 }
 
 func (p *Param) eval(h hashConfig) (ParamValue, error) {
