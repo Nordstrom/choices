@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"github.com/foolusion/choices"
 	storage "github.com/foolusion/choices/elwinstorage"
-	"github.com/foolusion/choices/storage/mongo"
 	"github.com/pkg/errors"
 )
 
@@ -21,8 +21,8 @@ const (
 	rootEndpoint      = "/"
 	healthEndpoint    = "/healthz"
 	readinessEndpoint = "/readiness"
-	launchPrefix      = "/launch/"
-	deletePrefix      = "/delete/"
+	launchPrefix      = "/launch"
+	deletePrefix      = "/delete"
 )
 
 func init() {
@@ -217,8 +217,8 @@ const rootTmpl = `<!doctype html>
 	<th>{{$ns.Labels}}</th>
 	<th>{{$exp.Name}}</th>
 	<th>{{range .Params}}<strong>{{.Name}}</strong>: ({{.Values}})<br/>{{end}}</th>
-	<th><a href="/delete/{{$exp.Name}}">Delete</a></th>
-	<th><a href="/launch/{{$exp.Name}}">Launch</a></th>
+	<th><a href="/delete?experiment={{$exp.Name}}">Delete</a></th>
+	<th><a href="/launch?namespace={{$ns.Name}}&experiment={{$exp.Name}}">Launch</a></th>
 </tr>
 {{end}}
 {{end}}
@@ -243,8 +243,8 @@ const rootTmpl = `<!doctype html>
 	<th>{{$ns.Labels}}</th>
 	<th>{{$exp.Name}}</th>
 	<th>{{range .Params}}<strong>{{.Name}}</strong>: ({{.Values}})<br/>{{end}}</th>
-	<th><a href="/delete/{{$exp.Name}}">Delete</a></th>
-	<th><a href="/launch/{{$exp.Name}}">Launch</a></th>
+	<th><a href="/delete?experiment={{$exp.Name}}">Delete</a></th>
+	<th><a href="/launch?namespace={{$ns.Name}}&experiment={{$exp.Name}}">Launch</a></th>
 </tr>
 {{end}}
 {{end}}
@@ -293,24 +293,26 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		context.TODO(),
 		&storage.ReadRequest{Name: namespace, Environment: storage.Environment_Production},
 	)
-	switch err := errors.Cause(err).(type) {
-	case *mongo.NotFound:
-		createErr := createNamespace(ns.Name, ns.Labels, exp)
-		if createErr != nil {
+	if err != nil {
+		switch grpc.Code(err) {
+		case codes.NotFound:
+			createErr := createNamespace(ns.Name, ns.Labels, exp)
+			if createErr != nil {
+				log.Println(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+				w.Write([]byte("error launching to prod"))
+				return
+			}
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		default:
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.Write([]byte("error launching to prod"))
+			w.Write([]byte("something went wrong"))
 			return
 		}
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	default:
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("something went wrong"))
-		return
 	}
 
 	prod := productionReply.GetNamespace()
@@ -354,7 +356,10 @@ func createNamespace(name string, labels []string, exp choices.Experiment) error
 	if err := newProd.Segments.Remove(&exp.Segments); err != nil {
 		return errors.Wrap(err, "error removing segments, this should never happen...")
 	}
-	_, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{Namespace: newProd.ToNamespace()})
+	_, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{
+		Namespace:   newProd.ToNamespace(),
+		Environment: storage.Environment_Production,
+	})
 
 	return err
 }
