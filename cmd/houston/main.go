@@ -257,6 +257,7 @@ const rootTmpl = `<!doctype html>
 `
 
 func launchHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("starting launch...")
 	if err := r.ParseForm(); err != nil {
 		logAndWriteError(err, "could not parse form", w, http.StatusBadRequest)
 		return
@@ -264,6 +265,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	namespace := r.Form.Get("namespace")
 	experiment := r.Form.Get("experiment")
 
+	log.Println("reading staging namespace...")
 	// get the namespace from test
 	stagingReply, err := cfg.esc.Read(
 		context.TODO(),
@@ -288,6 +290,9 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Println(ns, exp)
+
+	log.Println("reading production namespace...")
 	// check for namespace in prod
 	productionReply, err := cfg.esc.Read(
 		context.TODO(),
@@ -296,6 +301,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch grpc.Code(err) {
 		case codes.NotFound:
+			log.Println("not found in production")
 			createErr := createNamespace(ns.Name, ns.Labels, exp)
 			if createErr != nil {
 				log.Println(err)
@@ -351,17 +357,23 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createNamespace(name string, labels []string, exp choices.Experiment) error {
+	log.Println("starting create namespace")
 	newProd := choices.Namespace{Name: name, TeamID: labels, Experiments: []choices.Experiment{exp}}
 	copy(newProd.Segments[:], choices.SegmentsAll[:])
 	if err := newProd.Segments.Remove(&exp.Segments); err != nil {
 		return errors.Wrap(err, "error removing segments, this should never happen...")
 	}
-	_, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{
+	cr, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{
 		Namespace:   newProd.ToNamespace(),
 		Environment: storage.Environment_Production,
 	})
+	if err != nil {
+		return err
+	}
 
-	return err
+	log.Println(*cr, err)
+
+	return nil
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {

@@ -16,7 +16,6 @@ package mongo
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -59,18 +58,20 @@ func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllRe
 	case r.Environment == storage.Environment_Production:
 		env = environmentProduction
 	default:
-		return nil, fmt.Errorf("bad environment requested")
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment requested")
 	}
 
 	var results []types.Namespace
 	err := s.sess.DB(s.db).C(env).Find(nil).All(&results)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not decode data from mongo")
+	if err == mgo.ErrNotFound {
+		return nil, grpc.Errorf(codes.NotFound, "could not find all: %s", err)
+	} else if err != nil {
+		return nil, grpc.Errorf(codes.Unknown, "could not decode data from mongo: %s", err)
 	}
 
 	resp, err := parseNamespaces(results)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not parse namespaces")
+		return nil, grpc.Errorf(codes.Internal, "could not parse namespaces: %s", err)
 	}
 
 	return &storage.AllReply{
@@ -80,7 +81,7 @@ func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllRe
 
 func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage.CreateReply, error) {
 	if r == nil || r.Namespace == nil {
-		return nil, fmt.Errorf("bad request")
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
 	}
 
 	nsi := snToN(r.Namespace)
@@ -91,18 +92,26 @@ func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage
 		env = environmentStaging
 	case storage.Environment_Production:
 		env = environmentProduction
+	default:
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
 	}
 
-	if err := s.sess.DB(s.db).C(env).Insert(nsi); err != nil {
-		return nil, errors.Wrap(err, "unable to insert experiment into database")
+	if _, err := s.sess.DB(s.db).C(env).Upsert(bson.M{"name": r.Namespace.Name}, nsi); err != nil {
+		return nil, grpc.Errorf(codes.Internal, "unable to insert experiment into database: %s", err)
 	}
 	ns, err := s.getNamespace(r.Namespace.Name, env)
-	return &storage.CreateReply{Namespace: ns}, err
+	switch {
+	case err != nil:
+		return nil, err
+	case ns == nil:
+		return nil, grpc.Errorf(codes.Internal, "nil namespace returned")
+	}
+	return &storage.CreateReply{Namespace: ns}, nil
 }
 
 func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.ReadReply, error) {
 	if r == nil || r.Name == "" {
-		return nil, fmt.Errorf("bad request")
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
 	}
 	var env string
 	switch r.Environment {
@@ -110,10 +119,18 @@ func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.Rea
 		env = environmentStaging
 	case storage.Environment_Production:
 		env = environmentProduction
+	default:
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
 	}
 
 	ns, err := s.getNamespace(r.Name, env)
-	return &storage.ReadReply{Namespace: ns}, err
+	switch {
+	case err != nil:
+		return nil, err
+	case ns == nil:
+		return nil, grpc.Errorf(codes.Internal, "nil response from getNamespace")
+	}
+	return &storage.ReadReply{Namespace: ns}, nil
 }
 
 func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage.UpdateReply, error) {
@@ -129,7 +146,7 @@ func parseNamespaces(namespaces []types.Namespace) ([]*storage.Namespace, error)
 	for i, mns := range namespaces {
 		ns, err := nToSN(mns)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not transform mongo namespace")
+			return nil, grpc.Errorf(codes.Internal, "could not transform mongo namespace: %s", err)
 		}
 		results[i] = ns
 	}
@@ -144,9 +161,9 @@ func (s *Server) getNamespace(name, environment string) (*storage.Namespace, err
 	} else if err != nil {
 		switch err := err.(type) {
 		case *mgo.QueryError:
-			return nil, grpc.Errorf(codes.Unknown, "namespace not found: %s", err)
+			return nil, grpc.Errorf(codes.Internal, "namespace not found: %s", err)
 		default:
-			return nil, errors.Wrapf(err, "could not find namespace %v", name)
+			return nil, grpc.Errorf(codes.Internal, "could not find namespace %v", name)
 		}
 	}
 
@@ -162,7 +179,7 @@ func nToSN(n types.Namespace) (*storage.Namespace, error) {
 	for i, mexp := range n.Experiments {
 		exp, err := eToSE(mexp)
 		if err != nil {
-			return nil, errors.Wrap(err, "cound not transform mongo experiment")
+			return nil, grpc.Errorf(codes.Internal, "cound not transform mongo experiment")
 		}
 		ns.Experiments[i] = exp
 	}
@@ -177,7 +194,7 @@ func eToSE(e types.Experiment) (*storage.Experiment, error) {
 	var err error
 	exp.Segments, err = decodeSegments(e.Segments)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not decode experiment segments")
+		return nil, grpc.Errorf(codes.Internal, "could not decode experiment segments")
 	}
 	for i, mparam := range e.Params {
 		exp.Params[i] = pToSP(mparam)
