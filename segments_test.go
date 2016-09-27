@@ -33,7 +33,7 @@ func TestSegmentContains(t *testing.T) {
 		"[7] contains 17":    {seg: segments{0, 1 << 7}, n: 14, want: false},
 	}
 	for k, test := range tests {
-		got := test.seg.claimed(test.n)
+		got := test.seg.isClaimed(test.n)
 		if test.want != got {
 			t.Errorf("%s: %v.contains(%v) = %v, want %v", k, test.seg, test.n, got, test.want)
 		}

@@ -78,12 +78,12 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 		return ExperimentResponse{}, err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
-	if !n.Segments.claimed(uint64(segment)) {
+	if !n.Segments.isClaimed(uint64(segment)) {
 		return ExperimentResponse{}, ErrSegmentNotInExperiment
 	}
 
 	for _, exp := range n.Experiments {
-		if exp.Segments.claimed(uint64(segment)) {
+		if !exp.Segments.isClaimed(uint64(segment)) {
 			continue
 		}
 		p, err := exp.eval(h)

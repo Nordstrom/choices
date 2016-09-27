@@ -42,7 +42,7 @@ func (s segments) Claim(out segments) (segments, error) {
 	return seg, nil
 }
 
-func (s segments) claimed(seg uint64) bool {
+func (s segments) isClaimed(seg uint64) bool {
 	index, pos := seg/8, seg%8
 	return s[index]>>pos&1 == 1
 }
