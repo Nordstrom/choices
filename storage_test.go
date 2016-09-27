@@ -12,8 +12,8 @@ func TestFromNamespace(t *testing.T) {
 		want Namespace
 		err  error
 	}{
-		"emptyNamespace": {in: &storage.Namespace{}, want: Namespace{Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}}, err: nil},
-		"oneExperiment":  {in: &storage.Namespace{Name: "ns", Labels: []string{"test"}, Experiments: []*storage.Experiment{{Name: "exp1", Segments: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []*storage.Param{{Name: "param1", Value: &storage.Value{Choices: []string{"a", "b"}}}}}}}, want: Namespace{Name: "ns", TeamID: []string{"test"}, Experiments: []Experiment{{Name: "exp1", Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []Param{{Name: "param1", Value: &Uniform{Choices: []string{"a", "b"}}}}}}}, err: nil},
+		"emptyNamespace": {in: &storage.Namespace{}, want: Namespace{}, err: nil},
+		"oneExperiment":  {in: &storage.Namespace{Name: "ns", Labels: []string{"test"}, Experiments: []*storage.Experiment{{Name: "exp1", Segments: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []*storage.Param{{Name: "param1", Value: &storage.Value{Choices: []string{"a", "b"}}}}}}}, want: Namespace{Name: "ns", TeamID: []string{"test"}, Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Experiments: []Experiment{{Name: "exp1", Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []Param{{Name: "param1", Value: &Uniform{Choices: []string{"a", "b"}}}}}}}, err: nil},
 	}
 
 	for k, test := range tests {

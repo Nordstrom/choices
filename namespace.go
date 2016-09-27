@@ -43,7 +43,6 @@ func NewNamespace(name string, labels []string) *Namespace {
 		Name:   name,
 		TeamID: labels,
 	}
-	copy(n.Segments[:], segmentsAll[:])
 	return n
 }
 
@@ -63,7 +62,7 @@ func (n *Namespace) ToNamespace() *storage.Namespace {
 // segments from the namespace. It returns an error if the number of segments
 // is larger than the number of available segments in the namespace.
 func (n *Namespace) AddExperiment(e Experiment) error {
-	seg, err := n.Segments.Remove(e.Segments)
+	seg, err := n.Segments.Claim(e.Segments)
 	if err != nil {
 		return errors.Wrap(err, "could not claim segments from namespace")
 	}
@@ -79,12 +78,12 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 		return ExperimentResponse{}, err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
-	if n.Segments.contains(uint64(segment)) {
+	if !n.Segments.claimed(uint64(segment)) {
 		return ExperimentResponse{}, ErrSegmentNotInExperiment
 	}
 
 	for _, exp := range n.Experiments {
-		if !exp.Segments.contains(uint64(segment)) {
+		if exp.Segments.claimed(uint64(segment)) {
 			continue
 		}
 		p, err := exp.eval(h)

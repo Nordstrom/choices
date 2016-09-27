@@ -223,7 +223,7 @@ func nToSN(n types.Namespace) (*storage.Namespace, error) {
 	for i, mexp := range n.Experiments {
 		exp, err := eToSE(mexp)
 		if err != nil {
-			return nil, grpc.Errorf(codes.Internal, "cound not transform mongo experiment")
+			return nil, grpc.Errorf(codes.Internal, "cound not transform mongo experiment: %s", err)
 		}
 		ns.Experiments[i] = exp
 	}
@@ -238,7 +238,7 @@ func eToSE(e types.Experiment) (*storage.Experiment, error) {
 	var err error
 	exp.Segments, err = decodeSegments(e.Segments)
 	if err != nil {
-		return nil, grpc.Errorf(codes.Internal, "could not decode experiment segments")
+		return nil, grpc.Errorf(codes.Internal, "could not decode experiment segments: %s", err)
 	}
 	for i, mparam := range e.Params {
 		exp.Params[i] = pToSP(mparam)

@@ -16,13 +16,12 @@ package choices
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
 )
 
 type segments [16]byte
 
-// SegmentsAll is a value where every segment is available
+// segmentsAll is a value where every segment is available
 var segmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
 
 var (
@@ -31,33 +30,19 @@ var (
 	ErrSegmentUnavailable = errors.New("segment unavailable")
 )
 
-func Remove(orig, rem []byte) ([]byte, error) {
-	if len(orig) != len(rem) {
-		return nil, fmt.Errorf("different length slices")
-	}
-	seg := make([]byte, len(orig))
-	for i := range seg {
-		seg[i] = orig[i] ^ rem[i]
-		if seg[i]&rem[i] > 0 {
-			return nil, ErrSegmentUnavailable
-		}
-	}
-	return seg, nil
-}
-
 // Remove removes the segments in del from s and throws an error if the
-func (s segments) Remove(out segments) (segments, error) {
+func (s segments) Claim(out segments) (segments, error) {
 	var seg segments
 	for i := range seg {
-		seg[i] = s[i] ^ out[i]
-		if seg[i]&out[i] > 0 {
+		if s[i]&out[i] > 0 {
 			return s, ErrSegmentUnavailable
 		}
+		seg[i] = s[i] | out[i]
 	}
 	return seg, nil
 }
 
-func (s segments) contains(seg uint64) bool {
+func (s segments) claimed(seg uint64) bool {
 	index, pos := seg/8, seg%8
 	return s[index]>>pos&1 == 1
 }
@@ -66,7 +51,7 @@ func (s segments) available() []int {
 	out := make([]int, 0, 128)
 	for i := range s {
 		for shift := uint8(0); shift < 8; shift++ {
-			if s[i]&(1<<shift) == 1<<shift {
+			if s[i]&(1<<shift) != 1<<shift {
 				out = append(out, i*8+int(shift))
 			}
 		}
@@ -92,15 +77,15 @@ func (s segments) set(index int, val bit) segments {
 	return s
 }
 
-func (s segments) sample(n int) segments {
+func (s segments) sample(n int) (orig, out segments) {
 	avail := s.available()
-	out := segments{}
+	orig = s
 	p := rand.Perm(len(avail))
 	for i := 0; i < n; i++ {
-		s = s.set(avail[p[i]], zero)
+		orig = s.set(avail[p[i]], one)
 		out = out.set(avail[p[i]], one)
 	}
-	return out
+	return
 }
 
 func (s segments) count() int {

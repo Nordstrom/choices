@@ -44,15 +44,17 @@ func (e *Experiment) SetSegments(seg segments) *Experiment {
 }
 
 func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
-	seg := ns.Segments.sample(num)
-	copy(e.Segments[:], seg[:])
+	orig, seg := ns.Segments.sample(num)
+	ns.Segments = orig
+	e.Segments = seg
 	return e
 }
 
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
-		Name:   e.Name,
-		Params: make([]*storage.Param, len(e.Params)),
+		Name:     e.Name,
+		Params:   make([]*storage.Param, len(e.Params)),
+		Segments: make([]byte, 16),
 	}
 	copy(exp.Segments[:], e.Segments[:])
 	for i, p := range e.Params {

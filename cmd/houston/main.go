@@ -315,6 +315,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 
 	prod := productionReply.GetNamespace()
 	if prod == nil {
+		logAndWriteError(err, "something went wrong", w, http.StatusInternalServerError)
 		return
 	}
 
@@ -322,20 +323,14 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 
 	prodNS, err := choices.FromNamespace(prod)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("something went wrong"))
+		logAndWriteError(err, "something went wrong", w, http.StatusInternalServerError)
 		return
 	}
 
 	// subtract segments from prod namespace and add experiment
-	seg, err := prodNS.Segments.Remove(exp.Segments)
+	seg, err := prodNS.Segments.Claim(exp.Segments)
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusNotFound)
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Write([]byte("not found"))
+		logAndWriteError(err, "not found", w, http.StatusNotFound)
 		return
 	}
 	prodNS.Segments = seg
