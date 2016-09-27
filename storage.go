@@ -32,7 +32,7 @@ const (
 	StorageEnvironmentProd
 )
 
-func WithStorageConfig(addr string, env int) func(*Config) error {
+func WithStorageConfig(addr string, env int) ConfigOpt {
 	return func(c *Config) error {
 		cc, err := grpc.Dial(addr, grpc.WithInsecure())
 		if err != nil {

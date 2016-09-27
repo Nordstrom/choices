@@ -30,6 +30,8 @@ type Config struct {
 	ErrChan        chan error
 }
 
+type ConfigOpt func(*Config) error
+
 const (
 	defaultSalt           string        = "choices"
 	defaultUpdateInterval time.Duration = 5 * time.Minute
@@ -39,7 +41,7 @@ const (
 // s.Update() until the context is cancelled. To change the tick interval call
 // SetUpdateInterval(d time.Duration). Must cancel the context before calling
 // NewChoices again otherwise you will leak go routines.
-func NewChoices(ctx context.Context, opts ...func(*Config) error) (*Config, error) {
+func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	e := &Config{
 		globalSalt:     defaultSalt,
 		updateInterval: defaultUpdateInterval,
@@ -77,7 +79,7 @@ func NewChoices(ctx context.Context, opts ...func(*Config) error) (*Config, erro
 }
 
 // GlobalSalt sets the salt used in hashing users.
-func GlobalSalt(salt string) func(*Config) error {
+func GlobalSalt(salt string) ConfigOpt {
 	return func(ec *Config) error {
 		ec.globalSalt = salt
 		return nil
@@ -87,7 +89,7 @@ func GlobalSalt(salt string) func(*Config) error {
 // UpdateInterval changes the update interval for Storage. Must call
 // SetStorage after this or cancel context of the current Storage and call
 // SetStorage again.
-func UpdateInterval(dur time.Duration) func(*Config) error {
+func UpdateInterval(dur time.Duration) ConfigOpt {
 	return func(ec *Config) error {
 		ec.updateInterval = dur
 		return nil
