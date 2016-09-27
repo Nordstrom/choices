@@ -23,7 +23,7 @@ import (
 type segments [16]byte
 
 // SegmentsAll is a value where every segment is available
-var SegmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
+var segmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
 
 var (
 	// ErrSegmentUnavailable is thrown when you request an a segment set to
@@ -46,7 +46,7 @@ func Remove(orig, rem []byte) ([]byte, error) {
 }
 
 // Remove removes the segments in del from s and throws an error if the
-func (s *segments) Remove(out *segments) error {
+func (s *segments) Remove(out segments) error {
 	var seg segments
 	for i := range seg {
 		seg[i] = s[i] ^ out[i]

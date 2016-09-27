@@ -104,11 +104,11 @@ func FromNamespace(s *storage.Namespace) (Namespace, error) {
 		Name:        s.Name,
 		TeamID:      s.Labels,
 		Experiments: make([]Experiment, len(s.Experiments)),
-		Segments:    SegmentsAll,
 	}
+	copy(ns.Segments[:], segmentsAll[:])
 	for i, e := range s.Experiments {
 		ns.Experiments[i] = FromExperiment(e)
-		err := ns.Segments.Remove(&ns.Experiments[i].Segments)
+		err := ns.Segments.Remove(ns.Experiments[i].Segments)
 		if err != nil {
 			return Namespace{}, errors.Wrap(err, "could not remove segments from namespaces")
 		}

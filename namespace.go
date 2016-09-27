@@ -39,10 +39,10 @@ type Namespace struct {
 // an error if no units are given.
 func NewNamespace(name, teamID string) *Namespace {
 	n := &Namespace{
-		Name:     name,
-		TeamID:   []string{teamID},
-		Segments: SegmentsAll,
+		Name:   name,
+		TeamID: []string{teamID},
 	}
+	copy(n.Segments[:], segmentsAll[:])
 	return n
 }
 

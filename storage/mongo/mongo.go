@@ -14,12 +14,18 @@
 
 package mongo
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+	"fmt"
+)
 
 func decodeSegments(seg string) ([]byte, error) {
 	segBytes, err := hex.DecodeString(seg)
 	if err != nil {
 		return nil, err
+	}
+	if len(segBytes) != 16 {
+		return nil, fmt.Errorf("segments bytes too small")
 	}
 	return segBytes[:16], nil
 }

@@ -16,6 +16,7 @@ package mongo
 
 import (
 	"encoding/hex"
+	"log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -80,12 +81,12 @@ func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllRe
 }
 
 func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage.CreateReply, error) {
+	log.Println("strarting create...")
 	if r == nil || r.Namespace == nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
 	}
 
 	nsi := snToN(r.Namespace)
-
 	var env string
 	switch r.Environment {
 	case storage.Environment_Staging:
@@ -96,23 +97,21 @@ func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
 	}
 
-	if _, err := s.sess.DB(s.db).C(env).Upsert(bson.M{"name": r.Namespace.Name}, nsi); err != nil {
+	err := s.sess.DB(s.db).C(env).Insert(nsi)
+	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "unable to insert experiment into database: %s", err)
 	}
-	ns, err := s.getNamespace(r.Namespace.Name, env)
-	switch {
-	case err != nil:
-		return nil, err
-	case ns == nil:
-		return nil, grpc.Errorf(codes.Internal, "nil namespace returned")
-	}
-	return &storage.CreateReply{Namespace: ns}, nil
+
+	return &storage.CreateReply{Namespace: r.Namespace}, nil
 }
 
 func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.ReadReply, error) {
+	log.Println("starting read...")
+	var rr storage.ReadReply
 	if r == nil || r.Name == "" {
-		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
+		return &rr, grpc.Errorf(codes.InvalidArgument, "bad request")
 	}
+
 	var env string
 	switch r.Environment {
 	case storage.Environment_Staging:
@@ -120,25 +119,70 @@ func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.Rea
 	case storage.Environment_Production:
 		env = environmentProduction
 	default:
-		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
+		return &rr, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
 	}
 
 	ns, err := s.getNamespace(r.Name, env)
 	switch {
 	case err != nil:
-		return nil, err
+		return &rr, err
 	case ns == nil:
-		return nil, grpc.Errorf(codes.Internal, "nil response from getNamespace")
+		return &rr, grpc.Errorf(codes.Internal, "nil response from getNamespace")
 	}
 	return &storage.ReadReply{Namespace: ns}, nil
 }
 
 func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage.UpdateReply, error) {
-	return nil, nil
+	log.Println("starting update...")
+
+	if r == nil || r.Namespace == nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
+	}
+
+	nsi := snToN(r.Namespace)
+	var env string
+	switch r.Environment {
+	case storage.Environment_Staging:
+		env = environmentStaging
+	case storage.Environment_Production:
+		env = environmentProduction
+	default:
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
+	}
+	err := s.sess.DB(s.db).C(env).Update(bson.M{"name": r.Namespace.Name}, nsi)
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "error updating namespaces: %s", err)
+	}
+
+	return &storage.UpdateReply{Namespace: r.Namespace}, nil
 }
 
 func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage.DeleteReply, error) {
-	return nil, nil
+	log.Println("starting delete...")
+
+	if r == nil || r.Name == "" {
+		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
+	}
+
+	var env string
+	switch r.Environment {
+	case storage.Environment_Staging:
+		env = environmentStaging
+	case storage.Environment_Production:
+		env = environmentProduction
+	}
+
+	ns, err := s.getNamespace(r.Name, env)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.sess.DB(s.db).C(env).Remove(bson.M{"name": r.Name})
+	if err != nil {
+		return nil, grpc.Errorf(codes.Internal, "namespace could not be deleted: %s", err)
+	}
+
+	return &storage.DeleteReply{Namespace: ns}, nil
 }
 
 func parseNamespaces(namespaces []types.Namespace) ([]*storage.Namespace, error) {
@@ -161,7 +205,7 @@ func (s *Server) getNamespace(name, environment string) (*storage.Namespace, err
 	} else if err != nil {
 		switch err := err.(type) {
 		case *mgo.QueryError:
-			return nil, grpc.Errorf(codes.Internal, "namespace not found: %s", err)
+			return nil, grpc.Errorf(codes.Internal, "query error: %s", err)
 		default:
 			return nil, grpc.Errorf(codes.Internal, "could not find namespace %v", name)
 		}

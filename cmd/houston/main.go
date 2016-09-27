@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -217,7 +218,7 @@ const rootTmpl = `<!doctype html>
 	<th>{{$ns.Labels}}</th>
 	<th>{{$exp.Name}}</th>
 	<th>{{range .Params}}<strong>{{.Name}}</strong>: ({{.Values}})<br/>{{end}}</th>
-	<th><a href="/delete?experiment={{$exp.Name}}">Delete</a></th>
+	<th><a href="/delete?namespace={{$ns.Name}}&experiment={{$exp.Name}}&environment=staging">Delete</a></th>
 	<th><a href="/launch?namespace={{$ns.Name}}&experiment={{$exp.Name}}">Launch</a></th>
 </tr>
 {{end}}
@@ -243,8 +244,7 @@ const rootTmpl = `<!doctype html>
 	<th>{{$ns.Labels}}</th>
 	<th>{{$exp.Name}}</th>
 	<th>{{range .Params}}<strong>{{.Name}}</strong>: ({{.Values}})<br/>{{end}}</th>
-	<th><a href="/delete?experiment={{$exp.Name}}">Delete</a></th>
-	<th><a href="/launch?namespace={{$ns.Name}}&experiment={{$exp.Name}}">Launch</a></th>
+	<th><a href="/delete?namespace={{$ns.Name}}&experiment={{$exp.Name}}&environment=production">Delete</a></th>
 </tr>
 {{end}}
 {{end}}
@@ -290,8 +290,6 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Println(ns, exp)
-
 	log.Println("reading production namespace...")
 	// check for namespace in prod
 	productionReply, err := cfg.esc.Read(
@@ -304,19 +302,13 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("not found in production")
 			createErr := createNamespace(ns.Name, ns.Labels, exp)
 			if createErr != nil {
-				log.Println(err)
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-				w.Write([]byte("error launching to prod"))
+				logAndWriteError(err, "error launching to prod", w, http.StatusInternalServerError)
 				return
 			}
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		default:
-			log.Println(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.Write([]byte("something went wrong"))
+			logAndWriteError(err, "something went wrong", w, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -325,6 +317,8 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	if prod == nil {
 		return
 	}
+
+	log.Println(prod, exp)
 
 	prodNS, err := choices.FromNamespace(prod)
 	if err != nil {
@@ -336,7 +330,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// subtract segments from prod namespace and add experiment
-	if err := prodNS.Segments.Remove(&exp.Segments); err != nil {
+	if err := prodNS.Segments.Remove(exp.Segments); err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -344,10 +338,12 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	prodNS.Experiments = append(prodNS.Experiments, exp)
+	log.Println(prod)
 	ureq := &storage.UpdateRequest{
 		Namespace:   prodNS.ToNamespace(),
 		Environment: storage.Environment_Production,
 	}
+	log.Println(ureq)
 	_, err = cfg.esc.Update(context.TODO(), ureq)
 	if err != nil {
 		logAndWriteError(err, "error launching to prod", w, http.StatusInternalServerError)
@@ -359,10 +355,6 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 func createNamespace(name string, labels []string, exp choices.Experiment) error {
 	log.Println("starting create namespace")
 	newProd := choices.Namespace{Name: name, TeamID: labels, Experiments: []choices.Experiment{exp}}
-	copy(newProd.Segments[:], choices.SegmentsAll[:])
-	if err := newProd.Segments.Remove(&exp.Segments); err != nil {
-		return errors.Wrap(err, "error removing segments, this should never happen...")
-	}
 	cr, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{
 		Namespace:   newProd.ToNamespace(),
 		Environment: storage.Environment_Production,
@@ -377,6 +369,87 @@ func createNamespace(name string, labels []string, exp choices.Experiment) error
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		logAndWriteError(err, "could not parse form", w, http.StatusBadRequest)
+	}
+
+	var storageEnv storage.Environment
+	switch r.Form.Get("environment") {
+	case "staging":
+		storageEnv = storage.Environment_Staging
+	case "production":
+		storageEnv = storage.Environment_Production
+	default:
+		storageEnv = storage.Environment_Staging
+	}
+
+	prodReadReq, err := cfg.esc.Read(context.TODO(), &storage.ReadRequest{
+		Name:        r.Form.Get("namespace"),
+		Environment: storage.Environment_Production,
+	})
+
+	var prodNS choices.Namespace
+	if err != nil {
+		prodNS = choices.Namespace{}
+	} else {
+		prodNS, err = choices.FromNamespace(prodReadReq.Namespace)
+		if err != nil {
+			logAndWriteError(err, "could not parse namespace", w, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	prodIndex := -1
+	for i, exp := range prodNS.Experiments {
+		if exp.Name == r.Form.Get("experiment") {
+			prodIndex = i
+			break
+		}
+	}
+
+	if prodIndex >= 0 && storageEnv == storage.Environment_Production {
+		if err := deleteExperiment(prodNS, storageEnv, prodIndex); err != nil {
+			logAndWriteError(err, "could not delete prod experiment", w, http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	} else if prodIndex >= 0 && storageEnv == storage.Environment_Staging {
+		logAndWriteError(fmt.Errorf("bad request"), "test still in prod", w, http.StatusBadRequest)
+		return
+	} else if prodIndex < 0 && storageEnv == storage.Environment_Production {
+		logAndWriteError(fmt.Errorf("not found"), "test is not in prod", w, http.StatusNotFound)
+		return
+	}
+
+	var stagingNS choices.Namespace
+	stagReadReq, err := cfg.esc.Read(context.TODO(), &storage.ReadRequest{
+		Name:        r.Form.Get("namespace"),
+		Environment: storage.Environment_Staging,
+	})
+	if err != nil {
+		stagingNS = choices.Namespace{}
+	} else {
+		prodNS, err = choices.FromNamespace(stagReadReq.Namespace)
+		if err != nil {
+			logAndWriteError(err, "could not parse staging namespace", w, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	stagIndex := -1
+	for i, exp := range stagingNS.Experiments {
+		if exp.Name == r.Form.Get("experiment") {
+			stagIndex = i
+			break
+		}
+	}
+
+	if err := deleteExperiment(stagingNS, storageEnv, stagIndex); err != nil {
+		logAndWriteError(err, "could not delete experiment", w, http.StatusInternalServerError)
+	}
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -389,6 +462,27 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("OK"))
+}
+
+func deleteExperiment(ns choices.Namespace, env storage.Environment, index int) error {
+	if len(ns.Experiments) == 1 {
+		if _, err := cfg.esc.Delete(context.TODO(), &storage.DeleteRequest{
+			Name:        ns.Name,
+			Environment: env,
+		}); err != nil {
+			return err
+		}
+		return nil
+	}
+	ns.Experiments[index] = ns.Experiments[len(ns.Experiments)-1]
+	ns.Experiments = ns.Experiments[:len(ns.Experiments)-1]
+	if _, err := cfg.esc.Update(context.TODO(), &storage.UpdateRequest{
+		Namespace:   ns.ToNamespace(),
+		Environment: env,
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func logAndWriteError(err error, errMsg string, w http.ResponseWriter, httpStatus int) {

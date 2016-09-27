@@ -82,7 +82,7 @@ func TestSegmentsSet(t *testing.T) {
 	}{
 		"set one":      {seg: segments{}, index: 0, value: one, want: segments{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 		"set thirteen": {seg: segments{}, index: 13, value: one, want: segments{0, 1 << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-		"unset 15":     {seg: SegmentsAll, index: 15, value: zero, want: segments{255, 127, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
+		"unset 15":     {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, index: 15, value: zero, want: segments{255, 127, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
 	}
 
 	for k, test := range tests {
@@ -99,8 +99,8 @@ func TestSegmentsSample(t *testing.T) {
 		num  int
 		want segments
 	}{
-		"sample none": {seg: SegmentsAll, num: 0, want: segments{}},
-		"sample one":  {seg: SegmentsAll, num: 1, want: segments{0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}},
+		"sample none": {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, num: 0, want: segments{}},
+		"sample one":  {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, num: 1, want: segments{0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}},
 	}
 
 	for k, test := range tests {
@@ -118,15 +118,15 @@ func TestSegmentsRemove(t *testing.T) {
 		want segments
 		err  error
 	}{
-		"remove none":          {seg: SegmentsAll, out: segments{}, want: SegmentsAll, err: nil},
-		"remove all":           {seg: SegmentsAll, out: SegmentsAll, want: segments{}, err: nil},
-		"remove all from none": {seg: segments{}, out: SegmentsAll, want: segments{}, err: ErrSegmentUnavailable},
-		"remove some":          {seg: SegmentsAll, out: segments{255}, want: segments{0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, err: nil},
+		"remove none":          {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, out: segments{}, want: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, err: nil},
+		"remove all":           {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, out: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, want: segments{}, err: nil},
+		"remove all from none": {seg: segments{}, out: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, want: segments{}, err: ErrSegmentUnavailable},
+		"remove some":          {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, out: segments{255}, want: segments{0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, err: nil},
 		"bad remove some":      {seg: segments{0, 255}, out: segments{255, 0}, want: segments{0, 255}, err: ErrSegmentUnavailable},
 	}
 
 	for k, test := range tests {
-		got := test.seg.Remove(&test.out)
+		got := test.seg.Remove(test.out)
 		if test.seg != test.want {
 			t.Errorf("%s: test.Remove(%v) = %v, want %v", k, test.out, test.seg, test.want)
 		}

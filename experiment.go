@@ -34,10 +34,10 @@ type Experiment struct {
 
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
-		Name:     e.Name,
-		Segments: e.Segments[:],
-		Params:   make([]*storage.Param, len(e.Params)),
+		Name:   e.Name,
+		Params: make([]*storage.Param, len(e.Params)),
 	}
+	copy(exp.Segments[:], e.Segments[:])
 	for i, p := range e.Params {
 		exp.Params[i] = p.ToParam()
 	}
