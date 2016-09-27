@@ -15,8 +15,9 @@
 package choices
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	storage "github.com/foolusion/choices/elwinstorage"
 )
@@ -37,10 +38,10 @@ type Namespace struct {
 
 // NewNamespace creates a new namespace with all segments available. It returns
 // an error if no units are given.
-func NewNamespace(name, teamID string) *Namespace {
+func NewNamespace(name string, labels []string) *Namespace {
 	n := &Namespace{
 		Name:   name,
-		TeamID: []string{teamID},
+		TeamID: labels,
 	}
 	copy(n.Segments[:], segmentsAll[:])
 	return n
@@ -61,15 +62,12 @@ func (n *Namespace) ToNamespace() *storage.Namespace {
 // AddExperiment adds an experiment to the namespace. It takes the the given number of
 // segments from the namespace. It returns an error if the number of segments
 // is larger than the number of available segments in the namespace.
-func (n *Namespace) AddExperiment(name string, params []Param, numSegments int) error {
-	if n.Segments.count() < numSegments {
-		return fmt.Errorf("Namespace.Addexp: not enough segments in namespace, want: %v, got %v", numSegments, n.Segments.count())
+func (n *Namespace) AddExperiment(e Experiment) error {
+	seg, err := n.Segments.Remove(e.Segments)
+	if err != nil {
+		return errors.Wrap(err, "could not claim segments from namespace")
 	}
-	e := Experiment{
-		Name:     name,
-		Params:   params,
-		Segments: n.Segments.sample(numSegments),
-	}
+	n.Segments = seg
 	n.Experiments = append(n.Experiments, e)
 	return nil
 }

@@ -330,13 +330,16 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// subtract segments from prod namespace and add experiment
-	if err := prodNS.Segments.Remove(exp.Segments); err != nil {
+	seg, err := prodNS.Segments.Remove(exp.Segments)
+	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte("not found"))
 		return
 	}
+	prodNS.Segments = seg
+
 	prodNS.Experiments = append(prodNS.Experiments, exp)
 	log.Println(prod)
 	ureq := &storage.UpdateRequest{

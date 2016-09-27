@@ -17,12 +17,10 @@ package choices
 import "testing"
 
 func BenchmarkNamespaceEval(b *testing.B) {
-	ns := NewNamespace("t1", "test")
-	if err := ns.AddExperiment(
-		"aTest",
-		[]Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}},
-		128,
-	); err != nil {
+	ns := NewNamespace("t1", []string{"test"})
+	e := NewExperiment("aTest").SetSegments(segmentsAll)
+	e.Params = []Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}}
+	if err := ns.AddExperiment(*e); err != nil {
 		b.Fatal(err)
 	}
 	h := hashConfig{}

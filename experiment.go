@@ -32,6 +32,23 @@ type Experiment struct {
 	Segments segments
 }
 
+func NewExperiment(name string) *Experiment {
+	return &Experiment{
+		Name: name,
+	}
+}
+
+func (e *Experiment) SetSegments(seg segments) *Experiment {
+	copy(e.Segments[:], seg[:])
+	return e
+}
+
+func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
+	seg := ns.Segments.sample(num)
+	copy(e.Segments[:], seg[:])
+	return e
+}
+
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
 		Name:   e.Name,

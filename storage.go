@@ -100,20 +100,14 @@ func (n *NamespaceStore) Update() error {
 }
 
 func FromNamespace(s *storage.Namespace) (Namespace, error) {
-	ns := Namespace{
-		Name:        s.Name,
-		TeamID:      s.Labels,
-		Experiments: make([]Experiment, len(s.Experiments)),
-	}
-	copy(ns.Segments[:], segmentsAll[:])
-	for i, e := range s.Experiments {
-		ns.Experiments[i] = FromExperiment(e)
-		err := ns.Segments.Remove(ns.Experiments[i].Segments)
+	ns := NewNamespace(s.Name, s.Labels)
+	for _, e := range s.Experiments {
+		err := ns.AddExperiment(FromExperiment(e))
 		if err != nil {
-			return Namespace{}, errors.Wrap(err, "could not remove segments from namespaces")
+			return Namespace{}, errors.Wrap(err, "could not remove add experiment")
 		}
 	}
-	return ns, nil
+	return *ns, nil
 }
 
 func FromExperiment(s *storage.Experiment) Experiment {

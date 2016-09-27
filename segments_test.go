@@ -14,7 +14,10 @@
 
 package choices
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+)
 
 func TestSegmentContains(t *testing.T) {
 	tests := map[string]struct {
@@ -86,7 +89,7 @@ func TestSegmentsSet(t *testing.T) {
 	}
 
 	for k, test := range tests {
-		test.seg.set(test.index, test.value)
+		test.seg = test.seg.set(test.index, test.value)
 		if test.seg != test.want {
 			t.Errorf("%s: test.set(%v, %v) = %v, want %v", k, test.index, test.value, test.seg, test.want)
 		}
@@ -100,13 +103,14 @@ func TestSegmentsSample(t *testing.T) {
 		want segments
 	}{
 		"sample none": {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, num: 0, want: segments{}},
-		"sample one":  {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, num: 1, want: segments{0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}},
+		"sample one":  {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, num: 1, want: segments{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 	}
 
 	for k, test := range tests {
+		rand.Seed(0)
 		got := test.seg.sample(test.num)
 		if got != test.want {
-			t.Errorf("%s: test.sample() = %v, %v, want %v", k, got, test.seg, test.want)
+			t.Errorf("%s: test.sample() = %v, want %v", k, got, test.want)
 		}
 	}
 }
@@ -126,8 +130,8 @@ func TestSegmentsRemove(t *testing.T) {
 	}
 
 	for k, test := range tests {
-		got := test.seg.Remove(test.out)
-		if test.seg != test.want {
+		seg, got := test.seg.Remove(test.out)
+		if seg != test.want {
 			t.Errorf("%s: test.Remove(%v) = %v, want %v", k, test.out, test.seg, test.want)
 		}
 		if got != test.err {

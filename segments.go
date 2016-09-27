@@ -46,24 +46,23 @@ func Remove(orig, rem []byte) ([]byte, error) {
 }
 
 // Remove removes the segments in del from s and throws an error if the
-func (s *segments) Remove(out segments) error {
+func (s segments) Remove(out segments) (segments, error) {
 	var seg segments
 	for i := range seg {
 		seg[i] = s[i] ^ out[i]
 		if seg[i]&out[i] > 0 {
-			return ErrSegmentUnavailable
+			return s, ErrSegmentUnavailable
 		}
 	}
-	*s = seg
-	return nil
+	return seg, nil
 }
 
-func (s *segments) contains(seg uint64) bool {
+func (s segments) contains(seg uint64) bool {
 	index, pos := seg/8, seg%8
 	return s[index]>>pos&1 == 1
 }
 
-func (s *segments) available() []int {
+func (s segments) available() []int {
 	out := make([]int, 0, 128)
 	for i := range s {
 		for shift := uint8(0); shift < 8; shift++ {
@@ -82,7 +81,7 @@ const (
 	one
 )
 
-func (s *segments) set(index int, val bit) {
+func (s segments) set(index int, val bit) segments {
 	i, pos := index/8, uint8(index%8)
 	switch val {
 	case zero:
@@ -90,20 +89,21 @@ func (s *segments) set(index int, val bit) {
 	case one:
 		s[i] |= 1 << pos
 	}
+	return s
 }
 
-func (s *segments) sample(n int) segments {
+func (s segments) sample(n int) segments {
 	avail := s.available()
 	out := segments{}
 	p := rand.Perm(len(avail))
 	for i := 0; i < n; i++ {
-		s.set(avail[p[i]], zero)
-		out.set(avail[p[i]], one)
+		s = s.set(avail[p[i]], zero)
+		out = out.set(avail[p[i]], one)
 	}
 	return out
 }
 
-func (s *segments) count() int {
+func (s segments) count() int {
 	count := 0
 	for _, v := range s {
 		count += int(cnt[v])
