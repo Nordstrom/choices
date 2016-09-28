@@ -97,6 +97,7 @@ const (
 func env(dst *string, src string) {
 	if os.Getenv(src) != "" {
 		*dst = os.Getenv(src)
+		log.Printf("Set %s to %s", src, *dst)
 	}
 }
 
@@ -109,22 +110,23 @@ func main() {
 	env(&config.mongoDB, envMongoDB)
 	env(&config.mongoCollection, envMongoColl)
 
-	var env int
+	var storageEnv int
 	switch config.mongoCollection {
 	case "staging", "dev", "test":
-		env = choices.StorageEnvironmentDev
+		storageEnv = choices.StorageEnvironmentDev
 	case "production", "prod":
-		env = choices.StorageEnvironmentProd
+		storageEnv = choices.StorageEnvironmentProd
 	default:
-		env = choices.StorageEnvironmentDev
+		storageEnv = choices.StorageEnvironmentDev
 	}
+	log.Println(config.mongoCollection, storageEnv)
 
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ec, err := choices.NewChoices(
 		ctx,
-		choices.WithStorageConfig(config.mongoAddr, env),
+		choices.WithStorageConfig(config.mongoAddr, storageEnv),
 		choices.UpdateInterval(time.Minute),
 	)
 	if err != nil {
