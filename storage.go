@@ -79,6 +79,8 @@ func (n *NamespaceStore) Update() error {
 		req = &storage.AllRequest{
 			Environment: storage.Environment_Production,
 		}
+	default:
+		return fmt.Errorf("bad environment set")
 	}
 	ar, err := n.el.All(context.TODO(), req)
 	if err != nil {

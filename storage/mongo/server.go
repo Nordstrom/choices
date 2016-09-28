@@ -52,8 +52,6 @@ func NewServer(addr, db string) (*Server, error) {
 func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllReply, error) {
 	var env string
 	switch {
-	case r == nil:
-		env = environmentStaging
 	case r.Environment == storage.Environment_Staging:
 		env = environmentStaging
 	case r.Environment == storage.Environment_Production:

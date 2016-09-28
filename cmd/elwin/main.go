@@ -117,7 +117,7 @@ func main() {
 	case "production", "prod":
 		storageEnv = choices.StorageEnvironmentProd
 	default:
-		storageEnv = choices.StorageEnvironmentDev
+		log.Fatalf("bad storage environment")
 	}
 	log.Println(config.mongoCollection, storageEnv)
 
