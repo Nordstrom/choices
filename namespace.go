@@ -15,8 +15,11 @@
 package choices
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
+
+	storage "github.com/foolusion/choices/elwinstorage"
 )
 
 var (
@@ -35,27 +38,35 @@ type Namespace struct {
 
 // NewNamespace creates a new namespace with all segments available. It returns
 // an error if no units are given.
-func NewNamespace(name, teamID string) *Namespace {
+func NewNamespace(name string, labels []string) *Namespace {
 	n := &Namespace{
-		Name:     name,
-		TeamID:   []string{teamID},
-		Segments: SegmentsAll,
+		Name:   name,
+		TeamID: labels,
 	}
 	return n
+}
+
+func (n *Namespace) ToNamespace() *storage.Namespace {
+	ns := &storage.Namespace{
+		Name:        n.Name,
+		Labels:      n.TeamID,
+		Experiments: make([]*storage.Experiment, len(n.Experiments)),
+	}
+	for i, e := range n.Experiments {
+		ns.Experiments[i] = e.ToExperiment()
+	}
+	return ns
 }
 
 // AddExperiment adds an experiment to the namespace. It takes the the given number of
 // segments from the namespace. It returns an error if the number of segments
 // is larger than the number of available segments in the namespace.
-func (n *Namespace) AddExperiment(name string, params []Param, numSegments int) error {
-	if n.Segments.count() < numSegments {
-		return fmt.Errorf("Namespace.Addexp: not enough segments in namespace, want: %v, got %v", numSegments, n.Segments.count())
+func (n *Namespace) AddExperiment(e Experiment) error {
+	seg, err := n.Segments.Claim(e.Segments)
+	if err != nil {
+		return errors.Wrap(err, "could not claim segments from namespace")
 	}
-	e := Experiment{
-		Name:     name,
-		Params:   params,
-		Segments: n.Segments.sample(numSegments),
-	}
+	n.Segments = seg
 	n.Experiments = append(n.Experiments, e)
 	return nil
 }
@@ -67,12 +78,12 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 		return ExperimentResponse{}, err
 	}
 	segment := uniform(i, 0, float64(len(n.Segments)*8))
-	if n.Segments.contains(uint64(segment)) {
+	if !n.Segments.isClaimed(uint64(segment)) {
 		return ExperimentResponse{}, ErrSegmentNotInExperiment
 	}
 
 	for _, exp := range n.Experiments {
-		if !exp.Segments.contains(uint64(segment)) {
+		if !exp.Segments.isClaimed(uint64(segment)) {
 			continue
 		}
 		p, err := exp.eval(h)
@@ -102,7 +113,7 @@ func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range TeamNamespaces(ec.Storage, teamID) {
+	for _, ns := range TeamNamespaces(*ec.Storage, teamID) {
 		eResp, err := ns.eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue

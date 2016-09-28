@@ -14,6 +14,8 @@
 
 package choices
 
+import storage "github.com/foolusion/choices/elwinstorage"
+
 // ParamValue is a key value pair returned from an evalated experiment
 // parameter.
 type ParamValue struct {
@@ -28,6 +30,37 @@ type Experiment struct {
 	Name     string
 	Params   []Param
 	Segments segments
+}
+
+func NewExperiment(name string) *Experiment {
+	return &Experiment{
+		Name: name,
+	}
+}
+
+func (e *Experiment) SetSegments(seg segments) *Experiment {
+	copy(e.Segments[:], seg[:])
+	return e
+}
+
+func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
+	orig, seg := ns.Segments.sample(num)
+	ns.Segments = orig
+	e.Segments = seg
+	return e
+}
+
+func (e *Experiment) ToExperiment() *storage.Experiment {
+	exp := &storage.Experiment{
+		Name:     e.Name,
+		Params:   make([]*storage.Param, len(e.Params)),
+		Segments: make([]byte, 16),
+	}
+	copy(exp.Segments[:], e.Segments[:])
+	for i, p := range e.Params {
+		exp.Params[i] = p.ToParam()
+	}
+	return exp
 }
 
 func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
@@ -48,6 +81,24 @@ func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 type Param struct {
 	Name  string
 	Value Value
+}
+
+func (p *Param) ToParam() *storage.Param {
+	param := &storage.Param{
+		Name: p.Name,
+	}
+	switch val := p.Value.(type) {
+	case *Uniform:
+		param.Value = &storage.Value{
+			Choices: val.Choices,
+		}
+	case *Weighted:
+		param.Value = &storage.Value{
+			Choices: val.Choices,
+			Weights: val.Weights,
+		}
+	}
+	return param
 }
 
 func (p *Param) eval(h hashConfig) (ParamValue, error) {

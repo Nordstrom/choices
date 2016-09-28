@@ -14,19 +14,138 @@
 
 package choices
 
-// Storage is an interface for the storage of experiments. Storage has two
-// functions. Update, which checks for new data from the data store, and Read
-// which returns the current slice of Namespaces. Clients using the storage
-// interface should never write data to the slice returned by Namespaces.
-// Storage should be read only the values should never be overwritten.
-type Storage interface {
-	Update() error
-	Read() []Namespace
-	Ready() error
+import (
+	"fmt"
+	"sync"
+
+	"golang.org/x/net/context"
+
+	"google.golang.org/grpc"
+
+	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/pkg/errors"
+)
+
+const (
+	StorageEnvironmentBad = iota
+	StorageEnvironmentDev
+	StorageEnvironmentProd
+)
+
+func WithStorageConfig(addr string, env int) ConfigOpt {
+	return func(c *Config) error {
+		cc, err := grpc.Dial(addr, grpc.WithInsecure())
+		if err != nil {
+			return errors.Wrap(err, "could not dial storage service")
+		}
+		if env == StorageEnvironmentBad {
+			return fmt.Errorf("bad storage environment set")
+		}
+		c.Storage = NewNamespaceStore(cc, env)
+		return nil
+	}
+}
+
+type NamespaceStore struct {
+	mu    sync.RWMutex
+	el    storage.ElwinStorageClient
+	env   int
+	cache []Namespace
+}
+
+func NewNamespaceStore(cc *grpc.ClientConn, env int) *NamespaceStore {
+	return &NamespaceStore{
+		el:  storage.NewElwinStorageClient(cc),
+		env: env,
+	}
+}
+
+func (n *NamespaceStore) Read() []Namespace {
+	out := make([]Namespace, len(n.cache))
+	n.mu.RLock()
+	copy(out, n.cache)
+	n.mu.RUnlock()
+	return out
+}
+
+func (n *NamespaceStore) Update() error {
+	var req *storage.AllRequest
+	switch n.env {
+	case StorageEnvironmentDev:
+		req = &storage.AllRequest{
+			Environment: storage.Environment_Staging,
+		}
+	case StorageEnvironmentProd:
+		req = &storage.AllRequest{
+			Environment: storage.Environment_Production,
+		}
+	default:
+		return fmt.Errorf("bad environment set")
+	}
+	ar, err := n.el.All(context.TODO(), req)
+	if err != nil {
+		return errors.Wrap(err, "error requesting All from storage")
+	}
+
+	cache := make([]Namespace, len(ar.GetNamespaces()))
+	for i, ns := range ar.GetNamespaces() {
+		var err error
+		cache[i], err = FromNamespace(ns)
+		if err != nil {
+			return errors.Wrap(err, "could not parse Namespace")
+		}
+	}
+	n.mu.Lock()
+	n.cache = cache
+	n.mu.Unlock()
+	return nil
+}
+
+func FromNamespace(s *storage.Namespace) (Namespace, error) {
+	ns := NewNamespace(s.Name, s.Labels)
+	for _, e := range s.Experiments {
+		err := ns.AddExperiment(FromExperiment(e))
+		if err != nil {
+			return Namespace{}, errors.Wrap(err, "could not remove add experiment")
+		}
+	}
+	return *ns, nil
+}
+
+func FromExperiment(s *storage.Experiment) Experiment {
+	exp := Experiment{
+		Name:   s.Name,
+		Params: make([]Param, len(s.Params)),
+	}
+	copy(exp.Segments[:], s.Segments[:16])
+
+	for i, p := range s.Params {
+		exp.Params[i] = FromParam(p)
+	}
+
+	return exp
+}
+
+func FromParam(s *storage.Param) Param {
+	par := Param{
+		Name: s.Name,
+	}
+	switch {
+	case len(s.Value.Weights) == 0:
+		par.Value = &Uniform{
+			Choices: s.Value.Choices,
+		}
+	case len(s.Value.Weights) == len(s.Value.Choices):
+		par.Value = &Weighted{
+			Choices: s.Value.Choices,
+			Weights: s.Value.Weights,
+		}
+	}
+	return par
 }
 
 // TeamNamespaces filters the namespaces from storage based on teamID.
-func TeamNamespaces(s Storage, teamID string) []Namespace {
+func TeamNamespaces(s NamespaceStore, teamID string) []Namespace {
 	allNamespaces := s.Read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {

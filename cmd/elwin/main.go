@@ -30,7 +30,6 @@ import (
 
 	"github.com/foolusion/choices"
 	"github.com/foolusion/choices/elwin"
-	"github.com/foolusion/choices/storage/mongo"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
@@ -42,10 +41,16 @@ var config = struct {
 	mongoAddr       string
 	mongoDB         string
 	mongoCollection string
+	readiness       struct {
+		storage      bool
+		grpcServer   bool
+		errorHandler bool
+		httpServer   bool
+	}
 }{
 	jsonAddr:        ":8081",
 	grpcAddr:        ":8080",
-	mongoAddr:       "elwin-storage",
+	mongoAddr:       "elwin-storage:80",
 	mongoDB:         "elwin",
 	mongoCollection: "test",
 }
@@ -92,6 +97,7 @@ const (
 func env(dst *string, src string) {
 	if os.Getenv(src) != "" {
 		*dst = os.Getenv(src)
+		log.Printf("Set %s to %s", src, *dst)
 	}
 }
 
@@ -104,22 +110,35 @@ func main() {
 	env(&config.mongoDB, envMongoDB)
 	env(&config.mongoCollection, envMongoColl)
 
+	var storageEnv int
+	switch config.mongoCollection {
+	case "staging", "dev", "test":
+		storageEnv = choices.StorageEnvironmentDev
+	case "production", "prod":
+		storageEnv = choices.StorageEnvironmentProd
+	default:
+		log.Fatalf("bad storage environment")
+	}
+	log.Println(config.mongoCollection, storageEnv)
+
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ec, err := choices.NewChoices(
 		ctx,
-		mongo.WithMongoStorage(config.mongoAddr, config.mongoDB, config.mongoCollection),
+		choices.WithStorageConfig(config.mongoAddr, storageEnv),
 		choices.UpdateInterval(time.Minute),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	config.ec = ec
+	config.readiness.storage = true
 
 	http.Handle("/metrics", prometheus.Handler())
 
 	go func() {
+		config.readiness.httpServer = true
 		config.ec.ErrChan <- http.ListenAndServe(config.jsonAddr, nil)
 	}()
 
@@ -130,12 +149,14 @@ func main() {
 		}
 		grpcServer := grpc.NewServer()
 		elwin.RegisterElwinServer(grpcServer, &elwinServer{})
+		config.readiness.grpcServer = true
 		config.ec.ErrChan <- grpcServer.Serve(lis)
 	}()
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
+	config.readiness.errorHandler = true
 	for {
 		select {
 		case err := <-config.ec.ErrChan:
@@ -294,15 +315,15 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 func healthzHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
-	if _, err := w.Write([]byte("I’ve taken on enough new tech in this project, and still need to integrate with SnowPlow. I can’t afford the time to work through the growing pains of a new code base when there is only one engineer3 backing it and they’re using completely unsupported infrastructure.\n\nLove,\nPaul McCallick")); err != nil {
+	if _, err := w.Write([]byte("OK")); err != nil {
 		log.Printf("could not write to healthz connection: %s", err)
 	}
 }
 
 func readinessHandler(w http.ResponseWriter, r *http.Request) {
-	if err := config.ec.Storage.Ready(); err != nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
+	if config.readiness.storage && config.readiness.httpServer && config.readiness.grpcServer && config.readiness.errorHandler {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusServiceUnavailable)
 }

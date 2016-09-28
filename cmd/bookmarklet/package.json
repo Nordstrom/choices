@@ -1,0 +1,29 @@
+{
+  "name": "bookmarklet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify -t [ babelify --presets [ es2015 ] ] index.js | uglifyjs - -c -m -o out.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/foolusion/choices.git"
+  },
+  "keywords": [
+    "elwin"
+  ],
+  "author": "Andrew O'Neill <foolusion@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/foolusion/choices/issues"
+  },
+  "homepage": "https://github.com/foolusion/choices#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.14.0",
+    "babelify": "^7.3.0",
+    "browserify": "^13.1.0",
+    "uglifyjs": "^2.4.10"
+  }
+}
