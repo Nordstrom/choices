@@ -30,8 +30,10 @@ import (
 
 	"github.com/foolusion/choices"
 	"github.com/foolusion/choices/elwin"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 var config = struct {
@@ -74,6 +76,12 @@ var (
 		Name:      "param_counts",
 		Help:      "Params served to users.",
 	}, []string{"exp", "param", "value"})
+	updateErrors = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "nordstrom",
+		Subsystem: "elwin",
+		Name:      "update_errors",
+		Help:      "The number of errors while updating storage.",
+	})
 )
 
 func init() {
@@ -117,7 +125,7 @@ func main() {
 	case "production", "prod":
 		storageEnv = choices.StorageEnvironmentProd
 	default:
-		log.Fatalf("bad storage environment")
+		log.Fatal("bad storage environment")
 	}
 	log.Println(config.mongoCollection, storageEnv)
 
@@ -126,6 +134,7 @@ func main() {
 	defer cancel()
 	ec, err := choices.NewChoices(
 		ctx,
+		choices.GlobalSalt("choices"),
 		choices.WithStorageConfig(config.mongoAddr, storageEnv),
 		choices.UpdateInterval(time.Minute),
 	)
@@ -147,6 +156,7 @@ func main() {
 		if err != nil {
 			config.ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
 		}
+
 		grpcServer := grpc.NewServer()
 		elwin.RegisterElwinServer(grpcServer, &elwinServer{})
 		config.readiness.grpcServer = true
@@ -161,7 +171,14 @@ func main() {
 		select {
 		case err := <-config.ec.ErrChan:
 			if err != nil {
-				log.Fatal(err)
+				switch err := errors.Cause(err).(type) {
+				case choices.ErrUpdateStorage:
+					updateErrors.Inc()
+					log.Println(err)
+					continue
+				default:
+					log.Fatal(err)
+				}
 			}
 		case s := <-signalChan:
 			log.Printf("Captured %v. Exitting...", s)
@@ -177,7 +194,7 @@ type elwinServer struct{}
 func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
 	log.Printf("GetNamespaces: %v", id)
 	if id == nil {
-		return nil, fmt.Errorf("GetNamespaces: no Identifier recieved")
+		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier recieved")
 	}
 
 	resp, err := config.ec.Namespaces(id.TeamID, id.UserID)
@@ -312,7 +329,7 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 	return nil
 }
 
-func healthzHandler(w http.ResponseWriter, r *http.Request) {
+func healthzHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write([]byte("OK")); err != nil {
@@ -320,7 +337,7 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func readinessHandler(w http.ResponseWriter, r *http.Request) {
+func readinessHandler(w http.ResponseWriter, _ *http.Request) {
 	if config.readiness.storage && config.readiness.httpServer && config.readiness.grpcServer && config.readiness.errorHandler {
 		w.WriteHeader(http.StatusOK)
 		return

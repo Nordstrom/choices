@@ -21,6 +21,26 @@ import (
 	"net/http"
 
 	"github.com/foolusion/choices"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+func init() {
+	prometheus.MustRegister(genCounts)
+}
+
+var (
+	genCounts = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "nordstrom",
+		Subsystem: "elwin",
+		Name:      "gen_counts",
+		Help:      "gens served to users.",
+	}, []string{"label"})
+	genErrors = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "nordstrom",
+		Subsystem: "elwin",
+		Name:      "gen_error_counts",
+		Help:      "gen errors",
+	})
 )
 
 func getUserIDs(variants map[string]string, value choices.Value, buf []byte, n, e, p string) map[string]string {
@@ -53,6 +73,7 @@ func getUserIDs(variants map[string]string, value choices.Value, buf []byte, n, 
 func genValues(v choices.Value, namespace, experiment, param, userID string) (string, error) {
 	h, err := config.ec.HashExperience(namespace, experiment, param, userID)
 	if err != nil {
+		genErrors.Inc()
 		return "", err
 	}
 	return v.Value(h)
@@ -63,6 +84,8 @@ func genHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	r.ParseForm()
+	genCounts.With(prometheus.Labels{"label": r.Form.Get("label")}).Inc()
+
 	namespaces := config.ec.Storage.Read()
 	var teamNs []choices.Namespace
 	for _, namespace := range namespaces {

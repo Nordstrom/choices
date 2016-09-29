@@ -37,6 +37,18 @@ const (
 	defaultUpdateInterval time.Duration = 5 * time.Minute
 )
 
+type ErrUpdateStorage struct {
+	error
+}
+
+func (e ErrUpdateStorage) Error() string {
+	return e.error.Error()
+}
+
+func (e ErrUpdateStorage) Cause() error {
+	return e
+}
+
 // NewChoices sets the storage engine. It starts a ticker that will call
 // s.Update() until the context is cancelled. To change the tick interval call
 // SetUpdateInterval(d time.Duration). Must cancel the context before calling
@@ -57,7 +69,7 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	go func(e *Config) {
 		err := e.Storage.Update()
 		if err != nil {
-			e.ErrChan <- errors.Wrap(err, "could not update strorage")
+			e.ErrChan <- ErrUpdateStorage{error: errors.Wrap(err, "could not update storage")}
 		}
 		ticker := time.NewTicker(e.updateInterval)
 		for {
@@ -65,7 +77,7 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 			case <-ticker.C:
 				err := e.Storage.Update()
 				if err != nil {
-					e.ErrChan <- err
+					e.ErrChan <- ErrUpdateStorage{error: errors.Wrap(err, "could not update storage")}
 					ticker.Stop()
 					return
 				}
