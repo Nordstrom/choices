@@ -32,6 +32,7 @@ import (
 	"github.com/foolusion/choices/elwin"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 var config = struct {
@@ -117,7 +118,7 @@ func main() {
 	case "production", "prod":
 		storageEnv = choices.StorageEnvironmentProd
 	default:
-		log.Fatalf("bad storage environment")
+		log.Fatal("bad storage environment")
 	}
 	log.Println(config.mongoCollection, storageEnv)
 
@@ -147,6 +148,7 @@ func main() {
 		if err != nil {
 			config.ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
 		}
+
 		grpcServer := grpc.NewServer()
 		elwin.RegisterElwinServer(grpcServer, &elwinServer{})
 		config.readiness.grpcServer = true
@@ -177,7 +179,7 @@ type elwinServer struct{}
 func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
 	log.Printf("GetNamespaces: %v", id)
 	if id == nil {
-		return nil, fmt.Errorf("GetNamespaces: no Identifier recieved")
+		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier recieved")
 	}
 
 	resp, err := config.ec.Namespaces(id.TeamID, id.UserID)
@@ -312,7 +314,7 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 	return nil
 }
 
-func healthzHandler(w http.ResponseWriter, r *http.Request) {
+func healthzHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write([]byte("OK")); err != nil {
@@ -320,7 +322,7 @@ func healthzHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func readinessHandler(w http.ResponseWriter, r *http.Request) {
+func readinessHandler(w http.ResponseWriter, _ *http.Request) {
 	if config.readiness.storage && config.readiness.httpServer && config.readiness.grpcServer && config.readiness.errorHandler {
 		w.WriteHeader(http.StatusOK)
 		return
