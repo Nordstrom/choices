@@ -1,8 +1,21 @@
+// Copyright 2016 Andrew O'Neill
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//     http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
 	"context"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -16,14 +29,6 @@ import (
 	"github.com/foolusion/choices"
 	storage "github.com/foolusion/choices/elwinstorage"
 	"github.com/pkg/errors"
-)
-
-const (
-	rootEndpoint      = "/"
-	healthEndpoint    = "/healthz"
-	readinessEndpoint = "/readiness"
-	launchPrefix      = "/launch"
-	deletePrefix      = "/delete"
 )
 
 func init() {
@@ -44,6 +49,20 @@ type config struct {
 	esc         storage.ElwinStorageClient
 }
 
+const (
+	rootEndpoint      = "/"
+	healthEndpoint    = "/healthz"
+	readinessEndpoint = "/readiness"
+	launchPrefix      = "/launch"
+	deletePrefix      = "/delete"
+
+	envStorageAddress = "STORAGE_ADDRESS"
+	envMongoDatabase  = "MONGO_DATABASE"
+	envUsername       = "USERNAME"
+	envPassword       = "PASSWORD"
+	envAddr           = "ADDRESS"
+)
+
 var cfg = config{
 	storageAddr: "elwin-storage:80",
 	mongoDB:     "elwin",
@@ -52,12 +71,9 @@ var cfg = config{
 	addr:        ":8080",
 }
 
-const (
-	envStorageAddress = "STORAGE_ADDRESS"
-	envMongoDatabase  = "MONGO_DATABASE"
-	envUsername       = "USERNAME"
-	envPassword       = "PASSWORD"
-	envAddr           = "ADDRESS"
+var (
+	ErrBadRequest = errors.New("bad request")
+	ErrNotFound   = errors.New("not found")
 )
 
 func configFromEnv(dst *string, env string) {
@@ -414,10 +430,10 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	} else if prodIndex >= 0 && storageEnv == storage.Environment_Staging {
-		logAndWriteError(fmt.Errorf("bad request"), "test still in prod", w, http.StatusBadRequest)
+		logAndWriteError(ErrBadRequest, "test still in prod", w, http.StatusBadRequest)
 		return
 	} else if prodIndex < 0 && storageEnv == storage.Environment_Production {
-		logAndWriteError(fmt.Errorf("not found"), "test is not in prod", w, http.StatusNotFound)
+		logAndWriteError(ErrNotFound, "test is not in prod", w, http.StatusNotFound)
 		return
 	}
 
@@ -450,13 +466,13 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
+func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("OK"))
 }
 
-func readinessHandler(w http.ResponseWriter, r *http.Request) {
+func readinessHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("OK"))
@@ -485,7 +501,5 @@ func deleteExperiment(ns choices.Namespace, env storage.Environment, index int) 
 
 func logAndWriteError(err error, errMsg string, w http.ResponseWriter, httpStatus int) {
 	log.Println(errors.Wrap(err, errMsg))
-	w.WriteHeader(httpStatus)
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte(errMsg))
+	http.Error(w, errMsg, httpStatus)
 }

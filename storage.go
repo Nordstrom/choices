@@ -15,7 +15,6 @@
 package choices
 
 import (
-	"fmt"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -32,6 +31,8 @@ const (
 	StorageEnvironmentProd
 )
 
+var ErrBadStorageEnvironment = errors.New("bad storage environment")
+
 func WithStorageConfig(addr string, env int) ConfigOpt {
 	return func(c *Config) error {
 		cc, err := grpc.Dial(addr, grpc.WithInsecure())
@@ -39,7 +40,7 @@ func WithStorageConfig(addr string, env int) ConfigOpt {
 			return errors.Wrap(err, "could not dial storage service")
 		}
 		if env == StorageEnvironmentBad {
-			return fmt.Errorf("bad storage environment set")
+			return ErrBadStorageEnvironment
 		}
 		c.Storage = NewNamespaceStore(cc, env)
 		return nil
@@ -80,7 +81,7 @@ func (n *NamespaceStore) Update() error {
 			Environment: storage.Environment_Production,
 		}
 	default:
-		return fmt.Errorf("bad environment set")
+		return ErrBadStorageEnvironment
 	}
 	ar, err := n.el.All(context.TODO(), req)
 	if err != nil {
