@@ -30,6 +30,7 @@ import (
 
 	"github.com/foolusion/choices"
 	"github.com/foolusion/choices/elwin"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -75,6 +76,12 @@ var (
 		Name:      "param_counts",
 		Help:      "Params served to users.",
 	}, []string{"exp", "param", "value"})
+	updateErrors = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "nordstrom",
+		Subsystem: "elwin",
+		Name:      "update_errors",
+		Help:      "The number of errors while updating storage.",
+	})
 )
 
 func init() {
@@ -127,6 +134,7 @@ func main() {
 	defer cancel()
 	ec, err := choices.NewChoices(
 		ctx,
+		choices.GlobalSalt("choices"),
 		choices.WithStorageConfig(config.mongoAddr, storageEnv),
 		choices.UpdateInterval(time.Minute),
 	)
@@ -163,7 +171,14 @@ func main() {
 		select {
 		case err := <-config.ec.ErrChan:
 			if err != nil {
-				log.Fatal(err)
+				switch err := errors.Cause(err).(type) {
+				case choices.ErrUpdateStorage:
+					updateErrors.Inc()
+					log.Println(err)
+					continue
+				default:
+					log.Fatal(err)
+				}
 			}
 		case s := <-signalChan:
 			log.Printf("Captured %v. Exitting...", s)
