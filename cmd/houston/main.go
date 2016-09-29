@@ -89,13 +89,13 @@ var (
 		Subsystem: "houston",
 		Name:      "not_found_requests",
 		Help:      "Then number of requests not found.",
-	}, []string{"envirnoment", "hanldler", "rpc"})
+	}, []string{"environment", "hanldler", "rpc"})
 	internalErrorRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "nordstrom",
 		Subsystem: "houston",
 		Name:      "internal_error_requests",
 		Help:      "Then number of requests with an internal server error.",
-	}, []string{"envirnoment", "hanldler", "rpc"})
+	}, []string{"environment", "hanldler", "rpc"})
 
 	cfg = config{
 		storageAddr: "elwin-storage:80",
