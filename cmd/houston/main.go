@@ -44,58 +44,38 @@ type config struct {
 
 const (
 	rootEndpoint      = "/"
+	launchEndpoint    = "/launch"
+	deleteEndpoint    = "/delete"
 	healthEndpoint    = "/healthz"
 	readinessEndpoint = "/readiness"
-	launchPrefix      = "/launch"
-	deletePrefix      = "/delete"
 
 	envStorageAddress = "STORAGE_ADDRESS"
 	envMongoDatabase  = "MONGO_DATABASE"
 	envUsername       = "USERNAME"
 	envPassword       = "PASSWORD"
 	envAddr           = "ADDRESS"
+
+	mbr  = "bad request"
+	mint = "internal"
+	mnf  = "not found"
 )
 
 var (
 	ErrBadRequest = errors.New("bad request")
 	ErrNotFound   = errors.New("not found")
 
-	dashboardRequests = prometheus.NewCounter(prometheus.CounterOpts{
+	requests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "nordstrom",
 		Subsystem: "houston",
-		Name:      "dashboard_requests",
-		Help:      "The number of dashboard requests recieved.",
-	})
-	launchRequests = prometheus.NewCounter(prometheus.CounterOpts{
+		Name:      "requests",
+		Help:      "The number of requests to houston",
+	}, []string{"path"})
+	errRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "nordstrom",
 		Subsystem: "houston",
-		Name:      "launch_requests",
-		Help:      "The number of launch requests recieved.",
-	})
-	deleteRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "nordstrom",
-		Subsystem: "houston",
-		Name:      "delete_requests",
-		Help:      "The number of delete requests recieved.",
-	}, []string{"environment"})
-	badRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "nordstrom",
-		Subsystem: "houston",
-		Name:      "bad_requests",
-		Help:      "The number of bad requests recieved.",
-	}, []string{"environment", "handler", "rpc"})
-	notFoundRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "nordstrom",
-		Subsystem: "houston",
-		Name:      "not_found_requests",
-		Help:      "Then number of requests not found.",
-	}, []string{"environment", "hanldler", "rpc"})
-	internalErrorRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "nordstrom",
-		Subsystem: "houston",
-		Name:      "internal_error_requests",
-		Help:      "Then number of requests with an internal server error.",
-	}, []string{"environment", "hanldler", "rpc"})
+		Name:      "error_requests",
+		Help:      "The number of requests to houston",
+	}, []string{"path", "type"})
 
 	cfg = config{
 		storageAddr: "elwin-storage:80",
@@ -118,16 +98,12 @@ func configFromEnv(dst *string, env string) {
 
 func init() {
 	http.HandleFunc(rootEndpoint, rootHandler)
-	http.HandleFunc(launchPrefix, launchHandler)
-	http.HandleFunc(deletePrefix, deleteHandler)
+	http.HandleFunc(launchEndpoint, launchHandler)
+	http.HandleFunc(deleteEndpoint, deleteHandler)
 	http.HandleFunc(healthEndpoint, healthHandler)
 	http.HandleFunc(readinessEndpoint, readinessHandler)
-	prometheus.MustRegister(dashboardRequests)
-	prometheus.MustRegister(launchRequests)
-	prometheus.MustRegister(deleteRequests)
-	prometheus.MustRegister(badRequests)
-	prometheus.MustRegister(notFoundRequests)
-	prometheus.MustRegister(internalErrorRequests)
+	prometheus.MustRegister(requests)
+	prometheus.MustRegister(errRequests)
 }
 
 func main() {
@@ -223,22 +199,27 @@ func namespaceToTableData(ns []*storage.Namespace) []TableData {
 func incErrMetrics(err error, labels prometheus.Labels) {
 	switch grpc.Code(err) {
 	case codes.NotFound:
-		notFoundRequests.With(labels).Inc()
+		labels["type"] = "not found"
+		errRequests.With(labels).Inc()
 	case codes.InvalidArgument:
-		badRequests.With(labels).Inc()
+		labels["type"] = "bad request"
+		errRequests.With(labels).Inc()
 	case codes.Internal:
-		internalErrorRequests.With(labels).Inc()
+		labels["type"] = "internal"
+		errRequests.With(labels).Inc()
 	default:
-		internalErrorRequests.With(labels).Inc()
+		labels["type"] = "internal"
+		errRequests.With(labels).Inc()
 	}
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	dashboardRequests.Inc()
+	labelGen := l(rootEndpoint)
+	requests.With(prometheus.Labels{"path": rootEndpoint}).Inc()
 	var buf []byte
 	var err error
 	if buf, err = httputil.DumpRequest(r, true); err != nil {
-		internalErrorRequests.With(prometheus.Labels{"handler": "root"}).Inc()
+		errRequests.With(labelGen(mint)).Inc()
 		log.Printf("could not dump request: %v", err)
 		return
 	}
@@ -246,12 +227,12 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	stagingReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Environment_Staging})
 	if err != nil {
-		incErrMetrics(err, prometheus.Labels{"environment": "staging", "handler": "root", "rpc": "all"})
+		incErrMetrics(err, labelGen(mint))
 		log.Printf("AllRequest failed: %s", err)
 	}
 	productionReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Environment_Production})
 	if err != nil {
-		incErrMetrics(err, prometheus.Labels{"environment": "staging", "handler": "root", "rpc": "all"})
+		incErrMetrics(err, labelGen(mint))
 		log.Printf("AllRequest failed: %s", err)
 	}
 
@@ -265,7 +246,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := rootTemplate.Execute(w, data); err != nil {
-		internalErrorRequests.With(prometheus.Labels{"handler": "root"}).Inc()
+		errRequests.With(labelGen(mint)).Inc()
 		log.Println(err)
 	}
 }
@@ -337,10 +318,11 @@ const rootTmpl = `<!doctype html>
 `
 
 func launchHandler(w http.ResponseWriter, r *http.Request) {
-	launchRequests.Inc()
+	labelGen := l(deleteEndpoint)
+	requests.With(prometheus.Labels{"path": launchEndpoint}).Inc()
 	log.Println("starting launch...")
 	if err := r.ParseForm(); err != nil {
-		internalErrorRequests.With(prometheus.Labels{"handler": "launch"}).Inc()
+		errRequests.With(labelGen(mbr)).Inc()
 		logAndWriteError(err, "could not parse form", w, http.StatusBadRequest)
 		return
 	}
@@ -354,7 +336,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		&storage.ReadRequest{Name: namespace, Environment: storage.Environment_Staging},
 	)
 	if err != nil {
-		incErrMetrics(err, prometheus.Labels{"environment": "staging", "handler": "launch", "rpc": "read"})
+		incErrMetrics(err, labelGen(mint))
 		logAndWriteError(err, "not found", w, http.StatusNotFound)
 		return
 	}
@@ -382,14 +364,14 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("not found in production")
 			createErr := createNamespace(ns.Name, ns.Labels, exp)
 			if createErr != nil {
-				internalErrorRequests.With(prometheus.Labels{"environment": "production", "handler": "launch", "rpc": "create"}).Inc()
+				errRequests.With(labelGen(mint)).Inc()
 				logAndWriteError(err, "error launching to prod", w, http.StatusInternalServerError)
 				return
 			}
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		default:
-			internalErrorRequests.With(prometheus.Labels{"environment": "production", "handler": "launch", "rpc": "create"}).Inc()
+			errRequests.With(labelGen(mint)).Inc()
 			logAndWriteError(err, "something went wrong", w, http.StatusInternalServerError)
 			return
 		}
@@ -397,7 +379,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 
 	prod := productionReply.GetNamespace()
 	if prod == nil {
-		internalErrorRequests.With(prometheus.Labels{"environment": "production", "handler": "launch", "rpc": "read"}).Inc()
+		errRequests.With(labelGen(mint)).Inc()
 		logAndWriteError(err, "something went wrong", w, http.StatusInternalServerError)
 		return
 	}
@@ -406,7 +388,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 
 	prodNS, err := choices.FromNamespace(prod)
 	if err != nil {
-		internalErrorRequests.With(prometheus.Labels{"environment": "production", "handler": "launch", "rpc": "read"}).Inc()
+		errRequests.With(labelGen(mint)).Inc()
 		logAndWriteError(err, "something went wrong", w, http.StatusInternalServerError)
 		return
 	}
@@ -414,7 +396,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	// subtract segments from prod namespace and add experiment
 	seg, err := prodNS.Segments.Claim(exp.Segments)
 	if err != nil {
-		notFoundRequests.With(prometheus.Labels{"environment": "production", "handler": "launch", "rpc": "read"}).Inc()
+		errRequests.With(labelGen(mnf)).Inc()
 		logAndWriteError(err, "not found", w, http.StatusNotFound)
 		return
 	}
@@ -429,7 +411,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(ureq)
 	_, err = cfg.esc.Update(context.TODO(), ureq)
 	if err != nil {
-		internalErrorRequests.With(prometheus.Labels{"environment": "production", "handler": "launch", "rpc": "update"}).Inc()
+		errRequests.With(labelGen(mint)).Inc()
 		logAndWriteError(err, "error launching to prod", w, http.StatusInternalServerError)
 		return
 	}
@@ -453,12 +435,13 @@ func createNamespace(name string, labels []string, exp choices.Experiment) error
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
+	labelGen := l(deleteEndpoint)
 	err := r.ParseForm()
 	if err != nil {
-		internalErrorRequests.With(prometheus.Labels{"handler": "delete"}).Inc()
+		errRequests.With(labelGen(mbr)).Inc()
 		logAndWriteError(err, "could not parse form", w, http.StatusBadRequest)
 	}
-	deleteRequests.With(prometheus.Labels{"environment": r.Form.Get("environment")}).Inc()
+	requests.With(prometheus.Labels{"path": deleteEndpoint}).Inc()
 
 	var storageEnv storage.Environment
 	switch r.Form.Get("environment") {
@@ -481,7 +464,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		prodNS, err = choices.FromNamespace(prodReadReq.Namespace)
 		if err != nil {
-			internalErrorRequests.With(prometheus.Labels{"environment": "production", "handler": "delete", "rpc": "read"}).Inc()
+			errRequests.With(labelGen(mint)).Inc()
 			logAndWriteError(err, "could not parse namespace", w, http.StatusInternalServerError)
 			return
 		}
@@ -497,18 +480,18 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	if prodIndex >= 0 && storageEnv == storage.Environment_Production {
 		if err := deleteExperiment(prodNS, storageEnv, prodIndex); err != nil {
-			internalErrorRequests.With(prometheus.Labels{"environment": "production", "handler": "delete", "rpc": "delete"}).Inc()
+			errRequests.With(labelGen(mint)).Inc()
 			logAndWriteError(err, "could not delete prod experiment", w, http.StatusInternalServerError)
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	} else if prodIndex >= 0 && storageEnv == storage.Environment_Staging {
-		badRequests.With(prometheus.Labels{"environment": "production", "handler": "delete"}).Inc()
+		errRequests.With(labelGen(mbr)).Inc()
 		logAndWriteError(ErrBadRequest, "test still in prod", w, http.StatusBadRequest)
 		return
 	} else if prodIndex < 0 && storageEnv == storage.Environment_Production {
-		notFoundRequests.With(prometheus.Labels{"environment": "production", "handler": "delete"}).Inc()
+		errRequests.With(labelGen(mnf)).Inc()
 		logAndWriteError(ErrNotFound, "test is not in prod", w, http.StatusNotFound)
 		return
 	}
@@ -523,7 +506,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		prodNS, err = choices.FromNamespace(stagReadReq.Namespace)
 		if err != nil {
-			internalErrorRequests.With(prometheus.Labels{"environment": "staging", "handler": "delete", "rpc": "read"}).Inc()
+			errRequests.With(labelGen(mint)).Inc()
 			logAndWriteError(err, "could not parse staging namespace", w, http.StatusInternalServerError)
 			return
 		}
@@ -538,7 +521,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := deleteExperiment(stagingNS, storageEnv, stagIndex); err != nil {
-		internalErrorRequests.With(prometheus.Labels{"environment": "staging", "handler": "delete", "rpc": "read"}).Inc()
+		errRequests.With(labelGen(mint)).Inc()
 		logAndWriteError(err, "could not delete experiment", w, http.StatusInternalServerError)
 	}
 	http.Redirect(w, r, "/", http.StatusFound)
@@ -580,4 +563,10 @@ func deleteExperiment(ns choices.Namespace, env storage.Environment, index int) 
 func logAndWriteError(err error, errMsg string, w http.ResponseWriter, httpStatus int) {
 	log.Println(errors.Wrap(err, errMsg))
 	http.Error(w, errMsg, httpStatus)
+}
+
+func l(p string) func(string) prometheus.Labels {
+	return func(t string) prometheus.Labels {
+		return prometheus.Labels{"path": p, "type": t}
+	}
 }
