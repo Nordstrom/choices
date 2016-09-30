@@ -17,11 +17,14 @@ package main
 import (
 	"log"
 	"net"
+	"net/http"
 
 	"google.golang.org/grpc"
 
 	"github.com/foolusion/choices/elwinstorage"
 	"github.com/foolusion/choices/storage/mongo"
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func main() {
@@ -34,7 +37,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+	)
 	storage.RegisterElwinStorageServer(s, server)
+	grpc_prometheus.Register(s)
+	go func() {
+		http.Handle("/metrics", prometheus.Handler())
+		log.Fatal(http.ListenAndServe(":8081", nil))
+	}()
+
 	log.Fatal(s.Serve(lis))
 }
