@@ -1,9 +1,10 @@
 (function main() {
+  const team = prompt("Enter Elwin team:");
   const cookiePrefix = 'ExperimentId=';
   const start = document.cookie.indexOf(cookiePrefix);
   const end = document.cookie.indexOf(';', start);
   const id = document.cookie.slice(start+cookiePrefix.length, end);
-  let req = new Request('http://elwin-test.ttoapps.aws.cloud.nordstrom.net/gen?label=search');
+  let req = new Request(`http://elwin-test.ttoapps.aws.cloud.nordstrom.net/gen?label=${team}`);
   fetch(req)
   .then(resp => resp.json())
   .then(json => {
