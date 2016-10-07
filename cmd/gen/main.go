@@ -72,7 +72,7 @@ func main() {
 	log.Println(http.ListenAndServe(listenAddr, nil))
 }
 
-func bookmarkletHandler(w http.ResponseWriter, r *http.Request) {
+func bookmarkletHandler(w http.ResponseWriter, _ *http.Request) {
 	if err := bookmarkletTmpl.Execute(w, os.Getenv(envURL)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -139,6 +139,7 @@ func genHandler(w http.ResponseWriter, _ *http.Request) {
 type experimentValue struct {
 	NamespaceName  string             `json:"namespaceName"`
 	ExperimentName string             `json:"experimentName"`
+	Labels         string             `json:"labels"`
 	Params         map[string][]param `json:"params"`
 }
 
@@ -158,6 +159,7 @@ func gen(ns []choices.Namespace) ([]experimentValue, error) {
 			ev := experimentValue{
 				NamespaceName:  n.Name,
 				ExperimentName: e.Name,
+				Labels:         strings.Join(n.TeamID, ", "),
 				Params:         make(map[string][]param, 16),
 			}
 
