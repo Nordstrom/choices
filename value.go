@@ -14,7 +14,10 @@
 
 package choices
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // ValueType are the different types of Values a Param can have. This is used
 // for parsing params in storage.
@@ -42,6 +45,15 @@ type Uniform struct {
 func (u *Uniform) Value(i uint64) (string, error) {
 	choice := int(i % uint64(len(u.Choices)))
 	return u.Choices[choice], nil
+}
+
+func (u *Uniform) MarshalJSON() ([]byte, error) {
+	var aux = struct {
+		Choices []string `json:"choices"`
+	}{
+		Choices: u.Choices,
+	}
+	return json.Marshal(aux)
 }
 
 // Weighted is a way to select from a list of Choices with probability ratio
@@ -74,4 +86,15 @@ func (w *Weighted) Value(i uint64) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no selection was made")
+}
+
+func (w *Weighted) MarshalJSON() ([]byte, error) {
+	var aux = struct {
+		Choices []string  `json:"choices"`
+		Weights []float64 `json:"weights"`
+	}{
+		Choices: w.Choices,
+		Weights: w.Weights,
+	}
+	return json.Marshal(aux)
 }

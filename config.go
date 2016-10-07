@@ -90,18 +90,10 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	return e, nil
 }
 
-// GlobalSalt sets the salt used in hashing users.
-func GlobalSalt(salt string) ConfigOpt {
-	return func(ec *Config) error {
-		ec.globalSalt = salt
-		return nil
-	}
-}
-
-// UpdateInterval changes the update interval for Storage. Must call
+// WithUpdateInterval changes the update interval for Storage. Must call
 // SetStorage after this or cancel context of the current Storage and call
 // SetStorage again.
-func UpdateInterval(dur time.Duration) ConfigOpt {
+func WithUpdateInterval(dur time.Duration) ConfigOpt {
 	return func(ec *Config) error {
 		ec.updateInterval = dur
 		return nil

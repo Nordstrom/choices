@@ -14,7 +14,11 @@
 
 package choices
 
-import storage "github.com/foolusion/choices/elwinstorage"
+import (
+	"encoding/json"
+
+	storage "github.com/foolusion/choices/elwinstorage"
+)
 
 // ParamValue is a key value pair returned from an evalated experiment
 // parameter.
@@ -76,6 +80,19 @@ func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 	return p, nil
 }
 
+func (e *Experiment) MarhalJSON() ([]byte, error) {
+	var aux = struct {
+		Name     string   `json:"name"`
+		Segments segments `json:"segments"`
+		Params   []Param  `json:"params"`
+	}{
+		Name:     e.Name,
+		Segments: e.Segments,
+		Params:   e.Params,
+	}
+	return json.Marshal(aux)
+}
+
 // Param is a struct that represents a single parameter in an experiment. Param
 // is evaluated through the call to Namespaces.
 type Param struct {
@@ -101,8 +118,19 @@ func (p *Param) ToParam() *storage.Param {
 	return param
 }
 
+func (p *Param) MarshalJSON() ([]byte, error) {
+	var aux = struct {
+		Name   string `json:"name"`
+		Values Value  `json:"values"`
+	}{
+		Name:   p.Name,
+		Values: p.Value,
+	}
+	return json.Marshal(aux)
+}
+
 func (p *Param) eval(h hashConfig) (ParamValue, error) {
-	h.salt[3] = p.Name
+	h.setParam(p.Name)
 	i, err := hash(h)
 	if err != nil {
 		return ParamValue{}, err

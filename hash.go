@@ -18,38 +18,60 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/binary"
+	"errors"
 )
 
 const longScale = float64(0xFFFFFFFFFFFFFFFF)
 
+var (
+	globalSalt = "choices"
+)
+
+var (
+	calledSet               bool
+	ErrGlobalSaltAlreadySet = errors.New("global salt already set")
+)
+
+func SetGlobalSalt(s string) error {
+	if calledSet {
+		return ErrGlobalSaltAlreadySet
+	}
+
+	globalSalt = s
+	calledSet = true
+	return nil
+}
+
+func WithGlobalSalt(s string) ConfigOpt {
+	return func(c *Config) error {
+		globalSalt = s
+		return nil
+	}
+}
+
 type hashConfig struct {
-	salt   [4]string
+	salt   [3]string
 	userID string
 }
 
-func (cfg *Config) HashExperience(namespace, experiment, param, userID string) (uint64, error) {
+func HashExperience(namespace, experiment, param, userID string) (uint64, error) {
 	h := hashConfig{userID: userID}
-	h.setSalt(cfg.globalSalt)
 	h.setNs(namespace)
 	h.setExp(experiment)
 	h.setParam(param)
 	return hash(h)
 }
 
-func (h *hashConfig) setSalt(s string) {
-	h.salt[0] = s
-}
-
 func (h *hashConfig) setNs(ns string) {
-	h.salt[1] = ns
+	h.salt[0] = ns
 }
 
 func (h *hashConfig) setExp(exp string) {
-	h.salt[2] = exp
+	h.salt[1] = exp
 }
 
 func (h *hashConfig) setParam(p string) {
-	h.salt[3] = p
+	h.salt[2] = p
 }
 
 func (h *hashConfig) setUserID(u string) {
@@ -75,7 +97,8 @@ func (e *errWriter) writeByte(b byte) {
 
 func (h *hashConfig) Bytes() ([]byte, error) {
 	ew := errWriter{}
-
+	ew.writeString(globalSalt)
+	ew.writeByte('.')
 	for i, v := range h.salt {
 		ew.writeString(v)
 		if i < len(h.salt)-1 {

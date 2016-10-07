@@ -17,6 +17,11 @@ package choices
 import "testing"
 
 func TestExperiment(t *testing.T) {
+	backup := globalSalt
+	defer func() {
+		globalSalt = backup
+	}()
+	globalSalt = ""
 	var seg segments
 	copy(seg[:], segmentsAll[:])
 	tests := []struct {
@@ -54,6 +59,12 @@ func TestExperiment(t *testing.T) {
 }
 
 func TestParamEval(t *testing.T) {
+	backup := globalSalt
+	defer func() {
+		globalSalt = backup
+	}()
+
+	globalSalt = "test"
 	tests := []struct {
 		p    Param
 		want ParamValue
@@ -70,7 +81,7 @@ func TestParamEval(t *testing.T) {
 			err:  nil,
 		},
 	}
-	h := hashConfig{salt: [4]string{"test", "", "", ""}}
+	h := hashConfig{salt: [3]string{"", "", ""}}
 	for _, test := range tests {
 		got, err := test.p.eval(h)
 		if err != test.err {
@@ -93,7 +104,7 @@ func BenchmarkExperimentEval(b *testing.B) {
 	}
 	copy(e.Segments[:], segmentsAll[:])
 	h := hashConfig{
-		salt: [4]string{"salt", "namespace", "", ""},
+		salt: [3]string{"namespace", "", ""},
 	}
 	for i := 0; i < b.N; i++ {
 		if _, err := e.eval(h); err != nil {

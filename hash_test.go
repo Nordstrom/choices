@@ -24,14 +24,14 @@ func TestHash(t *testing.T) {
 	}{
 		{
 			in: hashConfig{
-				salt: [4]string{"hello", "", "", ""},
+				salt: [3]string{"", "", ""},
 			},
-			out:    15651637208744958586,
+			out:    11350825000285427928,
 			outErr: nil,
 		},
 		{
 			in: hashConfig{
-				salt:   [4]string{"choices", "hello", "test", "something"},
+				salt:   [3]string{"hello", "test", "something"},
 				userID: "my-user-id",
 			},
 			out:    13108963186855807482,
@@ -92,8 +92,13 @@ func TestUniform(t *testing.T) {
 }
 
 func BenchmarkHash(b *testing.B) {
+	backup := globalSalt
+	defer func() {
+		globalSalt = backup
+	}()
+	globalSalt = "salt"
 	h := hashConfig{
-		salt:   [4]string{"salt", "namespace", "experiment", "param"},
+		salt:   [3]string{"namespace", "experiment", "param"},
 		userID: "abcdef1234567890",
 	}
 	for i := 0; i < b.N; i++ {
@@ -113,7 +118,12 @@ func BenchmarkHashBytes(b *testing.B) {
 }
 
 func BenchmarkHashBytesAll(b *testing.B) {
-	h := hashConfig{salt: [4]string{"salt", "namespace", "experiment", "param"}, userID: "value"}
+	backup := globalSalt
+	defer func() {
+		globalSalt = backup
+	}()
+	globalSalt = "salt"
+	h := hashConfig{salt: [3]string{"namespace", "experiment", "param"}, userID: "value"}
 	for i := 0; i < b.N; i++ {
 		if _, err := h.Bytes(); err != nil {
 			b.Fatal(err)

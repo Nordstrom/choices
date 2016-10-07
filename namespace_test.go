@@ -24,7 +24,6 @@ func BenchmarkNamespaceEval(b *testing.B) {
 		b.Fatal(err)
 	}
 	h := hashConfig{}
-	h.setSalt(defaultSalt)
 	h.setUserID("my-user-id")
 	for i := 0; i < b.N; i++ {
 		if _, err := ns.eval(h); err != nil {

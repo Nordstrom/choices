@@ -15,6 +15,8 @@
 package choices
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"math/rand"
 )
@@ -94,6 +96,27 @@ func (s segments) count() int {
 		count += int(cnt[v])
 	}
 	return count
+}
+
+func InSegment(namespace, userID string, s segments) bool {
+	h := hashConfig{userID: userID}
+	h.setNs(namespace)
+	i, err := hash(h)
+	if err != nil {
+		return false
+	}
+	segment := uniform(i, 0, float64(len(s)*8))
+
+	return s.isClaimed(uint64(segment))
+}
+
+func (s segments) MarshalJSON() ([]byte, error) {
+	var aux = struct {
+		segments string `json:"segments"`
+	}{
+		segments: hex.EncodeToString(s[:]),
+	}
+	return json.Marshal(aux)
 }
 
 var cnt = [256]byte{0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8}

@@ -15,6 +15,7 @@
 package choices
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -98,6 +99,19 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 	return ExperimentResponse{}, fmt.Errorf("unreachable code Namespace.eval")
 }
 
+func (n *Namespace) MarshalJSON() ([]byte, error) {
+	var aux = struct {
+		Name        string       `json:"name"`
+		Segments    segments     `json:"segments"`
+		Experiments []Experiment `json:"experiments"`
+	}{
+		Name:        n.Name,
+		Segments:    n.Segments,
+		Experiments: n.Experiments,
+	}
+	return json.Marshal(aux)
+}
+
 // ExperimentResponse holds the data for an evaluated expeiment.
 type ExperimentResponse struct {
 	Name   string
@@ -109,7 +123,6 @@ type ExperimentResponse struct {
 // if it is successful or an error if something went wrong.
 func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
 	h := hashConfig{}
-	h.setSalt(ec.globalSalt)
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
