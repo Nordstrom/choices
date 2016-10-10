@@ -30,11 +30,10 @@ var (
 
 // Namespace is a container for experiments. Segments in the namespace divide
 // traffic. Units are the keys that will hash experiments.
-// TODO: rename TeamID to Labels
 type Namespace struct {
 	Name        string
 	Segments    segments
-	TeamID      []string
+	Labels      []string
 	Experiments []Experiment
 }
 
@@ -43,7 +42,7 @@ type Namespace struct {
 func NewNamespace(name string, labels []string) *Namespace {
 	n := &Namespace{
 		Name:   name,
-		TeamID: labels,
+		Labels: labels,
 	}
 	return n
 }
@@ -53,7 +52,7 @@ func NewNamespace(name string, labels []string) *Namespace {
 func (n *Namespace) ToNamespace() *storage.Namespace {
 	ns := &storage.Namespace{
 		Name:        n.Name,
-		Labels:      n.TeamID,
+		Labels:      n.Labels,
 		Experiments: make([]*storage.Experiment, len(n.Experiments)),
 	}
 	for i, e := range n.Experiments {
@@ -112,10 +111,12 @@ func (n *Namespace) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		Name        string       `json:"name"`
 		Segments    segments     `json:"segments"`
+		Labels      []string     `json:"labels"`
 		Experiments []Experiment `json:"experiments"`
 	}{
 		Name:        n.Name,
 		Segments:    n.Segments,
+		Labels:      n.Labels,
 		Experiments: n.Experiments,
 	}
 	return json.Marshal(aux)

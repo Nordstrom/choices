@@ -167,7 +167,7 @@ func TeamNamespaces(s NamespaceStore, teamID string) []Namespace {
 	allNamespaces := s.Read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {
-		for _, t := range n.TeamID {
+		for _, t := range n.Labels {
 			if t == teamID {
 				teamNamespaces = append(teamNamespaces, n)
 			}

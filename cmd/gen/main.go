@@ -173,7 +173,7 @@ func gen(ns []choices.Namespace) ([]experimentValue, error) {
 			ev := experimentValue{
 				NamespaceName:  n.Name,
 				ExperimentName: e.Name,
-				Labels:         strings.Join(n.TeamID, ", "),
+				Labels:         strings.Join(n.Labels, ", "),
 				Params:         make(map[string][]param, 16),
 			}
 

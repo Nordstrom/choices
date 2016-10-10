@@ -420,7 +420,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 
 func createNamespace(name string, labels []string, exp choices.Experiment) error {
 	log.Println("starting create namespace")
-	newProd := choices.Namespace{Name: name, TeamID: labels, Experiments: []choices.Experiment{exp}}
+	newProd := choices.Namespace{Name: name, Labels: labels, Experiments: []choices.Experiment{exp}}
 	cr, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{
 		Namespace:   newProd.ToNamespace(),
 		Environment: storage.Environment_Production,
