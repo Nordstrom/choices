@@ -63,7 +63,7 @@ type NamespaceStore struct {
 	cache []Namespace
 }
 
-// newNamespaceStore creates a new in memory store for the data and client to
+// NewNamespaceStore creates a new in memory store for the data and client to
 // use to update the in memory store.
 func NewNamespaceStore(cc *grpc.ClientConn, env int) *NamespaceStore {
 	return &NamespaceStore{

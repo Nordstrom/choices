@@ -92,7 +92,7 @@ func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 }
 
 // MarshalJSON implements the json.Marshaler interface for Experiments.
-func (e *Experiment) MarhalJSON() ([]byte, error) {
+func (e *Experiment) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		Name     string   `json:"name"`
 		Segments segments `json:"segments"`
@@ -112,6 +112,7 @@ type Param struct {
 	Value Value
 }
 
+// ToParam is a helper function that converts a Param into a *storage.Param.
 func (p *Param) ToParam() *storage.Param {
 	param := &storage.Param{
 		Name: p.Name,

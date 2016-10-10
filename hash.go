@@ -29,7 +29,10 @@ var (
 )
 
 var (
-	calledSet               bool
+	calledSet bool
+
+	// ErrGlobalSaltAlreadySet is the error returned when a SetGlobalSalt
+	// has been called more than once.
 	ErrGlobalSaltAlreadySet = errors.New("global salt already set")
 )
 
