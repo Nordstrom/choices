@@ -71,7 +71,7 @@ func newNamespaceStore(cc *grpc.ClientConn, env int) *namespaceStore {
 	}
 }
 
-// Read returns the current list of Namespace that are in memory.
+// read returns the current list of Namespace that are in memory.
 func (n *namespaceStore) read() []Namespace {
 	out := make([]Namespace, len(n.cache))
 	n.mu.RLock()
@@ -80,7 +80,7 @@ func (n *namespaceStore) read() []Namespace {
 	return out
 }
 
-// Update requests the data from storage server and updates the in memory copy
+// update requests the data from storage server and updates the in memory copy
 // with the lastest data. It returns wether or not the update was successful.
 func (n *namespaceStore) update() error {
 	var req *storage.AllRequest
