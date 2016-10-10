@@ -55,8 +55,7 @@ func WithStorageConfig(addr string, env int) ConfigOpt {
 
 // NamespaceStore is the in memory copy of the storage. el is the
 // storage.ElwinStorageClient used to get the data out of storage.
-// TODO: evaluate whether this can become unexported
-type NamespaceStore struct {
+type namespaceStore struct {
 	mu    sync.RWMutex
 	el    storage.ElwinStorageClient
 	env   int
@@ -65,15 +64,15 @@ type NamespaceStore struct {
 
 // NewNamespaceStore creates a new in memory store for the data and client to
 // use to update the in memory store.
-func NewNamespaceStore(cc *grpc.ClientConn, env int) *NamespaceStore {
-	return &NamespaceStore{
+func NewNamespaceStore(cc *grpc.ClientConn, env int) *namespaceStore {
+	return &namespaceStore{
 		el:  storage.NewElwinStorageClient(cc),
 		env: env,
 	}
 }
 
 // Read returns the current list of Namespace that are in memory.
-func (n *NamespaceStore) Read() []Namespace {
+func (n *namespaceStore) Read() []Namespace {
 	out := make([]Namespace, len(n.cache))
 	n.mu.RLock()
 	copy(out, n.cache)
@@ -83,7 +82,7 @@ func (n *NamespaceStore) Read() []Namespace {
 
 // Update requests the data from storage server and updates the in memory copy
 // with the lastest data. It returns wether or not the update was successful.
-func (n *NamespaceStore) Update() error {
+func (n *namespaceStore) Update() error {
 	var req *storage.AllRequest
 	switch n.env {
 	case StorageEnvironmentDev:
@@ -163,7 +162,7 @@ func FromParam(s *storage.Param) Param {
 }
 
 // TeamNamespaces filters the namespaces from storage based on teamID.
-func TeamNamespaces(s NamespaceStore, teamID string) []Namespace {
+func TeamNamespaces(s namespaceStore, teamID string) []Namespace {
 	allNamespaces := s.Read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {

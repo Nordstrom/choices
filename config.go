@@ -24,7 +24,7 @@ import (
 
 // Config is the configuration struct used in an elwin server.
 type Config struct {
-	Storage        *NamespaceStore
+	Storage        *namespaceStore
 	updateInterval time.Duration
 	ErrChan        chan error
 }
