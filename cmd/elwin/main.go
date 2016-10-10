@@ -86,7 +86,6 @@ var (
 
 func init() {
 	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/gen", genHandler)
 	http.HandleFunc("/healthz", healthzHandler)
 	http.HandleFunc("/readiness", readinessHandler)
 	prometheus.MustRegister(jsonRequests)
@@ -134,9 +133,9 @@ func main() {
 	defer cancel()
 	ec, err := choices.NewChoices(
 		ctx,
-		choices.GlobalSalt("choices"),
+		choices.WithGlobalSalt("choices"),
 		choices.WithStorageConfig(config.mongoAddr, storageEnv),
-		choices.UpdateInterval(time.Minute),
+		choices.WithUpdateInterval(time.Minute),
 	)
 	if err != nil {
 		log.Fatal(err)
