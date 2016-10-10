@@ -47,6 +47,7 @@ func (u *Uniform) Value(i uint64) (string, error) {
 	return u.Choices[choice], nil
 }
 
+// MarshalJSON implements the json.Marshaler interface for Uniform choices.
 func (u *Uniform) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		Choices []string `json:"choices"`
@@ -88,6 +89,7 @@ func (w *Weighted) Value(i uint64) (string, error) {
 	return "", fmt.Errorf("no selection was made")
 }
 
+// MarshalJSON implements the json.Marshaler interface for Weighted choices.
 func (w *Weighted) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		Choices []string  `json:"choices"`

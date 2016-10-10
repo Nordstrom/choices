@@ -44,11 +44,14 @@ func (s segments) Claim(out segments) (segments, error) {
 	return seg, nil
 }
 
+// isClaimed returns whether or not a given segment is claimed from the
+// segments.
 func (s segments) isClaimed(seg uint64) bool {
 	index, pos := seg/8, seg%8
 	return s[index]>>pos&1 == 1
 }
 
+// available returns a list of segments that are available.
 func (s segments) available() []int {
 	out := make([]int, 0, 128)
 	for i := range s {
@@ -68,6 +71,7 @@ const (
 	one
 )
 
+// set claims or releases the segment at the given index
 func (s segments) set(index int, val bit) segments {
 	i, pos := index/8, uint8(index%8)
 	switch val {
@@ -79,6 +83,9 @@ func (s segments) set(index int, val bit) segments {
 	return s
 }
 
+// sample samples segments that are unclaimed and returns a the segments and
+// the sample. If n is greater than the number of available segments it returns
+// an error.
 func (s segments) sample(n int) (orig, out segments) {
 	avail := s.available()
 	orig = s
@@ -90,6 +97,7 @@ func (s segments) sample(n int) (orig, out segments) {
 	return
 }
 
+// count returns the number of claimed segments
 func (s segments) count() int {
 	count := 0
 	for _, v := range s {
@@ -98,6 +106,9 @@ func (s segments) count() int {
 	return count
 }
 
+// InSegment takes a namespace name, userID and segments and returns whether
+// the userID is in a segment that is claimed. Typical use case for this is
+// determining whether or not a user is in a given experiment.
 func InSegment(namespace, userID string, s segments) bool {
 	h := hashConfig{userID: userID}
 	h.setNs(namespace)
@@ -110,6 +121,7 @@ func InSegment(namespace, userID string, s segments) bool {
 	return s.isClaimed(uint64(segment))
 }
 
+// MarshalJSON implements the json.Marshaler interface for segments
 func (s segments) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		segments string `json:"segments"`

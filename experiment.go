@@ -36,17 +36,24 @@ type Experiment struct {
 	Segments segments
 }
 
+// NewExperiment creates an experiment with the supplied name and no segments
+// cliamed. In order for any traffic to be assigned to this experiment you will
+// need to call Experiment.SetSegments or Experiment.SampleSegments.
 func NewExperiment(name string) *Experiment {
 	return &Experiment{
 		Name: name,
 	}
 }
 
+// SetSegments copies the segments supplied to the experiment.
 func (e *Experiment) SetSegments(seg segments) *Experiment {
 	copy(e.Segments[:], seg[:])
 	return e
 }
 
+// SampleSegments takes a namespace and an amount of segments you want in your
+// experiment and returns a random sample of the unclaimed segments from the
+// namespace.
 func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
 	orig, seg := ns.Segments.sample(num)
 	ns.Segments = orig
@@ -54,6 +61,8 @@ func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
 	return e
 }
 
+// ToExperiment is a helper function that converts an Experiment into a
+// *storage.Experiment.
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
 		Name:     e.Name,
@@ -67,6 +76,8 @@ func (e *Experiment) ToExperiment() *storage.Experiment {
 	return exp
 }
 
+// eval evaluates the experiment based on the given hashConfig. It returns a
+// []ParamValue of the evaluated params or an error.
 func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 	p := make([]ParamValue, len(e.Params))
 	h.salt[2] = e.Name
@@ -80,6 +91,7 @@ func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
 	return p, nil
 }
 
+// MarshalJSON implements the json.Marshaler interface for Experiments.
 func (e *Experiment) MarhalJSON() ([]byte, error) {
 	var aux = struct {
 		Name     string   `json:"name"`
@@ -118,6 +130,7 @@ func (p *Param) ToParam() *storage.Param {
 	return param
 }
 
+// MarshalJSON implements the json.Marshaler interface for Params.
 func (p *Param) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		Name   string `json:"name"`
@@ -129,6 +142,8 @@ func (p *Param) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aux)
 }
 
+// eval evaluates the Param based on the given hashConfid. It returns a
+// ParamValue containing the value the user is assigned.
 func (p *Param) eval(h hashConfig) (ParamValue, error) {
 	h.setParam(p.Name)
 	i, err := hash(h)

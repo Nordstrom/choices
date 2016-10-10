@@ -30,6 +30,7 @@ var (
 
 // Namespace is a container for experiments. Segments in the namespace divide
 // traffic. Units are the keys that will hash experiments.
+// TODO: rename TeamID to Labels
 type Namespace struct {
 	Name        string
 	Segments    segments
@@ -47,6 +48,8 @@ func NewNamespace(name string, labels []string) *Namespace {
 	return n
 }
 
+// ToNamespace is a helper function that converts a Namespace into a
+// *storage.Namespace.
 func (n *Namespace) ToNamespace() *storage.Namespace {
 	ns := &storage.Namespace{
 		Name:        n.Name,
@@ -59,9 +62,10 @@ func (n *Namespace) ToNamespace() *storage.Namespace {
 	return ns
 }
 
-// AddExperiment adds an experiment to the namespace. It takes the the given number of
-// segments from the namespace. It returns an error if the number of segments
-// is larger than the number of available segments in the namespace.
+// AddExperiment adds an experiment to the namespace. It takes the the given
+// number of segments from the namespace. It returns an error if the number of
+// segments is larger than the number of available segments in the namespace.
+// TODO: make sure this is still needed
 func (n *Namespace) AddExperiment(e Experiment) error {
 	seg, err := n.Segments.Claim(e.Segments)
 	if err != nil {
@@ -72,6 +76,10 @@ func (n *Namespace) AddExperiment(e Experiment) error {
 	return nil
 }
 
+// eval evaluates the current namespace given the hashConfig supplied. If the
+// user hashes into a segment that is not claimed by an experiment then eval
+// returns the error ErrSegmentNotInExperiment. Otherwise it should return an
+// ExperimentResponse.
 func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 	h.setNs(n.Name)
 	i, err := hash(h)
@@ -99,6 +107,7 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 	return ExperimentResponse{}, fmt.Errorf("unreachable code Namespace.eval")
 }
 
+// MarshalJSON implements the json.Marshaler interface for Namespaces.
 func (n *Namespace) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		Name        string       `json:"name"`
@@ -118,8 +127,8 @@ type ExperimentResponse struct {
 	Params []ParamValue
 }
 
-// Namespaces determines the assignments for the a given users units based on
-// the current set of namespaces and experiments. It returns a Response object
+// Namespaces determines the assignments for the a given user's id based on the
+// current set of namespaces and experiments. It returns a []ExperimentResponse
 // if it is successful or an error if something went wrong.
 func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
 	h := hashConfig{}

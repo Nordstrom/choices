@@ -24,27 +24,31 @@ import (
 
 // Config is the configuration struct used in an elwin server.
 type Config struct {
-	globalSalt     string
 	Storage        *NamespaceStore
 	updateInterval time.Duration
 	ErrChan        chan error
 }
 
+// ConfigOpt is a type that modifies Config. It is used when calling NewChoices
+// to configure choices.
 type ConfigOpt func(*Config) error
 
 const (
-	defaultSalt           string        = "choices"
 	defaultUpdateInterval time.Duration = 5 * time.Minute
 )
 
+// ErrUpdateStorage is an error type that is returned when storage fails to
+// update.
 type ErrUpdateStorage struct {
 	error
 }
 
+// Error is to implement the error interface
 func (e ErrUpdateStorage) Error() string {
 	return e.error.Error()
 }
 
+// Cause is to implement the errors.causer interface.
 func (e ErrUpdateStorage) Cause() error {
 	return e
 }
@@ -55,7 +59,6 @@ func (e ErrUpdateStorage) Cause() error {
 // NewChoices again otherwise you will leak go routines.
 func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	e := &Config{
-		globalSalt:     defaultSalt,
 		updateInterval: defaultUpdateInterval,
 		ErrChan:        make(chan error, 1),
 	}

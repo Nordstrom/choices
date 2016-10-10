@@ -24,6 +24,7 @@ import (
 const longScale = float64(0xFFFFFFFFFFFFFFFF)
 
 var (
+	// globalSalt should only ever be set once.
 	globalSalt = "choices"
 )
 
@@ -32,6 +33,8 @@ var (
 	ErrGlobalSaltAlreadySet = errors.New("global salt already set")
 )
 
+// SetGlobalSalt this sets the global salt used for hashing users. It should
+// only ever be called once. It returns an error if it is called more than once.
 func SetGlobalSalt(s string) error {
 	if calledSet {
 		return ErrGlobalSaltAlreadySet
@@ -42,6 +45,8 @@ func SetGlobalSalt(s string) error {
 	return nil
 }
 
+// WithGlobalSalt is a configuration option for Config that sets the globalSalt
+// to something other than the default.
 func WithGlobalSalt(s string) ConfigOpt {
 	return func(c *Config) error {
 		globalSalt = s
@@ -49,11 +54,15 @@ func WithGlobalSalt(s string) ConfigOpt {
 	}
 }
 
+// hashConfig is a struct to store the hash data.
 type hashConfig struct {
+	// salt has 3 parts namespace is index 0, experiment is index 1, and param is index 2
 	salt   [3]string
 	userID string
 }
 
+// HashExperience takes the supplied arguments and returns the hashed uint64
+// that can be used for determining a segment.
 func HashExperience(namespace, experiment, param, userID string) (uint64, error) {
 	h := hashConfig{userID: userID}
 	h.setNs(namespace)
@@ -62,39 +71,49 @@ func HashExperience(namespace, experiment, param, userID string) (uint64, error)
 	return hash(h)
 }
 
+// setNs sets the namespaces portion of the salt
 func (h *hashConfig) setNs(ns string) {
 	h.salt[0] = ns
 }
 
+// setExp sets the experiment portion of the salt
 func (h *hashConfig) setExp(exp string) {
 	h.salt[1] = exp
 }
 
+// setParam sets the param portion of the salt
 func (h *hashConfig) setParam(p string) {
 	h.salt[2] = p
 }
 
+// setUserID sets the userID
 func (h *hashConfig) setUserID(u string) {
 	h.userID = u
 }
 
+// errWriter is a convience struct to eliminate lots of if err != nil.
 type errWriter struct {
 	buf bytes.Buffer
 	err error
 }
 
+// writeString writes the given string to the buf or nothing if err != nil
 func (e *errWriter) writeString(s string) {
 	if e.err == nil {
 		_, e.err = e.buf.WriteString(s)
 	}
 }
 
+// writeByte writes a single byte to the buf or nothing if err != nil
 func (e *errWriter) writeByte(b byte) {
 	if e.err == nil {
 		e.err = e.buf.WriteByte(b)
 	}
 }
 
+// Bytes returns a []byte that represents the entire salt+userID the format is
+// as follows.
+//     "globalSalt.namespace.experiment.param@userID"
 func (h *hashConfig) Bytes() ([]byte, error) {
 	ew := errWriter{}
 	ew.writeString(globalSalt)
@@ -116,6 +135,7 @@ func (h *hashConfig) Bytes() ([]byte, error) {
 	return ew.buf.Bytes(), nil
 }
 
+// hash hashes the hashConfig returning a uint64 hashed value or an error.
 func hash(h hashConfig) (uint64, error) {
 	b, err := h.Bytes()
 	if err != nil {
@@ -126,6 +146,8 @@ func hash(h hashConfig) (uint64, error) {
 	return i, nil
 }
 
+// uniform returns a uniformly random value between the min and max values
+// supplied.
 func uniform(hash uint64, min, max float64) float64 {
 	return min + (max-min)*(float64(hash)/longScale)
 }
