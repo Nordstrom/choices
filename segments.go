@@ -32,7 +32,7 @@ var (
 	ErrSegmentUnavailable = errors.New("segment unavailable")
 )
 
-// Remove removes the segments in del from s and throws an error if the
+// Claim removes the segments in del from s and throws an error if the
 func (s segments) Claim(out segments) (segments, error) {
 	var seg segments
 	for i := range seg {
@@ -86,15 +86,17 @@ func (s segments) set(index int, val bit) segments {
 // sample samples segments that are unclaimed and returns a the segments and
 // the sample. If n is greater than the number of available segments it returns
 // an error.
-func (s segments) sample(n int) (orig, out segments) {
+func (s segments) sample(n int) segments {
 	avail := s.available()
-	orig = s
 	p := rand.Perm(len(avail))
+	var out segments
+	if n > len(avail) {
+		n = len(avail)
+	}
 	for i := 0; i < n; i++ {
-		orig = s.set(avail[p[i]], one)
 		out = out.set(avail[p[i]], one)
 	}
-	return
+	return out
 }
 
 // count returns the number of claimed segments
@@ -123,12 +125,7 @@ func InSegment(namespace, userID string, s segments) bool {
 
 // MarshalJSON implements the json.Marshaler interface for segments
 func (s segments) MarshalJSON() ([]byte, error) {
-	var aux = struct {
-		segments string `json:"segments"`
-	}{
-		segments: hex.EncodeToString(s[:]),
-	}
-	return json.Marshal(aux)
+	return json.Marshal(hex.EncodeToString(s[:]))
 }
 
 var cnt = [256]byte{0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8}

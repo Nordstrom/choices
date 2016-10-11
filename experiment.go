@@ -55,8 +55,12 @@ func (e *Experiment) SetSegments(seg segments) *Experiment {
 // experiment and returns a random sample of the unclaimed segments from the
 // namespace.
 func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
-	orig, seg := ns.Segments.sample(num)
-	ns.Segments = orig
+	seg := ns.Segments.sample(num)
+	nsSeg, err := ns.Segments.Claim(seg)
+	if err != nil {
+		panic(err)
+	}
+	copy(ns.Segments[:], nsSeg[:])
 	e.Segments = seg
 	return e
 }

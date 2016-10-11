@@ -103,7 +103,7 @@ func TestSegmentsSample(t *testing.T) {
 
 	for k, test := range tests {
 		rand.Seed(0)
-		_, got := test.seg.sample(test.num)
+		got := test.seg.sample(test.num)
 		if got != test.want {
 			t.Errorf("%s: test.sample() = %v, want %v", k, got, test.want)
 		}
