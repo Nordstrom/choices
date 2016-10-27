@@ -502,9 +502,10 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		Environment: storage.Environment_Staging,
 	})
 	if err != nil {
-		stagingNS = choices.Namespace{}
+		http.Error(w, "namespace not found: "+err.Error(), http.StatusNotFound)
+		return
 	} else {
-		prodNS, err = choices.FromNamespace(stagReadReq.Namespace)
+		stagingNS, err = choices.FromNamespace(stagReadReq.Namespace)
 		if err != nil {
 			errRequests.With(labelGen(mint)).Inc()
 			logAndWriteError(err, "could not parse staging namespace", w, http.StatusInternalServerError)
@@ -518,6 +519,10 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 			stagIndex = i
 			break
 		}
+	}
+	if stagIndex == -1 {
+		http.Error(w, "could not match experiment", http.StatusNotFound)
+		return
 	}
 
 	if err := deleteExperiment(stagingNS, storageEnv, stagIndex); err != nil {
@@ -550,6 +555,7 @@ func deleteExperiment(ns choices.Namespace, env storage.Environment, index int) 
 		return nil
 	}
 	ns.Experiments[index] = ns.Experiments[len(ns.Experiments)-1]
+	ns.Experiments[len(ns.Experiments)-1] = choices.Experiment{}
 	ns.Experiments = ns.Experiments[:len(ns.Experiments)-1]
 	if _, err := cfg.esc.Update(context.TODO(), &storage.UpdateRequest{
 		Namespace:   ns.ToNamespace(),
