@@ -1,11 +1,14 @@
 import React from 'react';
 
 export const Values = props => {
-  const values = props.values.map(value => {
+  if (!props.values) {
+    return false;
+  }
+  const values = props.values.choices.map((choice, i) => {
     return (
-      <div className="value" key={value.name}>
-        <h2 className="value-name">{value.name}</h2>
-        <span className="value-weight">{value.weight}</span>
+      <div className="value" key={choice}>
+        <h2 className="value-name">{choice}</h2>
+        <span className="value-weight">{props.values.weights ? props.values.weights[i] : 1}</span>
       </div>
     );
   });

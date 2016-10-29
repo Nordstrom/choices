@@ -4,6 +4,9 @@ import { Params } from './Params.js';
 import './Experiments.css';
 
 export const Experiments = props => {
+  if (!props.experiments) {
+    return false;
+  }
   const experiments = props.experiments.map(experiment => {
     return (
       <div className="experiment" key={experiment.name}>
