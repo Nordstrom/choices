@@ -1,0 +1,7 @@
+.value {
+  border: 1px solid black;
+}
+
+.value-container {
+  display: flex;
+}

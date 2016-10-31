@@ -17,7 +17,7 @@ export const Namespaces = props => {
     );
   });
   return (
-    <div>
+    <div className="namespace-container">
       {namespaces}
     </div>
   )

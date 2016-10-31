@@ -1,6 +1,15 @@
+.namespace-container {
+  width: 700px;
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+}
+
 .namespace {
+  margin: 10px;
   background-color: #eee;
-  width: 400px;
+  width: 300px;
+  flex: 1 1 auto;
 }
 
 .namespace-name {
