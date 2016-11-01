@@ -16,6 +16,7 @@ package mongo
 
 import (
 	"encoding/hex"
+	"fmt"
 	"log"
 
 	"google.golang.org/grpc"
@@ -255,31 +256,42 @@ func pToSP(p types.Param) *storage.Param {
 	return param
 }
 
-func snToN(n *storage.Namespace) types.Namespace {
+func snToN(n *storage.Namespace) (types.Namespace, error) {
 	ns := types.Namespace{
 		Name:        n.Name,
 		Labels:      n.Labels,
 		Experiments: make([]types.Experiment, len(n.Experiments)),
 	}
 	for i, exp := range n.Experiments {
-		ns.Experiments[i] = seToE(exp)
+		var err error
+		ns.Experiments[i], err = seToE(exp)
+		if err != nil {
+			return types.Namespace{}, err
+		}
 	}
-	return ns
+	return ns, nil
 }
 
-func seToE(e *storage.Experiment) types.Experiment {
+func seToE(e *storage.Experiment) (types.Experiment, error) {
 	exp := types.Experiment{
 		Name:     e.Name,
 		Segments: hex.EncodeToString(e.Segments),
 		Params:   make([]types.Param, len(e.Params)),
 	}
 	for i, param := range e.Params {
-		exp.Params[i] = spToP(param)
+		var err error
+		exp.Params[i], err = spToP(param)
+		if err != nil {
+			return types.Experiment{}, err
+		}
 	}
-	return exp
+	return exp, nil
 }
 
-func spToP(p *storage.Param) types.Param {
+func spToP(p *storage.Param) (types.Param, error) {
+	if types.Value == nil {
+		return types.Param{}, fmt.Errorf("values not supplied in param")
+	}
 	return types.Param{
 		Name: p.Name,
 		Value: types.Value{
