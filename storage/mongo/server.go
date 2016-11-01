@@ -85,7 +85,10 @@ func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
 	}
 
-	nsi := snToN(r.Namespace)
+	nsi, err := snToN(r.Namespace)
+	if err != nil {
+		return nil, err
+	}
 	var env string
 	switch r.Environment {
 	case storage.Environment_Staging:
@@ -96,7 +99,7 @@ func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
 	}
 
-	err := s.sess.DB(s.db).C(env).Insert(nsi)
+	err = s.sess.DB(s.db).C(env).Insert(nsi)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "unable to insert experiment into database: %s", err)
 	}
@@ -138,7 +141,10 @@ func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad request")
 	}
 
-	nsi := snToN(r.Namespace)
+	nsi, err := snToN(r.Namespace)
+	if err != nil {
+		return nil, err
+	}
 	var env string
 	switch r.Environment {
 	case storage.Environment_Staging:
@@ -148,7 +154,7 @@ func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage
 	default:
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
 	}
-	err := s.sess.DB(s.db).C(env).Update(bson.M{"name": r.Namespace.Name}, nsi)
+	err = s.sess.DB(s.db).C(env).Update(bson.M{"name": r.Namespace.Name}, nsi)
 	if err != nil {
 		return nil, grpc.Errorf(codes.Internal, "error updating namespaces: %s", err)
 	}
@@ -289,7 +295,7 @@ func seToE(e *storage.Experiment) (types.Experiment, error) {
 }
 
 func spToP(p *storage.Param) (types.Param, error) {
-	if types.Value == nil {
+	if p.Value == nil {
 		return types.Param{}, fmt.Errorf("values not supplied in param")
 	}
 	return types.Param{
@@ -298,5 +304,5 @@ func spToP(p *storage.Param) (types.Param, error) {
 			Choices: p.Value.Choices,
 			Weights: p.Value.Weights,
 		},
-	}
+	}, nil
 }
