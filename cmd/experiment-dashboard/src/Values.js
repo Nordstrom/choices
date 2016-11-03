@@ -1,16 +1,23 @@
 import React from 'react';
+import './Values.css';
 
 export const Values = props => {
-  const values = props.values.map(value => {
+  if (!props.values) {
+    return false;
+  }
+  const values = props.values.choices.map((choice, i) => {
+    const style = {
+      flex: `${props.values.weights ? props.values.weights[i] : 1} 1 ${props.values.choices.length / 300}px`,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      minWidth: 0,
+    }
     return (
-      <div className="value" key={value.name}>
-        <h2 className="value-name">{value.name}</h2>
-        <span className="value-weight">{value.weight}</span>
-      </div>
+      <span className="value" style={style}>{choice}</span>
     );
   });
   return (
-    <div>
+    <div className="value-container">
       {values}
     </div>
   );

@@ -2,6 +2,9 @@ import React from 'react';
 import { Values } from './Values.js';
 
 export const Params = props => {
+  if (!props.params) {
+    return false;
+  }
   const params = props.params.map(param => {
     return (
       <div className="param" key={param.name}>
