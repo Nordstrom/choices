@@ -1,27 +1,11 @@
-const param = (state, action) => {
-    switch (action.type) {
-        case 'ADD_PARAM':
-            return {
-                id: action.id,
-                name: action.name,
-            };
-        default:
-            return state;
-    }
-}
+import { combineReducers } from 'redux';
 
-const params = (state = [], action) => {
-    switch (action.type) {
-        case 'ADD_PARAM':
-            return [
-                ...state,
-                param(undefined, action)
-            ];
-        case 'REMOVE_PARAM':
-            return state.filter(p => p.id !== action.id);
-        default:
-            return state;
-    }
-}
+import params from './params';
+import labels from './labels';
 
-export default params
+const reducers = combineReducers({
+  params,
+  labels,
+});
+
+export default reducers;
