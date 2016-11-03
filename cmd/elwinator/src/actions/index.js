@@ -25,4 +25,14 @@ export const addLabel = (id) => ({
 export const removeLabel = (id) => ({
   type: 'REMOVE_LABEL',
   id,
-})
+});
+
+export const updateName = (name) => ({
+  type: 'UPDATE_NAME', 
+  name,
+});
+
+export const createExperiment = (experiment) => ({
+  type: 'CREATE_EXPERIMENT',
+  experiment: experiment,
+});
