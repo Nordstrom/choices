@@ -25,7 +25,7 @@ const Experiment = ({ edit, experiments, updateName, createExperiment }) => {
       <NewParamSection />
       <button onClick={() => createExperiment(edit)}>Create Experiment</button>
     </div>
-  )
+  );
 }
 
 const mapStateToProps = (state) => ({
@@ -41,6 +41,6 @@ const mapDispatchToProps = ({
 const ExperimentContainer = connect(
   mapStateToProps,
   mapDispatchToProps,
-)(Experiment)
+)(Experiment);
 
 export default ExperimentContainer;

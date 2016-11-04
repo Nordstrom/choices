@@ -3,6 +3,8 @@ import React from 'react';
 import Label from './Label';
 import ExperimentContainer from './ExperimentContainer';
 
+// TODO: create a nested form structure
+
 const Namespace = (props) => {
   return (
     <div>
