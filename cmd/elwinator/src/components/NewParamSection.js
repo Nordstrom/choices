@@ -2,7 +2,7 @@ import React from 'react';
 
 import WeightedInput from './WeightedInput';
 import ParamList from './ParamList';
-import AddParam from '../containers/AddParam';
+import AddParam from './ParamInput';
 
 const NewParamSection = (props) => {
   return (

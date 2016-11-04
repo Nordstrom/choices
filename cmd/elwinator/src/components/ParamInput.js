@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { addParam } from '../../actions';
+import { addParam } from '../actions';
 
 let ParamInput = ({ addParam }) => {
   let input;
