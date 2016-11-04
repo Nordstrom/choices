@@ -26,7 +26,6 @@ const params = (state, action) => {
 
 const initialState = {
   params: [],
-  isWeighted: false,
 }
 
 const paramContainer = (state = initialState, action) => {
@@ -35,8 +34,6 @@ const paramContainer = (state = initialState, action) => {
     return Object.assign({}, state, { params: params(state.params, action) });
   case 'REMOVE_PARAM':
     return Object.assign({}, state, { params: params(state.params, action) });
-  case 'TOGGLE_WEIGHTED':
-    return Object.assign({}, state, { isWeighted: !state.isWeighted });
   default:
     return state;
   }

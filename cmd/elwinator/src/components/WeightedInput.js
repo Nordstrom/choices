@@ -6,14 +6,14 @@ import { toggleWeighted } from '../actions';
 const WeightedInput = ({ isWeighted, onWeightedClick }) => {
   return (
     <label>
-      Use Weighted Params
       <input type="checkbox" checked={isWeighted} onChange={() => onWeightedClick()} />
+      Weighted Param
     </label>
   );
 }
 
 const mapStateToProps = (state) => ({
-  isWeighted: state.params.isWeighted,
+  isWeighted: state.choices.isWeighted,
 });
 
 const mapDispatchToProps = ({

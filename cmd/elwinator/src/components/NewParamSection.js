@@ -1,16 +1,14 @@
 import React from 'react';
 
-import WeightedInput from './WeightedInput';
 import ParamList from './ParamList';
-import AddParam from './ParamInput';
+import ParamInput from './ParamInput';
 
 const NewParamSection = (props) => {
   return (
     <div>
       <h2>Pararms</h2>
-      <WeightedInput />
       <ParamList />
-      <AddParam />
+      <ParamInput />
     </div>
   );
 }

@@ -2,6 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { addParam } from '../actions';
+import WeightedInput from './WeightedInput';
+import ChoiceEditor from './ChoiceEditor';
 
 let ParamInput = ({ addParam }) => {
   let input;
@@ -16,9 +18,15 @@ let ParamInput = ({ addParam }) => {
         addParam(input.value);
         input.value = '';
       }}>
-        <input ref={node => {
-          input = node;
-        }} />
+        <label>Name</label>
+        <div>
+          <input ref={node => {
+            input = node;
+          }} />
+        </div>
+        <WeightedInput />
+        <ChoiceEditor />
+        {/* submit param */}
         <button type="submit">
           Add Param
         </button>

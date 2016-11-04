@@ -40,3 +40,17 @@ export const createExperiment = (experiment) => ({
 export const toggleWeighted = () => ({
   type: 'TOGGLE_WEIGHTED',
 });
+
+export const updateChoice = (choice) => ({
+  type: 'UPDATE_CHOICE',
+  choice,
+});
+
+export const updateWeight = (weight) => ({
+  type: 'UPDATE_WEIGHT',
+  weight,
+})
+
+export const addChoice = () => ({
+  type: 'ADD_CHOICE',
+});
