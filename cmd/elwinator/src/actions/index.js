@@ -36,3 +36,7 @@ export const createExperiment = (experiment) => ({
   type: 'CREATE_EXPERIMENT',
   experiment: experiment,
 });
+
+export const toggleWeighted = () => ({
+  type: 'TOGGLE_WEIGHTED',
+});

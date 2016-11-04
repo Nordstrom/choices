@@ -1,4 +1,7 @@
 import React from 'react';
+import { connect } from 'react-redux';
+
+import { createLabel } from '../actions';
 
 let LabelInput = ({ createLabel }) => {
   let input;
@@ -24,4 +27,15 @@ let LabelInput = ({ createLabel }) => {
   );
 }
 
-export default LabelInput;
+const mapStateToProps = (state) => ({});
+
+const mapDispatchToProps = ({
+  createLabel,
+});
+
+const AddLabel = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(LabelInput)
+
+export default AddLabel;

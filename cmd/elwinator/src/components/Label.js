@@ -1,8 +1,8 @@
 import React from 'react';
 
-import AppliedLabels from '../containers/AppliedLabels';
-import UnappliedLabels from '../containers/UnappliedLabels';
-import AddLabel from '../containers/AddLabel';
+import AppliedLabels from './AppliedLabelList';
+import UnappliedLabels from './UnappliedLabelList';
+import LabelInput from './LabelInput';
 
 const Label = (props) => {
   return(
@@ -10,7 +10,7 @@ const Label = (props) => {
       <label>Labels: </label>
       <AppliedLabels />
       <UnappliedLabels />
-      <AddLabel />
+      <LabelInput />
     </div>
   );
 }

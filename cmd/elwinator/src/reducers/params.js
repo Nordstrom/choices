@@ -10,7 +10,7 @@ const param = (state, action) => {
   }
 }
 
-const params = (state = [], action) => {
+const params = (state, action) => {
   switch (action.type) {
     case 'ADD_PARAM':
       return [
@@ -24,4 +24,22 @@ const params = (state = [], action) => {
   }
 }
 
-export default params
+const initialState = {
+  params: [],
+  isWeighted: false,
+}
+
+const paramContainer = (state = initialState, action) => {
+  switch (action.type) {
+  case 'ADD_PARAM':
+    return Object.assign({}, state, { params: params(state.params, action) });
+  case 'REMOVE_PARAM':
+    return Object.assign({}, state, { params: params(state.params, action) });
+  case 'TOGGLE_WEIGHTED':
+    return Object.assign({}, state, { isWeighted: !state.isWeighted });
+  default:
+    return state;
+  }
+}
+
+export default paramContainer

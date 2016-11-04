@@ -1,4 +1,8 @@
 import React from 'react';
+import { connect } from 'react-redux';
+
+import NewParamSection from './NewParamSection';
+import { updateName, createExperiment } from '../actions';
 
 const Experiment = ({ edit, experiments, updateName, createExperiment }) => {
   const experimentsList = experiments.map(exp => <li key={exp.name}>{exp.name}</li>)
@@ -18,9 +22,25 @@ const Experiment = ({ edit, experiments, updateName, createExperiment }) => {
         </tr>
       </tbody>
       </table>
+      <NewParamSection />
       <button onClick={() => createExperiment(edit)}>Create Experiment</button>
     </div>
   )
 }
 
-export default Experiment;
+const mapStateToProps = (state) => ({
+  edit: state.experiment.edit,
+  experiments: state.experiment.experiments,
+});
+
+const mapDispatchToProps = ({
+  updateName,
+  createExperiment,
+});
+
+const ExperimentContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Experiment)
+
+export default ExperimentContainer;

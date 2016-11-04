@@ -1,6 +1,5 @@
 const expInitialState = {
   name: '',
-  isUniform: true,
   params: [],
 };
 
@@ -8,8 +7,6 @@ const experiment = (state = expInitialState, action) => {
   switch (action.type) {
   case 'UPDATE_NAME':
     return Object.assign({}, state, { name: action.name });
-  case 'TOGGLE_UNIFORM':
-    return Object.assign({}, state, { isUniform: !state.isUniform });
   case 'ADD_PARAM':
     return Object.assign({}, state, { params: [...state.params, action.param] });
   default:

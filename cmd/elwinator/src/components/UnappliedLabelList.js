@@ -1,4 +1,7 @@
 import React from 'react';
+import { connect } from 'react-redux';
+
+import { addLabel } from '../actions';
 
 const UnappliedLabelList = ({ labels, onLabelClick }) => {
   const labelsList = labels.map(label => 
@@ -14,4 +17,17 @@ const UnappliedLabelList = ({ labels, onLabelClick }) => {
   );
 };
 
-export default UnappliedLabelList;
+const mapStateToProps = (state) => ({
+  labels: state.labels.filter(label => !label.active),
+});
+
+const mapDispatchToProps = ({
+  onLabelClick: addLabel,
+});
+
+const UnappliedLabels = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(UnappliedLabelList)
+
+export default UnappliedLabels;

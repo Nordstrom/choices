@@ -1,4 +1,7 @@
 import React from 'react';
+import { connect } from 'react-redux';
+
+import { addParam } from '../../actions';
 
 let ParamInput = ({ addParam }) => {
   let input;
@@ -24,4 +27,15 @@ let ParamInput = ({ addParam }) => {
   );
 }
 
-export default ParamInput;
+const mapStateToProps = (state) => ({});
+
+const mapDispatchToProps = ({
+  addParam,
+});
+
+const AddParam = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ParamInput);
+
+export default AddParam;

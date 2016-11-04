@@ -1,4 +1,7 @@
 import React from 'react';
+import { connect } from 'react-redux';
+
+import { removeLabel } from '../actions';
 
 const AppliedLabelList = ({ labels, onLabelClick }) => {
   const labelList = labels.map(label => 
@@ -14,4 +17,17 @@ const AppliedLabelList = ({ labels, onLabelClick }) => {
   )
 };
 
-export default AppliedLabelList;
+const mapStateToProps = (state) => ({
+  labels: state.labels.filter(label => label.active),
+});
+
+const mapDispatchToProps = ({
+  onLabelClick: removeLabel,
+});
+
+const AppliedLabels = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(AppliedLabelList)
+
+export default AppliedLabels;

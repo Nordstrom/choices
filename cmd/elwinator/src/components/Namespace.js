@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Label from './Label';
-import ExperimentContainer from '../containers/ExperimentContainer';
+import ExperimentContainer from './ExperimentContainer';
 
 const Namespace = (props) => {
   return (
