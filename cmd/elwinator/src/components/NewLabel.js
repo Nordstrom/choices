@@ -8,7 +8,7 @@ const NewLabel = (props) => {
           <label>Label</label>
           <input type="text" className="form-control" />
         </div>
-        <button type="submit" className="btn btn-primary" />
+        <button type="submit" className="btn btn-primary">Create label</button>
       </form>
     </div>
   );
