@@ -1,10 +1,10 @@
 import { combineReducers } from 'redux';
 import { routerReducer } from 'react-router-redux';
 
-import namespace from './namespace';
+import namespaces from './namespaces';
 
 const reducers = combineReducers({
-  namespace,
+  namespaces,
   routing: routerReducer,
 });
 

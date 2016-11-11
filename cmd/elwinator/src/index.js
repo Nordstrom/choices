@@ -3,11 +3,10 @@ import ReactDOM from 'react-dom';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 import 'bootstrap/dist/css/bootstrap.css';
-// import 'bootstrap/dist/css/bootstrap-theme.css';
 import { Router,  Route, browserHistory } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
 
-// import { loadState, saveState } from './Storage';
+import { loadState, saveState } from './Storage';
 import App from './App';
 import reducers from './reducers';
 import NewNamespace from './components/NewNamespace';
@@ -18,14 +17,15 @@ import NewParam from './components/NewParam';
 import Param from './components/Param';
 import NewChoice from './components/NewChoice';
 
-// const persistedState = loadState();
-const store = createStore(reducers);
-  // persistedState,
-// );
+const persistedState = loadState();
+const store = createStore(
+  reducers,
+  persistedState,
+);
 
-// store.subscribe(() => {
-//   saveState(store.getState());
-// });
+store.subscribe(() => {
+  saveState(store.getState());
+});
 
 const history = syncHistoryWithStore(browserHistory, store)
 

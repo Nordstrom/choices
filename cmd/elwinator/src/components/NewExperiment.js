@@ -13,7 +13,7 @@ const NewExperiment = ({ namespaceName, addExperiment }) => {
         if (!input.value.trim()) {
           return;
         }
-        addExperiment({name: input.value});
+        addExperiment(namespaceName, input.value);
         browserHistory.push(`/namespace/${namespaceName}/experiment/${input.value}`);
       }}>
         <div className="form-group">

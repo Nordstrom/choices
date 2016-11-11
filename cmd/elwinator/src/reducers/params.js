@@ -8,7 +8,7 @@ const paramInitialState = {
 const param = (state = paramInitialState, action) => {
   switch (action.type) {
   case 'ADD_PARAM':
-    return {...state, ...action};
+    return { ...state, name: action.name };
   case 'PARAM_NAME':
     return { ...state, name: action.name };
   default:

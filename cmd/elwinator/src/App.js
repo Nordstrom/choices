@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 const App = ({ namespaceName, params, children }) => {
   return (
     <div>
-      <Link to="/new">Create new namespace</Link>
+      <Link to="/namespace/new">Create new namespace</Link>
     </div>
   );
 };

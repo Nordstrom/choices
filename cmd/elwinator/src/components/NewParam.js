@@ -4,16 +4,16 @@ import { connect } from 'react-redux';
 
 import { addParam } from '../actions';
 
-const NewParam = ({ namespaceName, experimentName }) => {
+const NewParam = ({ namespaceName, experimentName, addParam }) => {
   let input;
   return (
-    <div>
+    <div className="container">
       <form onSubmit={e => {
         e.preventDefault();
         if (!input.value.trim()) {
           return;
         }
-        addParam(input.value);
+        addParam(namespaceName, experimentName, input.value);
         browserHistory.push(`/namespace/${namespaceName}/experiment/${experimentName}/param/${input.value}`)
       }}>
         <div className="form-group">

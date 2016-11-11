@@ -9,7 +9,7 @@ const experimentInitialState = {
 const experiment = (state = experimentInitialState, action) => {
   switch(action.type) {
   case 'ADD_EXPERIMENT':
-    return { ...state, ...action.experiment };
+    return { ...state, name: action.name };
   case 'EXPERIMENT_NAME':
     return { ...state, name: action.name };
   case 'PARAM_NAME':

@@ -26,9 +26,12 @@ const LabelList = ({ labels, toggleLabel }) => {
   )
 }
 
-const mapStateToProps = (state) => ({
-  labels: state.namespace.labels,
-});
+const mapStateToProps = (state, ownProps) => {
+  const ns = state.namespaces.find(n => n.name === ownProps.namespaceName);
+  return {
+    labels: ns.labels,
+  }
+};
 
 const LabelListContainer = connect(
   mapStateToProps,

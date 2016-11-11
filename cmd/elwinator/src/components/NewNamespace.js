@@ -1,13 +1,24 @@
 import React from 'react';
+import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
-const NewNamespace = ({ namespaceName, params, children }) => {
+import { addNamespace } from '../actions';
+
+const NewNamespace = ({ addNamespace }) => {
+  let input;
   return (
     <div className="container">
-      <form>
+      <form onSubmit={e => {
+        e.preventDefault();
+        if (!input.value.trim()) {
+          return;
+        }
+        addNamespace(input.value);
+        browserHistory.push(`/namespace/${input.value}`);
+      }}>
         <div className="form-group">
           <label>Namespace Name</label>
-          <input type="text" className="form-control" />
+          <input type="text" className="form-control" ref={node => input = node}/>
         </div>
         <button type="submit" className="btn btn-primary" >Create namespace</button>
       </form>
@@ -16,9 +27,13 @@ const NewNamespace = ({ namespaceName, params, children }) => {
 };
 
 const mapStateToProps = (state) => ({
-  namespaceName: state.namespace.name,
+  namespaceName: state.namespaces.name,
 });
 
-const connected = connect(mapStateToProps)(NewNamespace);
+const mapDispatchToProps = ({
+  addNamespace,
+})
+
+const connected = connect(mapStateToProps, mapDispatchToProps)(NewNamespace);
 
 export default connected;
