@@ -10,8 +10,10 @@ const Namespace = ({ namespaceName }) => {
   return (
     <div className="container">
       <h1>{namespaceName}</h1>
+      <h2>Labels</h2>
       <LabelList namespaceName={namespaceName} />
       <Link to={labelNewURL(namespaceName)}>New label</Link>
+      <h2>Experiments</h2>
       <ExperimentList namespaceName={namespaceName} />
       <Link to={experimentNewURL(namespaceName)}>New Experiment</Link>
     </div>

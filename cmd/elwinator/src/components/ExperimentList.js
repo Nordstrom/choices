@@ -7,7 +7,7 @@ import { experimentURL } from '../urls';
 const ExperimentList = ({ namespaceName, experiments }) => {
   const exps = experiments.map(e => <li key={e.name}><Link to={experimentURL(namespaceName, e.name)}>{e.name}</Link></li>)
   return (
-    <ul>
+    <ul className="list-unstyled">
       {exps}
     </ul>
   );
