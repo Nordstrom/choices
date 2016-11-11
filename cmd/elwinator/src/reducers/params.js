@@ -17,6 +17,8 @@ const param = (state = paramInitialState, action) => {
     return { ...state, choices: [...state.choices, action.choice] };
   case 'ADD_WEIGHT':
     return { ...state, weights: [...state.weights, action.weight] };
+  case 'CLEAR_CHOICES':
+    return { ...state, choices: [], weights: [] };
   default:
     return state;
   }
@@ -30,6 +32,7 @@ const params = (state = [], action) => {
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
+  case 'CLEAR_CHOICES':
     const pars = state.map(p => {
       if (p.name !== action.param) {
         return p;

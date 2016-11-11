@@ -17,6 +17,7 @@ const experiment = (state = experimentInitialState, action) => {
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
+  case 'CLEAR_CHOICES':
     return { ...state, params: params(state.params, action) };
   default:
     return state;
@@ -33,6 +34,7 @@ const experiments = (state = [], action) => {
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
+  case 'CLEAR_CHOICES':
     const exps = state.map(e => {
       if (e.name !== action.experiment) {
         return e;
