@@ -1,13 +1,11 @@
 import { combineReducers } from 'redux';
+import { routerReducer } from 'react-router-redux';
 
-import params from './params';
-import labels from './labels';
-import experiment from './experiment';
+import namespaces from './namespaces';
 
 const reducers = combineReducers({
-  params,
-  labels,
-  experiment,
+  namespaces,
+  routing: routerReducer,
 });
 
 export default reducers;

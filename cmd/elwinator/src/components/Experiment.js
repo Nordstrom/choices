@@ -1,26 +1,31 @@
 import React from 'react';
+import { Link } from 'react-router';
+import { connect } from 'react-redux';
 
-const Experiment = ({ edit, experiments, updateName, createExperiment }) => {
-  const experimentsList = experiments.map(exp => <li key={exp.name}>{exp.name}</li>)
+import ParamList from './ParamList';
+import { paramNewURL } from '../urls';
+
+const Experiment = ({ namespaceName, experimentName }) => {
   return (
-    <div>
-      <h2>Experiments</h2>
-      <ul>
-        {experimentsList}
-      </ul>
-      <table>
-      <tbody>
-        <tr>
-          <td>Name:</td>
-          <td>
-            <input type="text" value={edit.name} onChange={(ev) => updateName(ev.target.value)}/>
-          </td>
-        </tr>
-      </tbody>
-      </table>
-      <button onClick={() => createExperiment(edit)}>Create Experiment</button>
+    <div className="container">
+    <h1>{experimentName} - Experiment</h1>
+    <ParamList namespaceName={namespaceName} experimentName={experimentName} />
+    <Link to={paramNewURL(namespaceName, experimentName)}>Create param</Link>
     </div>
-  )
+  );
 }
 
-export default Experiment;
+const mapStateToProps = (state, ownProps) => {
+  const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
+  const exp = ns.experiments.find(e => e.name === ownProps.params.experiment);
+  return {
+    namespaceName: ns.name,
+    experimentName: exp.name,
+  }
+};
+
+const connected = connect(
+  mapStateToProps,
+)(Experiment);
+
+export default connected;
