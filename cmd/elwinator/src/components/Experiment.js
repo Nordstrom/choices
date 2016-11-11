@@ -3,13 +3,14 @@ import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
 import ParamList from './ParamList';
+import { paramNewURL } from '../urls';
 
 const Experiment = ({ namespaceName, experimentName }) => {
   return (
     <div className="container">
     <h1>{experimentName} - Experiment</h1>
     <ParamList namespaceName={namespaceName} experimentName={experimentName} />
-    <Link to={`/n/${namespaceName}/e/${experimentName}/p/new`}>Create param</Link>
+    <Link to={paramNewURL(namespaceName, experimentName)}>Create param</Link>
     </div>
   );
 }

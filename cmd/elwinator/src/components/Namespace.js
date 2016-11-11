@@ -4,15 +4,16 @@ import { connect } from 'react-redux';
 
 import LabelList from './LabelList';
 import ExperimentList from './ExperimentList';
+import { labelNewURL, experimentNewURL } from '../urls';
 
 const Namespace = ({ namespaceName }) => {
   return (
     <div className="container">
       <h1>{namespaceName}</h1>
       <LabelList namespaceName={namespaceName} />
-      <Link to={`/n/${namespaceName}/l/new`}>New label</Link>
+      <Link to={labelNewURL(namespaceName)}>New label</Link>
       <ExperimentList namespaceName={namespaceName} />
-      <Link to={`/n/${namespaceName}/e/new`}>New Experiment</Link>
+      <Link to={experimentNewURL(namespaceName)}>New Experiment</Link>
     </div>
   );
 };

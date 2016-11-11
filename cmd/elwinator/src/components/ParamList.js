@@ -3,12 +3,13 @@ import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
 import { removeParam } from '../actions';
+import { paramURL } from '../urls';
 
 const ParamList = ({ namespaceName, experimentName, params, onParamClick }) => (
   <ul>
     {params.map(param => 
       <li key={param.name} >
-        <Link to={`/namespace/${namespaceName}/experiment/${experimentName}/param/${param.name}`}>{param.name}</Link>
+        <Link to={paramURL(namespaceName, experimentName, param.name)}>{param.name}</Link>
       </li>
     )}
   </ul>

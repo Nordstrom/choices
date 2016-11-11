@@ -2,6 +2,7 @@ import React from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
+import { namespaceURL } from '../urls';
 import { addNamespace } from '../actions';
 
 const NewNamespace = ({ addNamespace }) => {
@@ -14,7 +15,7 @@ const NewNamespace = ({ addNamespace }) => {
           return;
         }
         addNamespace(input.value);
-        browserHistory.push(`/n/${input.value}`);
+        browserHistory.push(namespaceURL(input.value));
       }}>
         <div className="form-group">
           <label>Namespace Name</label>
