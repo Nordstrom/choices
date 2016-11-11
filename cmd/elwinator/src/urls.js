@@ -48,3 +48,11 @@ export const paramNewURL = (n, e) => `/n/${encodeURIComponent(n)}/e/${encodeURIC
  * @param {string} p - The param name.
  */
 export const paramURL = (n, e, p) => `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}/p/${encodeURIComponent(p)}`;
+
+/**
+ * choiceNewURL is the url for creating a new choice.
+ * @param {string} n - The namespace name.
+ * @param {string} e - The experiment name.
+ * @param {string} p - The param name.
+ */
+export const choiceNewURL = (n, e, p) => `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}/p/${encodeURIComponent(p)}/c/new`;
