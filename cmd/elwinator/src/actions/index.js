@@ -82,3 +82,49 @@ export const addParam = (namespace, experiment, name) => ({
   experiment,
   name,
 });
+
+/**
+ * toggleWeighted is an action that toggles whether a param is weighted or
+ * uniform.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment's name.
+ * @param {string} param - The name of the param.
+ */
+export const toggleWeighted = (namespace, experiment, param) => ({
+  type: 'TOGGLE_WEIGHTED',
+  namespace,
+  experiment,
+  param,
+});
+
+/**
+ * addChoice is an action that adds a choice to a param. You must also call
+ * addWeight if the param is a weighted param.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment's name.
+ * @param {string} param - The name of the param.
+ * @param {string} choice - The choice to add to the param.
+ */
+export const addChoice = (namespace, experiment, param, choice) => ({
+  type: 'ADD_CHOICE',
+  namespace,
+  experiment,
+  param,
+  choice,
+});
+
+/**
+ * addWeight is an action that adds a weight to a param. You should always
+ * call addChoice before calling this.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment's name.
+ * @param {string} param - The name of the param.
+ * @param {string} weight - The weight to add to the param.
+ */
+export const addWeight = (namespace, experiment, param, weight) => ({
+  type: 'ADD_WEIGHT',
+  namespace,
+  experiment,
+  param,
+  weight,
+});
