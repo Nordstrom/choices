@@ -1,7 +1,7 @@
 import React from 'react';
 
 const NewLabel = (props) => {
-  return <div />;
+  return <div className="container" />;
 }
 
 export default NewLabel;

@@ -2,7 +2,7 @@ import React from 'react';
 
 const NewChoice = (props) => {
   return (
-    <div />
+    <div className="container" />
   );
 }
 

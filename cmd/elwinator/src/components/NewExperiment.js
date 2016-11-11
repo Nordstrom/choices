@@ -7,7 +7,7 @@ import { addExperiment } from '../actions';
 const NewExperiment = ({ namespaceName, addExperiment }) => {
   let input;
   return (
-    <div>
+    <div className="container">
       <form onSubmit={e => {
         e.preventDefault();
         if (!input.value.trim()) {
