@@ -22,6 +22,7 @@ const namespace = (state = namespaceInitialState, action) => {
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
+  case 'CLEAR_CHOICES':
     return { ...state, experiments: experiments(state.experiments, action)};
   default: 
     return state;
@@ -42,6 +43,7 @@ const namespaces = (state = [], action) => {
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
+  case 'CLEAR_CHOICES':
     const ns = state.map(n => {
       if (n.name !== action.namespace) {
         return n;

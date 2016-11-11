@@ -2,17 +2,53 @@ import React from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
+import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
-import { choiceNewURL } from '../urls';
-import { addChoice, addWeight } from '../actions';
+import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
+import { addChoice, addWeight, toggleWeighted, clearChoices } from '../actions';
 
-const Param = ({ namespaceName, experimentName, p, addChoice, addWeight }) => {
+const Param = ({ namespaceName, experimentName, p, addChoice, addWeight, toggleWeighted, clearChoices }) => {
   return (
     <div className="container">
-      <h1>{p.name}</h1>
-      <h2>Choices</h2>
-      <ChoiceList choices={p.choices} />
-      <Link to={choiceNewURL(namespaceName, experimentName, p.name)}>Create new choice</Link>
+      <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{p.name}</h1></div></div>
+      <div className="row">
+        <div className="col-sm-3">
+          <nav>
+            <ul className="nav nav-pills nav-stacked">
+              <li className="nav-item"><Link to={namespaceURL(namespaceName)} className="nav-link">{namespaceName} - Namespace</Link></li>
+              <li className="nav-item"><Link to={experimentURL(namespaceName, experimentName)} className="nav-link">{experimentName} - Experiment</Link></li>
+              <li className="nav-item"><Link to={choiceNewURL(namespaceName, experimentName, p.name)}>Create new choice</Link></li>
+            </ul>
+          </nav>
+        </div>
+        <div className="col-sm-9">
+          <h2>Weight</h2>
+          <form>
+            <div className="form-group">
+              <label>
+                <input type="checkbox"
+                  onChange={() => {
+                    toggleWeighted(namespaceName, experimentName, p.name);
+                    clearChoices(namespaceName, experimentName, p.name);
+                  }}
+                  checked={p.isWeighted} /> Weighted choices
+              </label>
+              <p className="help-block">If you select this then you will need to add weights to your choices.</p>
+            </div>
+          </form>
+          <h2>Choices</h2>
+          <ChoiceList choices={p.choices} />
+          <NewChoice
+            namespaceName={namespaceName}
+            experimentName={experimentName}
+            paramName={p.name}
+            isWeighted={p.isWeighted}
+            addChoice={addChoice}
+            addWeight={addWeight}
+            redirectOnSubmit={false}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -31,6 +67,8 @@ const mapStateToProps = (state, ownProps) => {
 const mapDispatchToProps = {
   addChoice,
   addWeight,
+  toggleWeighted,
+  clearChoices,
 }
 
 const connected = connect(mapStateToProps, mapDispatchToProps)(Param);

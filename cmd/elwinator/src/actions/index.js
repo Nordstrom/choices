@@ -128,3 +128,16 @@ export const addWeight = (namespace, experiment, param, weight) => ({
   param,
   weight,
 });
+
+/**
+ * clearChoices is an action that removes all the choices and weights.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment's name.
+ * @param {string} param - The name of the param.
+ */
+export const clearChoices = (namespace, experiment, param) => ({
+  type: 'CLEAR_CHOICES',
+  namespace,
+  experiment,
+  param,
+});

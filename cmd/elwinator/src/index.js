@@ -17,7 +17,7 @@ import NewExperiment from './components/NewExperiment';
 import Experiment from './components/Experiment';
 import NewParam from './components/NewParam';
 import Param from './components/Param';
-import NewChoice from './components/NewChoice';
+import NewChoice from './connectors/NewChoice';
 
 const persistedState = loadState();
 const store = createStore(
