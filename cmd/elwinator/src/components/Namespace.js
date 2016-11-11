@@ -1,18 +1,23 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
-import Label from './Label';
-import ExperimentContainer from './ExperimentContainer';
+import LabelList from './LabelList';
+import ExperimentList from './ExperimentList';
 
-// TODO: create a nested form structure
-
-const Namespace = (props) => {
+const Namespace = ({ namespaceName, params, children }) => {
   return (
     <div>
-    <h1>{props.Name}</h1>
-    <Label />
-    <ExperimentContainer />
+      <h1>{namespaceName}</h1>
+      <LabelList />
+      <ExperimentList />
     </div>
   );
-}
+};
 
-export default Namespace;
+const mapStateToProps = (state) => ({
+  namespaceName: state.namespace.name,
+});
+
+const connected = connect(mapStateToProps)(Namespace);
+ 
+export default connected;

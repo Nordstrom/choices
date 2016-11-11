@@ -21,8 +21,9 @@ const choices = (state = initialState, action) => {
     return Object.assign({}, state, { weight: action.weight });
   case 'ADD_CHOICE':
     return Object.assign({}, state, {
-      choices: [...state.choices, state.choice],
-      weights: [...state.weights, state.weight],
+      choice: '',
+      choices: [...state.choices, action.choice],
+      weights: [...state.weights, action.weight],
     });
   default:
     return state;

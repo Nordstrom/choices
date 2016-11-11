@@ -1,56 +1,64 @@
-let nextParamId = 0;
-export const addParam = (name) => ({
-  type: 'ADD_PARAM',
-  id: nextParamId++,
+/**
+ * namespaceName is an action that set the name of the namespace.
+ * @param {string} name - The namespace's new name.
+ */
+export const namespaceName = (name) => ({
+  type: 'NAMESPACE_NAME',
   name,
 });
 
-export const removeParam = (id) => ({
-  type: 'REMOVE_PARAM',
-  id,
-});
+let nextLabelID = 0;
 
-let nextLabelId = 0;
-export const createLabel = (name) => ({
-  type: 'CREATE_LABEL',
-  id: nextLabelId++,
-  name,
-});
-
-export const addLabel = (id) => ({
+/**
+ * addLabel is an action that adds a label to an experiment.
+ * @param {string} name - The name of the label to add.
+ */
+export const addLabel = (name) => ({
   type: 'ADD_LABEL',
-  id,
-});
-
-export const removeLabel = (id) => ({
-  type: 'REMOVE_LABEL',
-  id,
-});
-
-export const updateName = (name) => ({
-  type: 'UPDATE_NAME', 
+  id: nextLabelID++,
   name,
-});
-
-export const createExperiment = (experiment) => ({
-  type: 'CREATE_EXPERIMENT',
-  experiment: experiment,
-});
-
-export const toggleWeighted = () => ({
-  type: 'TOGGLE_WEIGHTED',
-});
-
-export const updateChoice = (choice) => ({
-  type: 'UPDATE_CHOICE',
-  choice,
-});
-
-export const updateWeight = (weight) => ({
-  type: 'UPDATE_WEIGHT',
-  weight,
 })
 
-export const addChoice = () => ({
-  type: 'ADD_CHOICE',
+/** 
+ * addExperiment is an action that adds and experiment to the namespace.
+ * @param {Object} experiment - The experiment to add to the namespace.
+ */
+export const addExperiment = (experiment) => ({
+  type: 'ADD_EXPERIMENT',
+  experiment,
+});
+
+/**
+ * experimentName is an action that sets the name in an experiment.
+ * @param {string} experiment - The experiment's original name.
+ * @param {string} name - The experiment's new name.
+ */
+export const experimentName = (experiment, name) => ({
+  type: 'EXPERIMENT_NAME',
+  experiment,
+  name,
+});
+
+/**
+ * paramName is an action that sets the param name in an experiments param.
+ * @param {string} experiment - The experiment's name.
+ * @param {string} param - The param's original name.
+ * @param {string} name - The param's new name.
+ */
+export const paramName = (experiment, param, name) => ({
+  type: 'PARAM_NAME',
+  experiment,
+  param,
+  name,
+});
+
+/**
+ * addParam is an action that adds a param to an experiment.
+ * @param {string} experiment - The experiment name.
+ * @param {Object} param - The param you are adding.
+ */
+export const addParam = (experiment, param) => ({
+  type: 'ADD_PARAM',
+  experiment,
+  param,
 });

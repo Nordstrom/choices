@@ -1,42 +1,36 @@
-const param = (state, action) => {
-  switch (action.type) {
-    case 'ADD_PARAM':
-      return {
-        id: action.id,
-        name: action.name,
-      };
-    default:
-      return state;
-  }
+const paramInitialState = {
+  name: '',
+  isWeighted: false,
+  choices: [],
+  weights: [],
 }
 
-const params = (state, action) => {
-  switch (action.type) {
-    case 'ADD_PARAM':
-      return [
-        ...state,
-        param(undefined, action)
-      ];
-    case 'REMOVE_PARAM':
-      return state.filter(p => p.id !== action.id);
-    default:
-      return state;
-  }
-}
-
-const initialState = {
-  params: [],
-}
-
-const paramContainer = (state = initialState, action) => {
+const param = (state = paramInitialState, action) => {
   switch (action.type) {
   case 'ADD_PARAM':
-    return Object.assign({}, state, { params: params(state.params, action) });
-  case 'REMOVE_PARAM':
-    return Object.assign({}, state, { params: params(state.params, action) });
+    return {...state, ...action};
+  case 'PARAM_NAME':
+    return { ...state, name: action.name };
   default:
     return state;
   }
 }
 
-export default paramContainer
+const params = (state = [], action) => {
+  switch (action.type) {
+  case 'ADD_PARAM':
+    return [...state, param(undefined, action)];
+  case 'PARAM_NAME':
+    const pars = state.params.map(p => {
+      if (p.name !== action.param) {
+        return p;
+      }
+      return param(p, action);
+    });
+    return pars;
+  default:
+    return state;
+  }
+}
+
+export default params;

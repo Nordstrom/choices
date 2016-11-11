@@ -1,21 +1,12 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { Link } from 'react-router';
 
-import logo from './logo.svg';
-import './App.css';
-import Namespace from './components/Namespace';
-
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Welcome to React</h2>
-        </div>
-        <Namespace />
-      </div>
-    );
-  }
-}
+const App = ({ namespaceName, params, children }) => {
+  return (
+    <div>
+      <Link to="/new">Create new namespace</Link>
+    </div>
+  );
+};
 
 export default App;

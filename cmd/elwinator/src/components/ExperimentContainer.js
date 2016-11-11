@@ -29,8 +29,8 @@ const Experiment = ({ edit, experiments, updateName, createExperiment }) => {
 }
 
 const mapStateToProps = (state) => ({
-  edit: state.experiment.edit,
-  experiments: state.experiment.experiments,
+  edit: state.experiments.edit,
+  experiments: state.experiments.experiments,
 });
 
 const mapDispatchToProps = ({
