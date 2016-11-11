@@ -2,11 +2,16 @@ import React from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
+import ChoiceList from './ChoiceList';
 import { choiceNewURL } from '../urls';
+import { addChoice, addWeight } from '../actions';
 
-const Param = ({ namespaceName, experimentName, p }) => {
+const Param = ({ namespaceName, experimentName, p, addChoice, addWeight }) => {
   return (
     <div className="container">
+      <h1>{p.name}</h1>
+      <h2>Choices</h2>
+      <ChoiceList choices={p.choices} />
       <Link to={choiceNewURL(namespaceName, experimentName, p.name)}>Create new choice</Link>
     </div>
   );
@@ -23,6 +28,11 @@ const mapStateToProps = (state, ownProps) => {
   }
 }
 
-const connected = connect(mapStateToProps)(Param);
+const mapDispatchToProps = {
+  addChoice,
+  addWeight,
+}
+
+const connected = connect(mapStateToProps, mapDispatchToProps)(Param);
 
 export default connected;
