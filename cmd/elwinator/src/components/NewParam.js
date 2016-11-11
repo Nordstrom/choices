@@ -14,7 +14,7 @@ const NewParam = ({ namespaceName, experimentName, addParam }) => {
           return;
         }
         addParam(namespaceName, experimentName, input.value);
-        browserHistory.push(`/namespace/${namespaceName}/experiment/${experimentName}/param/${input.value}`)
+        browserHistory.push(`/n/${namespaceName}/e/${experimentName}/p/${input.value}`)
       }}>
         <div className="form-group">
           <label>Param Name</label>

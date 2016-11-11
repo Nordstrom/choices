@@ -14,7 +14,7 @@ const NewNamespace = ({ addNamespace }) => {
           return;
         }
         addNamespace(input.value);
-        browserHistory.push(`/namespace/${input.value}`);
+        browserHistory.push(`/n/${input.value}`);
       }}>
         <div className="form-group">
           <label>Namespace Name</label>

@@ -11,6 +11,7 @@ import App from './App';
 import reducers from './reducers';
 import NewNamespace from './components/NewNamespace';
 import Namespace from './components/Namespace';
+import NewLabel from './components/NewLabel';
 import NewExperiment from './components/NewExperiment';
 import Experiment from './components/Experiment';
 import NewParam from './components/NewParam';
@@ -33,13 +34,14 @@ ReactDOM.render(
   <Provider store={store}>
     <Router history={history}>
       <Route path="/" component={App} />
-      <Route path="/namespace/new" component={NewNamespace} />
-      <Route path="/namespace/:namespace" component={Namespace} />
-      <Route path="/namespace/:namespace/experiment/new" component={NewExperiment} />
-      <Route path="/namespace/:namespace/experiment/:experiment" component={Experiment} />
-      <Route path="/namespace/:namespace/experiment/:experiment/param/new" component={NewParam} />
-      <Route path="/namespace/:namespace/experiment/:experiment/param/:param/choice/new" component={NewChoice} />
-      <Route path="/namespace/:namespace/experiment/:experiment/param/:param" component={Param} />
+      <Route path="/n/new" component={NewNamespace} />
+      <Route path="/n/:namespace" component={Namespace} />
+      <Route path="/n/:namespace/l/new" component={NewLabel} />
+      <Route path="/n/:namespace/e/new" component={NewExperiment} />
+      <Route path="/n/:namespace/e/:experiment" component={Experiment} />
+      <Route path="/n/:namespace/e/:experiment/p/new" component={NewParam} />
+      <Route path="/n/:namespace/e/:experiment/p/:param" component={Param} />
+      <Route path="/n/:namespace/e/:experiment/p/:param/c/new" component={NewChoice} />
     </Router>
   </Provider>,
   document.getElementById('root')

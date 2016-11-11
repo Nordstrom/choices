@@ -9,7 +9,7 @@ const Experiment = ({ namespaceName, experimentName }) => {
     <div className="container">
     <h1>{experimentName} - Experiment</h1>
     <ParamList namespaceName={namespaceName} experimentName={experimentName} />
-    <Link to={`/namespace/${namespaceName}/experiment/${experimentName}/param/new`}>Create param</Link>
+    <Link to={`/n/${namespaceName}/e/${experimentName}/p/new`}>Create param</Link>
     </div>
   );
 }

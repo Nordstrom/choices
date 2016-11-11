@@ -3,8 +3,8 @@ import { Link } from 'react-router';
 
 const App = ({ namespaceName, params, children }) => {
   return (
-    <div>
-      <Link to="/namespace/new">Create new namespace</Link>
+    <div className="container">
+      <Link to="/n/new">Create new namespace</Link>
     </div>
   );
 };

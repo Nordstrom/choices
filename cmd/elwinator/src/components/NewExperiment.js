@@ -14,7 +14,7 @@ const NewExperiment = ({ namespaceName, addExperiment }) => {
           return;
         }
         addExperiment(namespaceName, input.value);
-        browserHistory.push(`/namespace/${namespaceName}/experiment/${input.value}`);
+        browserHistory.push(`/n/${namespaceName}/e/${input.value}`);
       }}>
         <div className="form-group">
           <label>Experiment Name</label>
