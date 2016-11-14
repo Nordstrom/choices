@@ -12,7 +12,7 @@ import App from './App';
 import reducers from './reducers';
 import NewNamespace from './components/NewNamespace';
 import Namespace from './components/Namespace';
-import NewLabel from './components/NewLabel';
+import NewLabel from './connectors/NewLabel';
 import NewExperiment from './components/NewExperiment';
 import Experiment from './components/Experiment';
 import NewParam from './components/NewParam';

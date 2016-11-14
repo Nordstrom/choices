@@ -5,17 +5,19 @@ import { connect } from 'react-redux';
 import LabelList from './LabelList';
 import ExperimentList from './ExperimentList';
 import { labelNewURL, experimentNewURL } from '../urls';
+import { toggleLabel } from '../actions';
 
-const Namespace = ({ namespaceName }) => {
+const Namespace = ({ ns, toggleLabel }) => {
+  const llProps = {namespaceName: ns.name, labels: ns.labels, toggleLabel, };
   return (
     <div className="container">
-      <h1>{namespaceName}</h1>
+      <h1>{ns.name}</h1>
       <h2>Labels</h2>
-      <LabelList namespaceName={namespaceName} />
-      <Link to={labelNewURL(namespaceName)}>New label</Link>
+      <LabelList {...llProps} />
+      <Link to={labelNewURL(ns.name)}>New label</Link>
       <h2>Experiments</h2>
-      <ExperimentList namespaceName={namespaceName} />
-      <Link to={experimentNewURL(namespaceName)}>New Experiment</Link>
+      <ExperimentList namespaceName={ns.name} />
+      <Link to={experimentNewURL(ns.name)}>New Experiment</Link>
     </div>
   );
 };
@@ -23,10 +25,14 @@ const Namespace = ({ namespaceName }) => {
 const mapStateToProps = (state, ownProps) => {
   const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
   return {
-    namespaceName: ns.name,
+    ns,
   }
 };
 
-const connected = connect(mapStateToProps)(Namespace);
+const mapDispatchToProps = {
+  toggleLabel,
+}
+
+const connected = connect(mapStateToProps, mapDispatchToProps)(Namespace);
  
 export default connected;

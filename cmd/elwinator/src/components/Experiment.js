@@ -19,6 +19,7 @@ const Experiment = ({ namespaceName, experimentName }) => {
           </nav>
         </div>
         <div className="col-sm-9">
+          <h2>Params</h2>
           <ParamList namespaceName={namespaceName} experimentName={experimentName} />  
         </div>
       </div>
