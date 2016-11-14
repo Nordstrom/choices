@@ -2,22 +2,29 @@ import React from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
+import NavSection from './NavSection';
 import LabelList from './LabelList';
+import NewLabel from './NewLabel';
 import ExperimentList from './ExperimentList';
-import { labelNewURL, experimentNewURL } from '../urls';
-import { toggleLabel } from '../actions';
+import { rootURL, labelNewURL, experimentNewURL } from '../urls';
+import { addLabel, toggleLabel } from '../actions';
 
-const Namespace = ({ ns, toggleLabel }) => {
-  const llProps = {namespaceName: ns.name, labels: ns.labels, toggleLabel, };
+const Namespace = ({ ns, addLabel, toggleLabel }) => {
+  const llProps = { namespaceName: ns.name, labels: ns.labels, toggleLabel };
+  const newLabelProps = { namespaceName: ns.name, addLabel, redirectOnSubmit: false };
   return (
     <div className="container">
-      <h1>{ns.name}</h1>
+      <NavSection>
+        <Link to={ rootURL() }>Home</Link>
+        <Link to={ labelNewURL(ns.name) }>New label</Link>
+        <Link to={ experimentNewURL(ns.name) }>New Experiment</Link>
+      </NavSection>
+      <h1>{ ns.name }</h1>
       <h2>Labels</h2>
-      <LabelList {...llProps} />
-      <Link to={labelNewURL(ns.name)}>New label</Link>
+      <LabelList { ...llProps } />
+      <NewLabel { ...newLabelProps } />
       <h2>Experiments</h2>
-      <ExperimentList namespaceName={ns.name} />
-      <Link to={experimentNewURL(ns.name)}>New Experiment</Link>
+      <ExperimentList namespaceName={ ns.name } />
     </div>
   );
 };
@@ -30,6 +37,7 @@ const mapStateToProps = (state, ownProps) => {
 };
 
 const mapDispatchToProps = {
+  addLabel,
   toggleLabel,
 }
 

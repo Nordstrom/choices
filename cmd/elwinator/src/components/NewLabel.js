@@ -19,10 +19,10 @@ const NewLabel = ({ namespaceName, redirectOnSubmit, addLabel }) => {
       browserHistory.push(namespaceURL(namespaceName));
     }}>
       <div className="form-group">
-        <label>Label</label>
+        <label>Create new label</label>
         <input type="text"
           className="form-control"
-          placeholder="Enter a choice"
+          placeholder="Enter a label name"
           ref={node => label = node}
         />
       </div>
