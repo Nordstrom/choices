@@ -18,7 +18,16 @@ export const namespaceName = (namespace, name) => ({
   name,
 });
 
-let nextLabelID = 0;
+/**
+ * toggleLabel is an action that toggles the specified label.
+ * @param {string} namespace - name of the namespace the label is in.
+ * @param {string} name - name of the label to toggle.
+ */
+export const toggleLabel = (namespace, name) => ({
+  type: 'TOGGLE_LABEL',
+  namespace,
+  name,
+})
 
 /**
  * addLabel is an action that adds a label to an experiment.
@@ -28,7 +37,6 @@ let nextLabelID = 0;
 export const addLabel = (namespace, name) => ({
   type: 'ADD_LABEL',
   namespace,
-  id: nextLabelID++,
   name,
 })
 

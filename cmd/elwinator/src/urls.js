@@ -39,7 +39,7 @@ export const experimentURL = (n, e) => `/n/${encodeURIComponent(n)}/e/${encodeUR
  * @param {string} n - The namespace name.
  * @param {string} e - The experiment name.
  */
-export const paramNewURL = (n, e) => `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}/param/new`;
+export const paramNewURL = (n, e) => `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}/p/new`;
 
 /**
  * paramURL is the url for a specified param.

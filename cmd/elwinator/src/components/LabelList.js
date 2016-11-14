@@ -1,10 +1,7 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import React, { PropTypes } from 'react';
 import classNames from 'classnames';
 
-import { toggleLabel } from '../actions';
-
-const LabelList = ({ labels, toggleLabel }) => {
+const LabelList = ({ namespaceName, labels, toggleLabel }) => {
   const labelList = labels.map(l => {
     const spanClassName = classNames({
       'btn': true,
@@ -12,8 +9,8 @@ const LabelList = ({ labels, toggleLabel }) => {
       'btn-success': l.active,
     });
     return (
-    <li key={l.id}>
-      <button className={spanClassName} onClick={() => toggleLabel(l.id)}>{l.name}</button>
+    <li key={l.name}>
+      <button className={spanClassName} onClick={() => toggleLabel(namespaceName, l.name)}>{l.name}</button>
     </li>
     );
   }
@@ -26,16 +23,10 @@ const LabelList = ({ labels, toggleLabel }) => {
   )
 }
 
-const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.namespaceName);
-  return {
-    labels: ns.labels,
-  }
+LabelList.propTypes = {
+  namespaceName: PropTypes.string.isRequired,
+  labels: PropTypes.arrayOf(PropTypes.object).isRequired,
+  toggleLabel: PropTypes.func.isRequired,
 };
 
-const LabelListContainer = connect(
-  mapStateToProps,
-  {toggleLabel},
-)(LabelList);
-
-export default LabelListContainer;
+export default LabelList;
