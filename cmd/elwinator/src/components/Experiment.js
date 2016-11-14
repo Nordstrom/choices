@@ -12,9 +12,9 @@ const Experiment = ({ namespaceName, experimentName }) => {
       <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{experimentName}</h1></div></div>
       <div className="row">
         <NavSection>
-          <Link to={ rootURL() }>Home</Link>
+          <Link to={ rootURL() } className="nav-link">Home</Link>
           <Link to={namespaceURL(namespaceName)} className="nav-link">{namespaceName} - Namespace</Link>
-          <Link to={paramNewURL(namespaceName, experimentName)}>Create param</Link>
+          <Link to={paramNewURL(namespaceName, experimentName)} className="nav-link">Create param</Link>
         </NavSection>
         <div className="col-sm-9">
           <h2>Params</h2>

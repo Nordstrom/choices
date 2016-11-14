@@ -17,9 +17,9 @@ const Namespace = ({ ns, addLabel, toggleLabel }) => {
       <div className="row"><h1>{ ns.name }</h1></div>
       <div className="row">
         <NavSection>
-          <Link to={ rootURL() }>Home</Link>
-          <Link to={ labelNewURL(ns.name) }>New label</Link>
-          <Link to={ experimentNewURL(ns.name) }>New Experiment</Link>
+          <Link to={ rootURL() } className="nav-link">Home</Link>
+          <Link to={ labelNewURL(ns.name) } className="nav-link">New label</Link>
+          <Link to={ experimentNewURL(ns.name) } className="nav-link">New Experiment</Link>
         </NavSection>
         <div className="col-sm-9">
           <h2>Labels</h2>
