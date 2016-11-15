@@ -3,8 +3,8 @@ import shuffle from '../shuffle';
 
 const experimentInitialState = {
   name: '',
-  segments: new Array(128).fill(1),
-  numSegments: 128,
+  segments: [],
+  numSegments: 0,
   params: [],
   dirtySegments: true,
 };

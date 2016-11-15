@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
+import NavSection from './NavSection';
 import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
 import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
@@ -12,15 +13,11 @@ const Param = ({ namespaceName, experimentName, p, addChoice, addWeight, toggleW
     <div className="container">
       <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{p.name}</h1></div></div>
       <div className="row">
-        <div className="col-sm-3">
-          <nav>
-            <ul className="nav nav-pills nav-stacked">
-              <li className="nav-item"><Link to={namespaceURL(namespaceName)} className="nav-link">{namespaceName} - Namespace</Link></li>
-              <li className="nav-item"><Link to={experimentURL(namespaceName, experimentName)} className="nav-link">{experimentName} - Experiment</Link></li>
-              <li className="nav-item"><Link to={choiceNewURL(namespaceName, experimentName, p.name)}>Create new choice</Link></li>
-            </ul>
-          </nav>
-        </div>
+        <NavSection>
+          <Link to={namespaceURL(namespaceName)} className="nav-link">{namespaceName} - Namespace</Link>
+          <Link to={experimentURL(namespaceName, experimentName)} className="nav-link">{experimentName} - Experiment</Link>
+          <Link to={choiceNewURL(namespaceName, experimentName, p.name)} className="nav-link">Create a new choice</Link>
+        </NavSection>
         <div className="col-sm-9">
           <h2>Weight</h2>
           <form>
