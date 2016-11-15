@@ -65,6 +65,34 @@ export const experimentName = (namespace, experiment, name) => ({
 });
 
 /**
+ * experimentNumSegments is an action that sets the number of segments in an
+ * expermient.
+ * @param {string} namespace - The namespace that the experiment is in.
+ * @param {string} experiment - The experiment that is being changed.
+ * @param {number} numSegments - The number of segments the experiment
+ * should have.
+ */
+export const experimentNumSegments = (namespace, experiment, numSegments) => ({
+  type: 'EXPERIMENT_NUM_SEGMENTS',
+  namespace,
+  experiment,
+  numSegments,
+});
+
+/**
+ * experimentPercent is an action that claims segments based on a percentage.
+ * @param {string} namespace - The namespace that the experiment is in.
+ * @param {string} experiment - The experiment that is being changed.
+ * @param {string} percent - The percentage of segments to claim.
+ */
+export const experimentPercent = (namespace, experiment, percent) => ({
+  type: 'EXPERIMENT_PERCENT',
+  namespace,
+  experiment,
+  percent,
+})
+
+/**
  * paramName is an action that sets the param name in an experiments param.
  * @param {string} namespace - The namespace that the param is in.
  * @param {string} experiment - The experiment's name.

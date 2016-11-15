@@ -14,17 +14,21 @@ const Namespace = ({ ns, addLabel, toggleLabel }) => {
   const newLabelProps = { namespaceName: ns.name, addLabel, redirectOnSubmit: false };
   return (
     <div className="container">
-      <NavSection>
-        <Link to={ rootURL() }>Home</Link>
-        <Link to={ labelNewURL(ns.name) }>New label</Link>
-        <Link to={ experimentNewURL(ns.name) }>New Experiment</Link>
-      </NavSection>
-      <h1>{ ns.name }</h1>
-      <h2>Labels</h2>
-      <LabelList { ...llProps } />
-      <NewLabel { ...newLabelProps } />
-      <h2>Experiments</h2>
-      <ExperimentList namespaceName={ ns.name } />
+      <div className="row"><h1>{ ns.name }</h1></div>
+      <div className="row">
+        <NavSection>
+          <Link to={ rootURL() } className="nav-link">Home</Link>
+          <Link to={ labelNewURL(ns.name) } className="nav-link">New label</Link>
+          <Link to={ experimentNewURL(ns.name) } className="nav-link">New Experiment</Link>
+        </NavSection>
+        <div className="col-sm-9">
+          <h2>Labels</h2>
+          <LabelList { ...llProps } />
+          <NewLabel { ...newLabelProps } />
+          <h2>Experiments</h2>
+          <ExperimentList namespaceName={ ns.name } />
+        </div>
+      </div>
     </div>
   );
 };

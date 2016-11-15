@@ -17,6 +17,8 @@ const namespace = (state = namespaceInitialState, action) => {
     return { ...state, labels: labels(state.labels, action)}
   case 'ADD_EXPERIMENT':
   case 'EXPERIMENT_NAME':
+  case 'EXPERIMENT_NUM_SEGMENTS':
+  case 'EXPERIMENT_PERCENT':
   case 'PARAM_NAME':
   case 'ADD_PARAM':
   case 'TOGGLE_WEIGHTED':
@@ -38,6 +40,8 @@ const namespaces = (state = [], action) => {
   case 'TOGGLE_LABEL':
   case 'ADD_EXPERIMENT':
   case 'EXPERIMENT_NAME':
+  case 'EXPERIMENT_NUM_SEGMENTS':
+  case 'EXPERIMENT_PERCENT':
   case 'PARAM_NAME':
   case 'ADD_PARAM':
   case 'TOGGLE_WEIGHTED':

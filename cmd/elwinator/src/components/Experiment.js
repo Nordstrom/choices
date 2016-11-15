@@ -2,25 +2,36 @@ import React from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
+import NavSection from './NavSection';
+import SegmentInput from './SegmentInput';
 import ParamList from './ParamList';
-import { namespaceURL, paramNewURL } from '../urls';
+import { rootURL, namespaceURL, paramNewURL } from '../urls';
+import { experimentNumSegments, experimentPercent } from '../actions';
 
-const Experiment = ({ namespaceName, experimentName }) => {
+const Experiment = ({ namespaceName, exp, experimentNumSegments, experimentPercent }) => {
+  const siProps = {
+    namespaceName,
+    experimentName: exp.name,
+    numSegments: exp.numSegments,
+    percent: exp.percent,
+    redirectOnSubmit: false,
+    experimentNumSegments,
+    experimentPercent,
+  }
   return (
     <div className="container">
-      <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{experimentName}</h1></div></div>
+      <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{exp.name}</h1></div></div>
       <div className="row">
-        <div className="col-sm-3">
-          <nav>
-            <ul className="nav nav-pills nav-stacked">
-              <li className="nav-item"><Link to={namespaceURL(namespaceName)} className="nav-link">{namespaceName} - Namespace</Link></li>
-              <li className="nav-item"><Link to={paramNewURL(namespaceName, experimentName)}>Create param</Link></li>
-            </ul>
-          </nav>
-        </div>
+        <NavSection>
+          <Link to={ rootURL() } className="nav-link">Home</Link>
+          <Link to={namespaceURL(namespaceName)} className="nav-link">{namespaceName} - Namespace</Link>
+          <Link to={paramNewURL(namespaceName, exp.name)} className="nav-link">Create param</Link>
+        </NavSection>
         <div className="col-sm-9">
+          <h2>Segments</h2>
+          <SegmentInput {...siProps } />
           <h2>Params</h2>
-          <ParamList namespaceName={namespaceName} experimentName={experimentName} />  
+          <ParamList namespaceName={namespaceName} experimentName={exp.name} />  
         </div>
       </div>
     </div>
@@ -32,12 +43,17 @@ const mapStateToProps = (state, ownProps) => {
   const exp = ns.experiments.find(e => e.name === ownProps.params.experiment);
   return {
     namespaceName: ns.name,
-    experimentName: exp.name,
+    exp,
   }
 };
 
+const mapDispatchToProps = {
+  experimentNumSegments,
+  experimentPercent,
+}
 const connected = connect(
   mapStateToProps,
+  mapDispatchToProps,
 )(Experiment);
 
 export default connected;
