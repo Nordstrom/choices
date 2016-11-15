@@ -12,7 +12,7 @@ import App from './App';
 import reducers from './reducers';
 import NewNamespaceView from './components/NewNamespaceView';
 import Namespace from './components/Namespace';
-import NewLabel from './connectors/NewLabel';
+import NewLabelView from './components/NewLabelView';
 import NewExperimentView from './components/NewExperimentView';
 import Experiment from './components/Experiment';
 import NewParamView from './components/NewParamView';
@@ -37,7 +37,7 @@ ReactDOM.render(
       <Route path="/" component={App} />
       <Route path="/n/new" component={NewNamespaceView} />
       <Route path="/n/:namespace" component={Namespace} />
-      <Route path="/n/:namespace/l/new" component={NewLabel} />
+      <Route path="/n/:namespace/l/new" component={NewLabelView} />
       <Route path="/n/:namespace/e/new" component={NewExperimentView} />
       <Route path="/n/:namespace/e/:experiment" component={Experiment} />
       <Route path="/n/:namespace/e/:experiment/p/new" component={NewParamView} />
