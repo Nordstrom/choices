@@ -13,7 +13,7 @@ const Experiment = ({ namespaceName, exp, experimentNumSegments, experimentPerce
     namespaceName,
     experimentName: exp.name,
     numSegments: exp.numSegments,
-    percent: exp.percent,
+    dirtySegments: exp.dirtySegments,
     redirectOnSubmit: false,
     experimentNumSegments,
     experimentPercent,

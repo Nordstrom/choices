@@ -3,9 +3,9 @@ import { browserHistory } from 'react-router';
 
 import { experimentURL } from '../urls';
 
-const percents = ['1', '25', '50', '100'];
+const percents = [1, 25, 50, 100];
 
-const SegmentInput = ({ namespaceName, experimentName, numSegments, percent, redirectOnSubmit, experimentNumSegments, experimentPercent }) => {
+const SegmentInput = ({ namespaceName, experimentName, numSegments, redirectOnSubmit, experimentNumSegments, experimentPercent }) => {
   let numSeg;
 
   const radio = percents.map(p => {
@@ -14,7 +14,7 @@ const SegmentInput = ({ namespaceName, experimentName, numSegments, percent, red
         <label>
         <input type="radio"
           name="percent"
-          checked={ p === "" + Math.floor((numSegments/128) * 100) }
+          checked={ Math.floor((p/100)*128) === numSegments }
           onChange={() => experimentPercent(namespaceName, experimentName, p)}
         /> {p}%
         </label>
@@ -47,7 +47,7 @@ const SegmentInput = ({ namespaceName, experimentName, numSegments, percent, red
       />
       <p className="help-block">The number of segments to use for this experiment</p>
     </div>
-    <button type="submit" className="btn btn-primary">Set and Randomize Segments</button>
+    <button type="submit" className="btn btn-default">Randomize Segments</button>
     </form>
   );
 };
@@ -55,8 +55,7 @@ const SegmentInput = ({ namespaceName, experimentName, numSegments, percent, red
 SegmentInput.propTypes = {
   namespaceName: PropTypes.string.isRequired,
   experimentName: PropTypes.string.isRequired,
-  numSegments: PropTypes.string.isRequired,
-  percent: PropTypes.string,
+  numSegments: PropTypes.number.isRequired,
   redirectOnSubmit: PropTypes.bool.isRequired,
   experimentNumSegments: PropTypes.func.isRequired,
   experimentPercent: PropTypes.func.isRequired,
