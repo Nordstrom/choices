@@ -5,7 +5,7 @@ import { experimentURL } from '../urls';
 
 const percents = [1, 25, 50, 100];
 
-const SegmentInput = ({ namespaceName, experimentName, numSegments, redirectOnSubmit, experimentNumSegments, experimentPercent }) => {
+const SegmentInput = ({ namespaceName, experimentName, numSegments, availableSegments, redirectOnSubmit, experimentNumSegments }) => {
   let numSeg;
 
   const radio = percents.map(p => {
@@ -14,9 +14,9 @@ const SegmentInput = ({ namespaceName, experimentName, numSegments, redirectOnSu
         <label>
         <input type="radio"
           name="percent"
-          checked={ Math.floor((p/100)*128) === numSegments }
-          onChange={() => experimentPercent(namespaceName, experimentName, p)}
-        /> {p}%
+          checked={ Math.floor((p/100)*availableSegments) === numSegments }
+          onChange={() => experimentNumSegments(namespaceName, experimentName, Math.floor((p/100)*availableSegments))}
+        /> {p}% of available segments
         </label>
       </div>
     );
@@ -33,13 +33,14 @@ const SegmentInput = ({ namespaceName, experimentName, numSegments, redirectOnSu
       }
       browserHistory.push(experimentURL(namespaceName, experimentName));
     }}>
+    Segments available: <strong>{availableSegments}</strong>
     {radio}
     <div className="form-group">
       <label>Number of segments</label>
       <input
         type="number"
         min="1"
-        max="128"
+        max={availableSegments}
         className="form-control"
         value={numSegments}
         onChange={(e) => experimentNumSegments(namespaceName, experimentName, e.target.value)}
@@ -56,9 +57,9 @@ SegmentInput.propTypes = {
   namespaceName: PropTypes.string.isRequired,
   experimentName: PropTypes.string.isRequired,
   numSegments: PropTypes.number.isRequired,
+  availableSegments: PropTypes.number.isRequired,
   redirectOnSubmit: PropTypes.bool.isRequired,
   experimentNumSegments: PropTypes.func.isRequired,
-  experimentPercent: PropTypes.func.isRequired,
 };
 
 export default SegmentInput;

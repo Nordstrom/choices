@@ -6,7 +6,7 @@ import NavSection from './NavSection';
 import LabelList from './LabelList';
 import NewLabel from './NewLabel';
 import ExperimentList from './ExperimentList';
-import { rootURL, labelNewURL, experimentNewURL } from '../urls';
+import { labelNewURL, experimentNewURL } from '../urls';
 import { addLabel, toggleLabel } from '../actions';
 
 const Namespace = ({ ns, addLabel, toggleLabel }) => {
@@ -17,7 +17,6 @@ const Namespace = ({ ns, addLabel, toggleLabel }) => {
       <div className="row"><h1>{ ns.name }</h1></div>
       <div className="row">
         <NavSection>
-          <Link to={ rootURL() } className="nav-link">Home</Link>
           <Link to={ labelNewURL(ns.name) } className="nav-link">New label</Link>
           <Link to={ experimentNewURL(ns.name) } className="nav-link">New Experiment</Link>
         </NavSection>

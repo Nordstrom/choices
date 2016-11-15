@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { namespaceURL } from '../urls';
 import { addNamespace } from '../actions';
 
-const NewNamespace = ({ addNamespace }) => {
+const NewNamespace = ({ dispatch }) => {
   let input;
   return (
     <div className="container">
@@ -14,7 +14,7 @@ const NewNamespace = ({ addNamespace }) => {
         if (!input.value.trim()) {
           return;
         }
-        addNamespace(input.value);
+        dispatch(addNamespace(input.value));
         browserHistory.push(namespaceURL(input.value));
       }}>
         <div className="form-group">
@@ -27,14 +27,6 @@ const NewNamespace = ({ addNamespace }) => {
   );
 };
 
-const mapStateToProps = (state) => ({
-  namespaceName: state.namespaces.name,
-});
-
-const mapDispatchToProps = ({
-  addNamespace,
-})
-
-const connected = connect(mapStateToProps, mapDispatchToProps)(NewNamespace);
+const connected = connect()(NewNamespace);
 
 export default connected;

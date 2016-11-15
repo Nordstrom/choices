@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 
 import { paramURL } from '../urls';
@@ -48,6 +48,16 @@ const NewChoice = ({ namespaceName, experimentName, paramName, isWeighted, addCh
       <button type="submit" className="btn btn-primary">Create choice</button>
     </form>
   );
+}
+
+NewChoice.propTypes = {
+   namespaceName: PropTypes.string.isRequired,
+   experimentName: PropTypes.string.isRequired,
+   paramName: PropTypes.string.isRequired,
+   isWeighted: PropTypes.bool.isRequired,
+   addChoice: PropTypes.func.isRequired,
+   addWeight: PropTypes.func.isRequired,
+   redirectOnSubmit: PropTypes.bool.isRequired,
 }
 
 export default NewChoice;

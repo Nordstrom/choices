@@ -4,7 +4,7 @@ import { browserHistory } from 'react-router';
 
 import { addExperiment } from '../actions';
 
-const NewExperiment = ({ namespaceName, addExperiment }) => {
+const NewExperiment = ({ namespaceName, dispatch }) => {
   let input;
   return (
     <div className="container">
@@ -13,7 +13,7 @@ const NewExperiment = ({ namespaceName, addExperiment }) => {
         if (!input.value.trim()) {
           return;
         }
-        addExperiment(namespaceName, input.value);
+        dispatch(addExperiment(namespaceName, input.value));
         browserHistory.push(`/n/${namespaceName}/e/${input.value}`);
       }}>
         <div className="form-group">
@@ -31,14 +31,11 @@ const NewExperiment = ({ namespaceName, addExperiment }) => {
   );
 };
 
-const mapStateToProps = (state, ownProps) => ({
-  namespaceName: ownProps.params.namespace,
-});
+NewExperiment.propTypes = {
+  namespaceName: React.PropTypes.string.isRequired,
+  dispatch: React.PropTypes.func.isRequired,
+}
 
-const mapDispatchToProps = ({
-  addExperiment,
-});
-
-const connected = connect(mapStateToProps, mapDispatchToProps)(NewExperiment);
+const connected = connect()(NewExperiment);
 
 export default connected;

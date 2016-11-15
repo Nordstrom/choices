@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 
 import { addParam } from '../actions';
 
-const NewParam = ({ namespaceName, experimentName, addParam }) => {
+const NewParam = ({ namespaceName, experimentName, dispatch }) => {
   let input;
   return (
     <div className="container">
@@ -13,7 +13,7 @@ const NewParam = ({ namespaceName, experimentName, addParam }) => {
         if (!input.value.trim()) {
           return;
         }
-        addParam(namespaceName, experimentName, input.value);
+        dispatch(addParam(namespaceName, experimentName, input.value));
         browserHistory.push(`/n/${namespaceName}/e/${experimentName}/p/${input.value}`)
       }}>
         <div className="form-group">
@@ -31,17 +31,12 @@ const NewParam = ({ namespaceName, experimentName, addParam }) => {
   );
 };
 
-const mapStateToProps = (state, ownProps) => {
-  return {
-    namespaceName: ownProps.params.namespace,
-    experimentName: ownProps.params.experiment,
-  }
-};
+NewParam.propTypes = {
+  namespaceName: React.PropTypes.string.isRequired,
+  experimentName: React.PropTypes.string.isRequired,
+  dispatch: React.PropTypes.func.isRequired,
+}
 
-const mapDispatchToProps = {
-  addParam,
-};
-
-const connected = connect(mapStateToProps, mapDispatchToProps)(NewParam);
+const connected = connect()(NewParam);
 
 export default connected;
