@@ -4,7 +4,6 @@ const experimentInitialState = {
   name: '',
   segments: [],
   numSegments: "128",
-  percent: "100",
   params: [],
 };
 
@@ -18,7 +17,7 @@ const experiment = (state = experimentInitialState, action) => {
     return { ...state, numSegments: action.numSegments };
   case 'EXPERIMENT_PERCENT':
     const p = Math.floor((parseFloat(action.percent) / 100)*128);
-    return { ...state, percent: action.percent, numSegments: "" + p };
+    return { ...state, numSegments: "" + p };
   case 'PARAM_NAME':
   case 'ADD_PARAM':
   case 'TOGGLE_WEIGHTED':

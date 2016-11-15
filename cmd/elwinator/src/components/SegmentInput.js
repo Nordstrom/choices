@@ -14,7 +14,7 @@ const SegmentInput = ({ namespaceName, experimentName, numSegments, percent, red
         <label>
         <input type="radio"
           name="percent"
-          checked={ p === percent }
+          checked={ p === "" + Math.floor((numSegments/128) * 100) }
           onChange={() => experimentPercent(namespaceName, experimentName, p)}
         /> {p}%
         </label>
