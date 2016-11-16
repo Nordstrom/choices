@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import NavSection from './NavSection';
 import LabelList from './LabelList';
 import NewLabel from './NewLabel';
+import Segment from './Segment';
 import ExperimentList from './ExperimentList';
 import { labelNewURL, experimentNewURL } from '../urls';
 import { addLabel, toggleLabel } from '../actions';
@@ -12,6 +13,14 @@ import { addLabel, toggleLabel } from '../actions';
 const Namespace = ({ ns, addLabel, toggleLabel }) => {
   const llProps = { namespaceName: ns.name, labels: ns.labels, toggleLabel };
   const newLabelProps = { namespaceName: ns.name, addLabel, redirectOnSubmit: false };
+  const nsSegments = ns.experiments.reduce((prev, e) => {
+      e.segments.forEach((seg, i) => {
+        if (seg === 1) {
+          prev[i] = 1;
+        }
+      });
+      return prev;
+    }, new Array(128).fill(0));
   return (
     <div className="container">
       <div className="row"><h1>{ ns.name }</h1></div>
@@ -24,6 +33,8 @@ const Namespace = ({ ns, addLabel, toggleLabel }) => {
           <h2>Labels</h2>
           <LabelList { ...llProps } />
           <NewLabel { ...newLabelProps } />
+          <h2>Segments</h2>
+          <Segment namespaceSegments={nsSegments} />
           <h2>Experiments</h2>
           <ExperimentList namespaceName={ ns.name } />
         </div>
