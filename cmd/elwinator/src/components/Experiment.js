@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 
 import NavSection from './NavSection';
 import SegmentInput from './SegmentInput';
+import Segment from './Segment';
 import ParamList from './ParamList';
 import { namespaceURL, paramNewURL } from '../urls';
 import { experimentNumSegments, experimentPercent } from '../actions';
@@ -44,6 +45,7 @@ const Experiment = ({ ns, exp, experimentNumSegments, experimentPercent }) => {
         <div className="col-sm-9">
           <h2>Segments</h2>
           <SegmentInput {...siProps } />
+          <Segment namespaceSegments={siProps.namespaceSegments} experimentSegments={exp.segments} />
           <h2>Params</h2>
           <ParamList namespaceName={ns.name} experimentName={exp.name} />  
         </div>
