@@ -7,27 +7,25 @@ import { addParam } from '../actions';
 const NewParam = ({ namespaceName, experimentName, dispatch }) => {
   let input;
   return (
-    <div className="container">
-      <form onSubmit={e => {
-        e.preventDefault();
-        if (!input.value.trim()) {
-          return;
-        }
-        dispatch(addParam(namespaceName, experimentName, input.value));
-        browserHistory.push(`/n/${namespaceName}/e/${experimentName}/p/${input.value}`)
-      }}>
-        <div className="form-group">
-          <label>Param Name</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Enter param name"
-            ref={node => { input = node }}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary">Submit</button>
-      </form>
-    </div>
+    <form onSubmit={e => {
+      e.preventDefault();
+      if (!input.value.trim()) {
+        return;
+      }
+      dispatch(addParam(namespaceName, experimentName, input.value));
+      browserHistory.push(`/n/${namespaceName}/e/${experimentName}/p/${input.value}`)
+    }}>
+      <div className="form-group">
+        <label>Param Name</label>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Enter param name"
+          ref={node => { input = node }}
+        />
+      </div>
+      <button type="submit" className="btn btn-primary">Submit</button>
+    </form>
   );
 };
 
