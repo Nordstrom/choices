@@ -1,5 +1,5 @@
 import params from './params';
-import shuffle from '../shuffle';
+import { sample } from '../shuffle';
 
 const experimentInitialState = {
   name: '',
@@ -17,12 +17,7 @@ const experiment = (state = experimentInitialState, action) => {
     return { ...state, name: action.name };
   case 'EXPERIMENT_NUM_SEGMENTS':
     const ns = parseInt(action.numSegments, 10);
-    const ensSegments = new Array(128).fill(0).fill(1, 0, ns);
-    return { ...state, numSegments: ns, segments: shuffle(ensSegments) };
-  case 'EXPERIMENT_PERCENT':
-    const p = Math.floor((parseFloat(action.percent) / 100)*128);
-    const epSegments = new Array(128).fill(0).fill(1, 0, p);
-    return { ...state, numSegments: p, segments: shuffle(epSegments) };
+    return { ...state, numSegments: ns, segments: sample(action.namespaceSegments, action.numSegments) };
   case 'PARAM_NAME':
   case 'ADD_PARAM':
   case 'TOGGLE_WEIGHTED':
@@ -41,7 +36,6 @@ const experiments = (state = [], action) => {
     return [...state, experiment(undefined, action)];
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
-  case 'EXPERIMENT_PERCENT':
   case 'PARAM_NAME':
   case 'ADD_PARAM':
   case 'TOGGLE_WEIGHTED':

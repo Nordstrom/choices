@@ -69,13 +69,15 @@ export const experimentName = (namespace, experiment, name) => ({
  * expermient.
  * @param {string} namespace - The namespace that the experiment is in.
  * @param {string} experiment - The experiment that is being changed.
+ * @param {Array} namespaceSegments - The segments claimed by the namespace.
  * @param {number} numSegments - The number of segments the experiment
  * should have.
  */
-export const experimentNumSegments = (namespace, experiment, numSegments) => ({
+export const experimentNumSegments = (namespace, experiment, namespaceSegments, numSegments) => ({
   type: 'EXPERIMENT_NUM_SEGMENTS',
   namespace,
   experiment,
+  namespaceSegments,
   numSegments,
 });
 

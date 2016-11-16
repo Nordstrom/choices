@@ -19,6 +19,17 @@ const Experiment = ({ ns, exp, experimentNumSegments, experimentPercent }) => {
       }
       return prev - e.numSegments;
     }, 128),
+    namespaceSegments: ns.experiments.reduce((prev, e) => {
+      if (e.name === exp.name) {
+        return prev;
+      }
+      e.segments.forEach((seg, i) => {
+        if (seg === 1) {
+          prev[i] = 1;
+        }
+      });
+      return prev;
+    }, new Array(128).fill(0)),
     redirectOnSubmit: false,
     experimentNumSegments,
   }
