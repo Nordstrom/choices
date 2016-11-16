@@ -1,26 +1,60 @@
 import React from 'react';
 
-const cellSize = 18;
-
-const Segment = ({ namespaceSegments, experimentSegments = [] }) => {
+const Segment = ({ namespaceSegments, experimentSegments = [], cellSize, spacing, rows }) => {
+  const cols = Math.ceil(128 / rows);
   const segs = new Array(128).fill(false);
-  namespaceSegments.forEach((s, i) => s === 0 ? false : 
-    segs[i] = <rect key={i} fill="#00295b" width={cellSize-2} height={cellSize-2} x={(Math.floor(i/4) * cellSize + 1)} y={(i%4) * cellSize + 1} />
-  );
-  experimentSegments.forEach((s, i) => s === 0 ? false :
-    segs[i] = <rect key={i} fill="#69bd28" width={cellSize-2} height={cellSize-2} x={(Math.floor(i / 4) * cellSize + 1) } y={(i % 4) * cellSize + 1} />
-  );
+  namespaceSegments.forEach((s, i) => {
+    if (s === 0) {
+      return;
+    }
+    segs[i] = <rect
+      key={i}
+      fill="#00295b"
+      width={cellSize}
+      height={cellSize}
+      x={Math.floor(i/rows) * (cellSize + spacing)}
+      y={(i%rows) * (cellSize + spacing)}
+    />;
+  });
+  experimentSegments.forEach((s, i) => {
+    if (s === 0) {
+      return;
+    }
+    segs[i] = <rect
+      key={i}
+      fill="#69bd28"
+      width={cellSize}
+      height={cellSize}
+      x={Math.floor(i / rows) * (cellSize + spacing)}
+      y={(i % rows) * (cellSize + spacing)}
+    />
+  });
   const out = segs.map((s, i) => {
     if (s) {
       return s;
     }
-    return <rect key={i} fill="#b5b6ba" width={cellSize-2} height={cellSize-2} x={(Math.floor(i/4) * cellSize + 1)} y={(i%4) * cellSize + 1} />
+    return <rect
+      key={i}
+      fill="#b5b6ba"
+      width={cellSize}
+      height={cellSize}
+      x={Math.floor(i/rows) * (cellSize + spacing)}
+      y={(i%rows) * (cellSize + spacing)}
+    />
   });
   return (
-    <svg width={cellSize*32} height={cellSize*4}>
+    <svg width={cellSize*cols + (cols-1)*spacing} height={cellSize*rows + (rows-1) * spacing}>
       {out}
     </svg>
   );
 }
+
+Segment.defaultProps = {
+  namespaceSegments: [],
+  experimentSegments: [],
+  cellSize: 16,
+  spacing: 2,
+  rows: 4,
+};
 
 export default Segment;
