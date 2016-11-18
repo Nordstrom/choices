@@ -13,6 +13,7 @@ import (
 
 var (
 	storageEndpoint = flag.String("storage_endpoint", "elwin-storage:80", "endpoint of elwin-storage")
+	listenAddress   = flag.String("listen_address", ":8080", "address to listen on")
 )
 
 func run() error {
@@ -27,7 +28,8 @@ func run() error {
 		return err
 	}
 
-	return http.ListenAndServe(":8080", mux)
+	log.Printf("Listening on %s", *listenAddress)
+	return http.ListenAndServe(*listenAddress, mux)
 }
 
 func main() {
