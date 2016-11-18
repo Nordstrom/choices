@@ -27,6 +27,19 @@ var _ io.Reader
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
+func request_ElwinStorage_All_0(ctx context.Context, marshaler runtime.Marshaler, client ElwinStorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AllRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.All(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
 func request_ElwinStorage_Create_0(ctx context.Context, marshaler runtime.Marshaler, client ElwinStorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq CreateRequest
 	var metadata runtime.ServerMetadata
@@ -108,6 +121,34 @@ func RegisterElwinStorageHandlerFromEndpoint(ctx context.Context, mux *runtime.S
 // The handlers forward requests to the grpc endpoint over "conn".
 func RegisterElwinStorageHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
 	client := NewElwinStorageClient(conn)
+
+	mux.Handle("POST", pattern_ElwinStorage_All_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_ElwinStorage_All_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ElwinStorage_All_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
 
 	mux.Handle("POST", pattern_ElwinStorage_Create_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
@@ -225,6 +266,8 @@ func RegisterElwinStorageHandler(ctx context.Context, mux *runtime.ServeMux, con
 }
 
 var (
+	pattern_ElwinStorage_All_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "all"}, ""))
+
 	pattern_ElwinStorage_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "create"}, ""))
 
 	pattern_ElwinStorage_Read_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "read"}, ""))
@@ -235,6 +278,8 @@ var (
 )
 
 var (
+	forward_ElwinStorage_All_0 = runtime.ForwardResponseMessage
+
 	forward_ElwinStorage_Create_0 = runtime.ForwardResponseMessage
 
 	forward_ElwinStorage_Read_0 = runtime.ForwardResponseMessage

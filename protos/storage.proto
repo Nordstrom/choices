@@ -5,7 +5,12 @@ import "google/api/annotations.proto";
 // The ElwinStorage service definition
 service ElwinStorage {
   // All returns all the namespaces for a given environment.
-  rpc All(AllRequest) returns (AllReply) {}
+  rpc All(AllRequest) returns (AllReply) {
+    option(google.api.http) = {
+      post: "/v1/all"
+      body: "*"
+    };
+  }
 
   // Create creates a namespace in the given environment.
   rpc Create(CreateRequest) returns (CreateReply) {
