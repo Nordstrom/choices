@@ -5,12 +5,17 @@ import "google/api/annotations.proto";
 // The ElwinStorage service definition
 service ElwinStorage {
   // All returns all the namespaces for a given environment.
-  rpc All(AllRequest) returns (AllReply) {}
+  rpc All(AllRequest) returns (AllReply) {
+    option(google.api.http) = {
+      post: "/api/v1/all"
+      body: "*"
+    };
+  }
 
   // Create creates a namespace in the given environment.
   rpc Create(CreateRequest) returns (CreateReply) {
     option(google.api.http) = {
-      post: "/v1/create"
+      post: "/api/v1/create"
       body: "*"
     };
   }
@@ -19,7 +24,7 @@ service ElwinStorage {
   // environment.
   rpc Read(ReadRequest) returns (ReadReply) {
     option(google.api.http) = {
-      post: "/v1/read"
+      post: "/api/v1/read"
       body: "*"
     };
   }
@@ -28,7 +33,7 @@ service ElwinStorage {
   // supplied.
   rpc Update(UpdateRequest) returns (UpdateReply) {
     option(google.api.http) = {
-      post: "/v1/update"
+      post: "/api/v1/update"
       body: "*"
     };
   }
@@ -36,7 +41,7 @@ service ElwinStorage {
   // Delete deletes the namespace from the given environment.
   rpc Delete(DeleteRequest) returns (DeleteReply) {
     option(google.api.http) = {
-      post: "/v1/delete"
+      post: "/api/v1/delete"
       body: "*"
     };
   }

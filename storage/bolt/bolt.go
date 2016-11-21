@@ -72,11 +72,11 @@ func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllRe
 	if err := s.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(env).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var ns *storage.Namespace
-			if err := proto.Unmarshal(v, ns); err != nil {
+			var ns storage.Namespace
+			if err := proto.Unmarshal(v, &ns); err != nil {
 				return err
 			}
-			ar.Namespaces = append(ar.Namespaces, ns)
+			ar.Namespaces = append(ar.Namespaces, &ns)
 		}
 		return nil
 	}); err != nil {
