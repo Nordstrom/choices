@@ -32,6 +32,8 @@ const namespace = (state = namespaceInitialState, action) => {
 
 const namespaces = (state = [], action) => {
   switch (action.type) {
+  case 'NAMESPACES_LOADED':
+    return action.namespaces.map(n => Object.assign({}, namespace(undefined, action), n));
   case 'ADD_NAMESPACE':
     return [...state, namespace(undefined, action)];
   case 'NAMESPACE_NAME':

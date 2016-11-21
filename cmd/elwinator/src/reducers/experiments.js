@@ -6,7 +6,6 @@ const experimentInitialState = {
   segments: [],
   numSegments: 0,
   params: [],
-  dirtySegments: true,
 };
 
 const experiment = (state = experimentInitialState, action) => {

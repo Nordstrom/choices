@@ -1,33 +1,41 @@
 import React from 'react';
 
-const Segment = ({ namespaceSegments, experimentSegments = [], cellSize, spacing, rows }) => {
+import { isClaimed } from '../nsconv';
+
+const Segment = ({ namespaceSegments, experimentSegments, cellSize, spacing, rows }) => {
   const cols = Math.ceil(128 / rows);
   const segs = new Array(128).fill(false);
   namespaceSegments.forEach((s, i) => {
-    if (s === 0) {
-      return;
+    for (let idx = 0; idx < 8; idx++) {
+      if (!isClaimed(s, idx)) {
+        continue;
+      }
+      const segIndex = (i*8)+idx
+      segs[segIndex] = <rect
+        key={segIndex}
+        fill="#00295b"
+        width={cellSize}
+        height={cellSize}
+        x={Math.floor(segIndex/rows) * (cellSize + spacing)}
+        y={(segIndex%rows) * (cellSize + spacing)}
+      />;
     }
-    segs[i] = <rect
-      key={i}
-      fill="#00295b"
-      width={cellSize}
-      height={cellSize}
-      x={Math.floor(i/rows) * (cellSize + spacing)}
-      y={(i%rows) * (cellSize + spacing)}
-    />;
   });
   experimentSegments.forEach((s, i) => {
-    if (s === 0) {
-      return;
+    for (let idx = 0; idx < 8; idx++) {
+      if (!isClaimed(s, idx)) {
+        continue;
+      }
+      const segIndex = (i*8)+idx
+      segs[segIndex] = <rect
+        key={segIndex}
+        fill="#69bd28"
+        width={cellSize}
+        height={cellSize}
+        x={Math.floor(segIndex / rows) * (cellSize + spacing)}
+        y={(segIndex % rows) * (cellSize + spacing)}
+      />
     }
-    segs[i] = <rect
-      key={i}
-      fill="#69bd28"
-      width={cellSize}
-      height={cellSize}
-      x={Math.floor(i / rows) * (cellSize + spacing)}
-      y={(i % rows) * (cellSize + spacing)}
-    />
   });
   const out = segs.map((s, i) => {
     if (s) {
