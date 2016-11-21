@@ -15,12 +15,10 @@ const Namespace = ({ ns, addLabel, toggleLabel }) => {
   const newLabelProps = { namespaceName: ns.name, addLabel, redirectOnSubmit: false };
   const nsSegments = ns.experiments.reduce((prev, e) => {
       e.segments.forEach((seg, i) => {
-        if (seg === 1) {
-          prev[i] = 1;
-        }
+        prev[i] |= seg;
       });
       return prev;
-    }, new Array(128).fill(0));
+    }, new Uint8Array(16).fill(0));
   return (
     <div className="container">
       <div className="row"><h1>{ ns.name }</h1></div>

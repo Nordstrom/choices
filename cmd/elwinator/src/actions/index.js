@@ -1,3 +1,8 @@
+export const namespacesLoaded = (namespaces) => ({
+  type: 'NAMESPACES_LOADED',
+  namespaces,
+});
+
 /**
  * addNamespace is an action that adds a namespace to the namespace list.
  * @param {string} name - The name of the namespace.

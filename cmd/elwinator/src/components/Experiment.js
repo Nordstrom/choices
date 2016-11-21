@@ -25,12 +25,10 @@ const Experiment = ({ ns, exp, experimentNumSegments, experimentPercent }) => {
         return prev;
       }
       e.segments.forEach((seg, i) => {
-        if (seg === 1) {
-          prev[i] = 1;
-        }
+        prev[i] |= seg
       });
       return prev;
-    }, new Array(128).fill(0)),
+    }, new Uint8Array(16).fill(0)),
     redirectOnSubmit: false,
     experimentNumSegments,
   }
