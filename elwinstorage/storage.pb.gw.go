@@ -266,15 +266,15 @@ func RegisterElwinStorageHandler(ctx context.Context, mux *runtime.ServeMux, con
 }
 
 var (
-	pattern_ElwinStorage_All_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "all"}, ""))
+	pattern_ElwinStorage_All_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "all"}, ""))
 
-	pattern_ElwinStorage_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "create"}, ""))
+	pattern_ElwinStorage_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "create"}, ""))
 
-	pattern_ElwinStorage_Read_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "read"}, ""))
+	pattern_ElwinStorage_Read_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "read"}, ""))
 
-	pattern_ElwinStorage_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "update"}, ""))
+	pattern_ElwinStorage_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "update"}, ""))
 
-	pattern_ElwinStorage_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "delete"}, ""))
+	pattern_ElwinStorage_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "delete"}, ""))
 )
 
 var (
