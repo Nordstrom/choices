@@ -43,7 +43,16 @@ export const addLabel = (namespace, name) => ({
   type: 'ADD_LABEL',
   namespace,
   name,
-})
+});
+
+/**
+ * togglePublish is an action that toggles a namespace for publishing.
+ * @param {string} namespace - The namespace to publish.
+ */
+export const togglePublish = (namespace) => ({
+  type: 'TOGGLE_PUBLISH',
+  namespace,
+});
 
 /** 
  * addExperiment is an action that adds and experiment to the namespace.

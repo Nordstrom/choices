@@ -56,7 +56,7 @@ const SegmentInput = ({ namespaceName, experimentName, namespaceSegments, numSeg
 SegmentInput.propTypes = {
   namespaceName: PropTypes.string.isRequired,
   experimentName: PropTypes.string.isRequired,
-  namespaceSegments: PropTypes.array.isRequired,
+  namespaceSegments: PropTypes.object.isRequired,
   numSegments: PropTypes.number.isRequired,
   availableSegments: PropTypes.number.isRequired,
   redirectOnSubmit: PropTypes.bool.isRequired,
