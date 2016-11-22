@@ -5,16 +5,22 @@ const namespaceInitialState = {
   name: '',
   labels: [],
   experiments: [],
+  isDirty: false,
+  isNew: false,
+  publish: false,
 };
 
 const namespace = (state = namespaceInitialState, action) => {
   switch (action.type) {
   case 'ADD_NAMESPACE':
+      return { ...state, name: action.name, isDirty: true, isNew: true };
   case 'NAMESPACE_NAME':
-    return { ...state, name: action.name};
+    return { ...state, name: action.name, isDirty: true };
   case 'ADD_LABEL':
   case 'TOGGLE_LABEL':
-    return { ...state, labels: labels(state.labels, action)}
+    return { ...state, labels: labels(state.labels, action), isDirty: true };
+  case 'TOGGLE_PUBLISH':
+    return { ...state, publish: !state.publish };
   case 'ADD_EXPERIMENT':
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
@@ -24,7 +30,7 @@ const namespace = (state = namespaceInitialState, action) => {
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
-    return { ...state, experiments: experiments(state.experiments, action)};
+    return { ...state, experiments: experiments(state.experiments, action), isDirty: true };
   default: 
     return state;
   }
@@ -39,6 +45,7 @@ const namespaces = (state = [], action) => {
   case 'NAMESPACE_NAME':
   case 'ADD_LABEL':
   case 'TOGGLE_LABEL':
+  case 'TOGGLE_PUBLISH':
   case 'ADD_EXPERIMENT':
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':

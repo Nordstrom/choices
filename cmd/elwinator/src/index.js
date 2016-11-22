@@ -73,4 +73,7 @@ fetch("/api/v1/all", req)
 .then(() => {
   render()
 })
-.catch(e => console.log(e));
+.catch(e => {
+  console.log(e);
+  render();
+});
