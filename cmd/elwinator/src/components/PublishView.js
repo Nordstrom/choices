@@ -12,7 +12,7 @@ function fromParam(param) {
     name: param.name,
     value: param.isWeighted ? {
       choices: param.choices,
-      weights: param.weights,
+      weights: param.weights.map(w => parseInt(w, 10)),
     } : { choices: param.choices },
   };
   return p;
