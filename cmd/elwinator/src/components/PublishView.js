@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { togglePublish } from '../actions';
+import { togglePublish, namespacesLoaded } from '../actions';
+import { toNamespace } from '../nsconv';
 
 function fromSegments(segments) {
   return btoa(String.fromCharCode.apply(null, segments));
@@ -68,8 +69,8 @@ const PublishView = ({ namespaces, dispatch }) => {
     <form onSubmit={e => {
       e.preventDefault();
       // filter selected
-      namespaces.filter(n => n.publish)
-      .forEach(n => {
+      const requests = namespaces.filter(n => n.publish)
+      .map(n => {
         let url;
         let req;
         if (n.isNew) {
@@ -79,8 +80,26 @@ const PublishView = ({ namespaces, dispatch }) => {
           url = '/api/v1/update';
           req = updateRequest(n);
         }
-        fetch(url, req);
+        return fetch(url, req);
       });
+      Promise.all(requests).then(responses => {
+        const headers = new Headers({'Accept': 'application/json'});
+        const req = { method: 'POST', headers: headers, body: JSON.stringify({ environment: "Staging" }) };
+        const badRequest =  { err: "bad request" };
+        fetch("/api/v1/all", req)
+        .then(resp => {
+          if (!resp.ok) {
+            throw badRequest;
+          }
+          return resp.json();
+        })
+        .then(json => {
+          const ns = json.namespaces.map(n => {
+            return toNamespace(n);
+          });
+          dispatch(namespacesLoaded(ns));
+        })
+      })
     }}>
     {ns}
     <button type="submit" className="btn btn-primary">Publish Changes</button>
