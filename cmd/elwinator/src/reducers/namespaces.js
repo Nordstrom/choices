@@ -7,6 +7,7 @@ const namespaceInitialState = {
   experiments: [],
   isDirty: false,
   isNew: false,
+  delete: false,
   publish: false,
 };
 
@@ -19,6 +20,8 @@ const namespace = (state = namespaceInitialState, action) => {
   case 'ADD_LABEL':
   case 'TOGGLE_LABEL':
     return { ...state, labels: labels(state.labels, action), isDirty: true };
+  case 'NAMESPACE_DELETE':
+    return { ...state, delete: true, isDirty: true };
   case 'TOGGLE_PUBLISH':
     return { ...state, publish: !state.publish };
   case 'ADD_EXPERIMENT':
@@ -43,6 +46,7 @@ const namespaces = (state = [], action) => {
     return action.namespaces.map(n => Object.assign({}, namespace(undefined, action), n));
   case 'ADD_NAMESPACE':
     return [...state, namespace(undefined, action)];
+  case 'NAMESPACE_DELETE':
   case 'NAMESPACE_NAME':
   case 'ADD_LABEL':
   case 'TOGGLE_LABEL':

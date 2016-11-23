@@ -13,6 +13,26 @@ export const addNamespace = (name) => ({
 });
 
 /**
+ * namespaceDelete is an action that marks a namespace to be deleted.
+ * @param {string} namespace - The namespace to delete.
+ */
+export const namespaceDelete = (namespace) => ({
+  type: 'NAMESPACE_DELETE',
+  namespace,
+});
+
+/**
+ * namespaceLocalDelete is an action that removes the given namespace from the
+ * local state. This would be used when you create a new namespace don't
+ * publish it then decide to delete it.
+ * @param {string} namespace - The namespace you want to delete.
+ */
+export const namespaceLocalDelete = (namespace) => ({
+  type: 'NAMESPACE_LOCAL_DELETE',
+  namespace,
+});
+
+/**
  * namespaceName is an action that set the name of the namespace.
  * @param {string} namespace - The original name of the namespace.
  * @param {string} name - The new name of the namespace.
