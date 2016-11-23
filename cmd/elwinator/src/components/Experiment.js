@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
 import NavSection from './NavSection';
@@ -7,9 +7,9 @@ import SegmentInput from './SegmentInput';
 import Segment from './Segment';
 import ParamList from './ParamList';
 import { namespaceURL, paramNewURL } from '../urls';
-import { experimentNumSegments, experimentPercent } from '../actions';
+import { experimentDelete } from '../actions';
 
-const Experiment = ({ ns, exp, experimentNumSegments, experimentPercent }) => {
+const Experiment = ({ ns, exp, dispatch }) => {
   const siProps = {
     namespaceName: ns.name,
     experimentName: exp.name,
@@ -30,7 +30,6 @@ const Experiment = ({ ns, exp, experimentNumSegments, experimentPercent }) => {
       return prev;
     }, new Uint8Array(16).fill(0)),
     redirectOnSubmit: false,
-    experimentNumSegments,
   }
   return (
     <div className="container">
@@ -45,7 +44,11 @@ const Experiment = ({ ns, exp, experimentNumSegments, experimentPercent }) => {
           <SegmentInput {...siProps } />
           <Segment namespaceSegments={siProps.namespaceSegments} experimentSegments={exp.segments} />
           <h2>Params</h2>
-          <ParamList namespaceName={ns.name} experimentName={exp.name} />  
+          <ParamList namespaceName={ns.name} experimentName={exp.name} />
+          <button className="btn btn-warning" onClick={() => {
+            dispatch(experimentDelete(ns.name, exp.name));
+            browserHistory.push(namespaceURL(ns.name));
+          }}>Delete {exp.name}</button>
         </div>
       </div>
     </div>
@@ -61,13 +64,8 @@ const mapStateToProps = (state, ownProps) => {
   }
 };
 
-const mapDispatchToProps = {
-  experimentNumSegments,
-  experimentPercent,
-}
 const connected = connect(
   mapStateToProps,
-  mapDispatchToProps,
 )(Experiment);
 
 export default connected;
