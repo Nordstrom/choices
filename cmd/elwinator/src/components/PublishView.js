@@ -3,8 +3,6 @@ import React from 'react';
 import { togglePublish, namespacesLoaded } from '../actions';
 import { toNamespace, fromNamespace } from '../nsconv';
 
-
-
 function createRequest(namespace) {
   return {
     method: 'POST',
@@ -25,7 +23,16 @@ const PublishView = ({ namespaces, dispatch }) => {
       return true;
     }
     return false;
-  }).map(n => <div key={n.name} className="checkbox"><label><input type="checkbox" checked={n.publish} onChange={() => dispatch(togglePublish(n.name))} /> {n.name}</label></div>);
+  }).map(n => 
+    <div key={n.name} className="checkbox">
+      <label><input
+        type="checkbox"
+        checked={n.publish}
+        onChange={() => dispatch(togglePublish(n.name))}
+      /> {`${n.name} - ${n.experiments.map(e => e.name).join(', ')}`}
+      </label>
+    </div>
+  );
   if (ns.length === 0) {
     return <p>No changes made</p>
   }
@@ -49,11 +56,11 @@ const PublishView = ({ namespaces, dispatch }) => {
       Promise.all(requests).then(responses => {
         const headers = new Headers({'Accept': 'application/json'});
         const req = { method: 'POST', headers: headers, body: JSON.stringify({ environment: "Staging" }) };
-        const badRequest =  { err: "bad request" };
+        const badRequest = (req, resp) =>  ({ err: "bad request", req, resp });
         fetch("/api/v1/all", req)
         .then(resp => {
           if (!resp.ok) {
-            throw badRequest;
+            throw badRequest(req, resp);
           }
           return resp.json();
         })
@@ -64,6 +71,7 @@ const PublishView = ({ namespaces, dispatch }) => {
           dispatch(namespacesLoaded(ns));
         })
       })
+      .catch(err => console.log(err.err, err.req, err.resp));
     }}>
     {ns}
     <button type="submit" className="btn btn-primary">Publish Changes</button>
