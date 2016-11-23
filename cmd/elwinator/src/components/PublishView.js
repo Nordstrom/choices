@@ -1,45 +1,9 @@
 import React from 'react';
 
 import { togglePublish, namespacesLoaded } from '../actions';
-import { toNamespace } from '../nsconv';
+import { toNamespace, fromNamespace } from '../nsconv';
 
-function fromSegments(segments) {
-  return btoa(String.fromCharCode.apply(null, segments));
-};
 
-function fromParam(param) {
-  const p = {
-    name: param.name,
-    value: param.isWeighted ? {
-      choices: param.choices,
-      weights: param.weights.map(w => parseInt(w, 10)),
-    } : { choices: param.choices },
-  };
-  return p;
-}
-
-function fromExperiment(experiment) {
-  const e = {
-    name: experiment.name,
-    segments: fromSegments(experiment.segments),
-    params: experiment.params.map(p => fromParam(p)),
-  };
-  return e;
-}
-
-function fromLabels(labels) {
-  return labels.filter(l => l.active)
-  .map(l => l.name);
-}
-
-function fromNamespace(namespace) {
-  const n = {
-    name: namespace.name,
-    labels: fromLabels(namespace.labels),
-    experiments: namespace.experiments.map(e => fromExperiment(e)),
-  }
-  return n;
-}
 
 function createRequest(namespace) {
   return {
