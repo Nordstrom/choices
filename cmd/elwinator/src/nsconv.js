@@ -73,3 +73,41 @@ export const toNamespace = ns => {
   experiments = experiments.map(toExperiment);
   return { name, labels, experiments }
 }
+
+const fromSegments = (segments) => {
+  return btoa(String.fromCharCode.apply(null, segments));
+};
+
+const fromParam = (param) => {
+  const p = {
+    name: param.name,
+    value: param.isWeighted ? {
+      choices: param.choices,
+      weights: param.weights.map(w => parseInt(w, 10)),
+    } : { choices: param.choices },
+  };
+  return p;
+}
+
+const fromExperiment (experiment) => {
+  const e = {
+    name: experiment.name,
+    segments: fromSegments(experiment.segments),
+    params: experiment.params.map(p => fromParam(p)),
+  };
+  return e;
+}
+
+const fromLabels = (labels) => {
+  return labels.filter(l => l.active)
+  .map(l => l.name);
+}
+
+export const fromNamespace = (namespace) => {
+  const n = {
+    name: namespace.name,
+    labels: fromLabels(namespace.labels),
+    experiments: namespace.experiments.map(e => fromExperiment(e)),
+  }
+  return n;
+}
