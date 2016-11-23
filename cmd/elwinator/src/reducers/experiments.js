@@ -33,6 +33,8 @@ const experiments = (state = [], action) => {
   switch (action.type) {
   case 'ADD_EXPERIMENT':
     return [...state, experiment(undefined, action)];
+  case 'EXPERIMENT_DELETE':
+    return state.filter(e => e.name !== action.experiment);
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'PARAM_NAME':

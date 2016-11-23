@@ -66,6 +66,17 @@ export const addExperiment = (namespace, name) => ({
 });
 
 /**
+ * experimentDelete is an action that marks an experiment for deletion.
+ * @param {string} namespace - The namespace the experiment is in.
+ * @param {string} experiment - The name of the experiment to delete.
+ */
+export const experimentDelete = (namespace, experiment) => ({
+  type: 'EXPERIMENT_DELETE',
+  namespace,
+  experiment,
+});
+
+/**
  * experimentName is an action that sets the name in an experiment.
  * @param {string} namespace - The namespace for the experiment.
  * @param {string} experiment - The experiment's original name.
@@ -106,7 +117,7 @@ export const experimentPercent = (namespace, experiment, percent) => ({
   namespace,
   experiment,
   percent,
-})
+});
 
 /**
  * paramName is an action that sets the param name in an experiments param.

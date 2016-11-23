@@ -22,6 +22,7 @@ const namespace = (state = namespaceInitialState, action) => {
   case 'TOGGLE_PUBLISH':
     return { ...state, publish: !state.publish };
   case 'ADD_EXPERIMENT':
+  case 'EXPERIMENT_DELETE':
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'PARAM_NAME':
@@ -47,6 +48,7 @@ const namespaces = (state = [], action) => {
   case 'TOGGLE_LABEL':
   case 'TOGGLE_PUBLISH':
   case 'ADD_EXPERIMENT':
+  case 'EXPERIMENT_DELETE':
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'PARAM_NAME':
