@@ -89,7 +89,7 @@ const fromParam = (param) => {
   return p;
 }
 
-const fromExperiment (experiment) => {
+const fromExperiment = (experiment) => {
   const e = {
     name: experiment.name,
     segments: fromSegments(experiment.segments),
