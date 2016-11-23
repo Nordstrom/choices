@@ -25,7 +25,16 @@ const PublishView = ({ namespaces, dispatch }) => {
       return true;
     }
     return false;
-  }).map(n => <div key={n.name} className="checkbox"><label><input type="checkbox" checked={n.publish} onChange={() => dispatch(togglePublish(n.name))} /> {n.name}</label></div>);
+  }).map(n => 
+    <div key={n.name} className="checkbox">
+      <label><input
+        type="checkbox"
+        checked={n.publish}
+        onChange={() => dispatch(togglePublish(n.name))}
+      /> {`${n.name} - ${n.experiments.map(e => e.name).join(', ')}`}
+      </label>
+    </div>
+  );
   if (ns.length === 0) {
     return <p>No changes made</p>
   }
