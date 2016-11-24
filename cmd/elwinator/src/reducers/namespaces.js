@@ -30,6 +30,7 @@ const namespace = (state = namespaceInitialState, action) => {
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'PARAM_NAME':
   case 'ADD_PARAM':
+  case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
@@ -57,6 +58,7 @@ const namespaces = (state = [], action) => {
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'PARAM_NAME':
   case 'ADD_PARAM':
+  case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':

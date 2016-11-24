@@ -156,11 +156,25 @@ export const paramName = (namespace, experiment, param, name) => ({
 
 /**
  * addParam is an action that adds a param to an experiment.
+ * @param {string} namespace - The namespace that the param is in.
  * @param {string} experiment - The experiment name.
  * @param {Object} param - The param you are adding.
  */
 export const addParam = (namespace, experiment, name) => ({
   type: 'ADD_PARAM',
+  namespace,
+  experiment,
+  name,
+});
+
+/**
+ * paramDelete is an action that deletes a param from an experiment.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment that the param is in.
+ * @param {string} name - The name of the param to delete.
+ */
+export const paramDelete = (namespace, experiment, name) => ({
+  type: 'PARAM_DELETE',
   namespace,
   experiment,
   name,

@@ -28,6 +28,8 @@ const params = (state = [], action) => {
   switch (action.type) {
   case 'ADD_PARAM':
     return [...state, param(undefined, action)];
+  case 'PARAM_DELETE':
+    return state.filter(p => p.name !== action.name);
   case 'PARAM_NAME':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':

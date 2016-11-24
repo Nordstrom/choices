@@ -19,6 +19,7 @@ const experiment = (state = experimentInitialState, action) => {
     return { ...state, numSegments: ns, segments: sample(action.namespaceSegments, action.numSegments) };
   case 'PARAM_NAME':
   case 'ADD_PARAM':
+  case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
@@ -39,6 +40,7 @@ const experiments = (state = [], action) => {
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'PARAM_NAME':
   case 'ADD_PARAM':
+  case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
   case 'ADD_WEIGHT':
