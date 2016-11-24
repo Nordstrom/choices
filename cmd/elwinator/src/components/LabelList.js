@@ -1,7 +1,10 @@
 import React, { PropTypes } from 'react';
+import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-const LabelList = ({ namespaceName, labels, toggleLabel }) => {
+import { toggleLabel } from '../actions';
+
+const LabelList = ({ namespaceName, labels, dispatch }) => {
   const labelList = labels.map(l => {
     const spanClassName = classNames({
       'btn': true,
@@ -10,7 +13,7 @@ const LabelList = ({ namespaceName, labels, toggleLabel }) => {
     });
     return (
     <li key={l.name}>
-      <button className={spanClassName} onClick={() => toggleLabel(namespaceName, l.name)}>{l.name}</button>
+      <button className={spanClassName} onClick={() => dispatch(toggleLabel(namespaceName, l.name))}>{l.name}</button>
     </li>
     );
   }
@@ -26,7 +29,8 @@ const LabelList = ({ namespaceName, labels, toggleLabel }) => {
 LabelList.propTypes = {
   namespaceName: PropTypes.string.isRequired,
   labels: PropTypes.arrayOf(PropTypes.object).isRequired,
-  toggleLabel: PropTypes.func.isRequired,
 };
 
-export default LabelList;
+const connected = connect()(LabelList);
+
+export default connected;

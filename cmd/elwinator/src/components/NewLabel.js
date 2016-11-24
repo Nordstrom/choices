@@ -2,8 +2,9 @@ import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 
 import { namespaceURL } from '../urls';
+import { addLabel } from '../actions';
 
-const NewLabel = ({ namespaceName, redirectOnSubmit, addLabel }) => {
+const NewLabel = ({ namespaceName, redirectOnSubmit, dispatch }) => {
   let label;
   return (
     <form onSubmit={e => {
@@ -11,7 +12,7 @@ const NewLabel = ({ namespaceName, redirectOnSubmit, addLabel }) => {
       if (!label.value.trim()) {
         return;
       }
-      addLabel(namespaceName, label.value);
+      dispatch(addLabel(namespaceName, label.value));
       if (!redirectOnSubmit) {
         label.value = '';
         return;
@@ -34,7 +35,6 @@ const NewLabel = ({ namespaceName, redirectOnSubmit, addLabel }) => {
 NewLabel.propTypes = {
   namespaceName: PropTypes.string.isRequired,
   redirectOnSubmit: PropTypes.bool.isRequired,
-  addLabel: PropTypes.func.isRequired,
 }
 
 export default NewLabel;

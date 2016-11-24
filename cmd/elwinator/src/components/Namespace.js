@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
 import NavSection from './NavSection';
@@ -7,12 +7,12 @@ import LabelList from './LabelList';
 import NewLabel from './NewLabel';
 import Segment from './Segment';
 import ExperimentList from './ExperimentList';
-import { labelNewURL, experimentNewURL } from '../urls';
-import { addLabel, toggleLabel } from '../actions';
+import { rootURL, labelNewURL, experimentNewURL } from '../urls';
+import { namespaceDelete } from '../actions';
 
-const Namespace = ({ ns, addLabel, toggleLabel }) => {
-  const llProps = { namespaceName: ns.name, labels: ns.labels, toggleLabel };
-  const newLabelProps = { namespaceName: ns.name, addLabel, redirectOnSubmit: false };
+const Namespace = ({ ns, dispatch }) => {
+  const llProps = { namespaceName: ns.name, labels: ns.labels };
+  const newLabelProps = { namespaceName: ns.name, dispatch, redirectOnSubmit: false };
   const nsSegments = ns.experiments.reduce((prev, e) => {
       e.segments.forEach((seg, i) => {
         prev[i] |= seg;
@@ -35,6 +35,10 @@ const Namespace = ({ ns, addLabel, toggleLabel }) => {
           <Segment namespaceSegments={nsSegments} />
           <h2>Experiments</h2>
           <ExperimentList namespaceName={ ns.name } />
+          <button className="btn btn-warning" onClick={() => {
+            dispatch(namespaceDelete(ns.name));
+            browserHistory.push(rootURL());
+          }}>Delete {ns.name}</button>
         </div>
       </div>
     </div>
@@ -48,11 +52,6 @@ const mapStateToProps = (state, ownProps) => {
   }
 };
 
-const mapDispatchToProps = {
-  addLabel,
-  toggleLabel,
-}
-
-const connected = connect(mapStateToProps, mapDispatchToProps)(Namespace);
+const connected = connect(mapStateToProps)(Namespace);
  
 export default connected;
