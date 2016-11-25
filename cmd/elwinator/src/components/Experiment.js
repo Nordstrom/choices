@@ -48,7 +48,7 @@ const Experiment = ({ ns, exp, dispatch }) => {
           <button className="btn btn-warning" onClick={() => {
             dispatch(experimentDelete(ns.name, exp.name));
             browserHistory.push(namespaceURL(ns.name));
-          }}>Delete {exp.name}</button>
+          }}>Delete experiment {exp.name}</button>
         </div>
       </div>
     </div>

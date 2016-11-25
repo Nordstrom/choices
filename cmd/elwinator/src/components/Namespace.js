@@ -38,7 +38,7 @@ const Namespace = ({ ns, dispatch }) => {
           <button className="btn btn-warning" onClick={() => {
             dispatch(namespaceDelete(ns.name));
             browserHistory.push(rootURL());
-          }}>Delete {ns.name}</button>
+          }}>Delete namespace {ns.name}</button>
         </div>
       </div>
     </div>
