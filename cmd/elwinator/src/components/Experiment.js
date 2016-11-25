@@ -45,6 +45,7 @@ const Experiment = ({ ns, exp, dispatch }) => {
           <Segment namespaceSegments={siProps.namespaceSegments} experimentSegments={exp.segments} />
           <h2>Params</h2>
           <ParamList namespaceName={ns.name} experimentName={exp.name} />
+          <Link to={paramNewURL(ns.name, exp.name)} className="btn btn-default" role="button">Create new param</Link><br />
           <button className="btn btn-warning" onClick={() => {
             dispatch(experimentDelete(ns.name, exp.name));
             browserHistory.push(namespaceURL(ns.name));

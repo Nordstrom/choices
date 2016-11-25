@@ -11,7 +11,7 @@ const App = ({ namespaceName, params, children }) => {
       <h1>Elwinator</h1>
       <h2>Namespaces</h2>
       <NamespaceList />
-      <Link to={namespaceNewURL()}>Create new namespace</Link>
+      <Link to={namespaceNewURL()} className="btn btn-default" role="button">Create new namespace</Link>
       <h2>Publish Changes</h2>
       <PublishView />
     </div>

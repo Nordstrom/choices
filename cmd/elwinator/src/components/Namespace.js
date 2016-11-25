@@ -35,6 +35,7 @@ const Namespace = ({ ns, dispatch }) => {
           <Segment namespaceSegments={nsSegments} />
           <h2>Experiments</h2>
           <ExperimentList namespaceName={ ns.name } />
+          <Link to={experimentNewURL(ns.name)} className="btn btn-default" role="button">Create new experiment</Link><br />
           <button className="btn btn-warning" onClick={() => {
             dispatch(namespaceDelete(ns.name));
             browserHistory.push(rootURL());
