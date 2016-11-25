@@ -22,6 +22,7 @@ const experiment = (state = experimentInitialState, action) => {
   case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
+  case 'CHOICE_DELETE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     return { ...state, params: params(state.params, action) };
@@ -43,6 +44,7 @@ const experiments = (state = [], action) => {
   case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
+  case 'CHOICE_DELETE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     const exps = state.map(e => {

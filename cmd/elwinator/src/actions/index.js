@@ -211,6 +211,21 @@ export const addChoice = (namespace, experiment, param, choice) => ({
 });
 
 /**
+ * choiceDelete is an action that deletes a choice from a param.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment that the param is in.
+ * @param {string} param - The param name.
+ * @param {string} index - The index of the choice to delete.
+ */
+export const choiceDelete = (namespace, experiment, param, index) => ({
+  type: 'CHOICE_DELETE',
+  namespace,
+  experiment,
+  param,
+  index,
+});
+
+/**
  * addWeight is an action that adds a weight to a param. You should always
  * call addChoice before calling this.
  * @param {string} namespace - The namespace that the param is in.

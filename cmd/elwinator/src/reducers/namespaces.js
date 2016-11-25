@@ -33,6 +33,7 @@ const namespace = (state = namespaceInitialState, action) => {
   case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
+  case 'CHOICE_DELETE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     return { ...state, experiments: experiments(state.experiments, action), isDirty: true };
@@ -61,6 +62,7 @@ const namespaces = (state = [], action) => {
   case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
+  case 'CHOICE_DELETE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     const ns = state.map(n => {

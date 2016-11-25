@@ -34,7 +34,13 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
             </div>
           </form>
           <h2>Choices</h2>
-          <ChoiceList choices={p.choices} />
+          <ChoiceList
+            namespaceName={namespaceName}
+            experimentName={experimentName}
+            paramName={p.name}
+            choices={p.choices}
+            weights={p.weights}
+          />
           <NewChoice
             namespaceName={namespaceName}
             experimentName={experimentName}
