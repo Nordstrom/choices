@@ -8,7 +8,7 @@ const ChoiceList = ({ namespaceName, experimentName, paramName, choices, weights
     <tr key={c}>
       <td>{i+1}</td>
       <td>{c}</td>
-      <td>{weights ? weights[i] : 1}</td>
+      <td>{ weights[i] || "uniform"}</td>
       <td><button className="btn btn-default btn-xs" onClick={() => {
         dispatch(choiceDelete(namespaceName, experimentName, paramName, i));
       }}>&times;</button></td>

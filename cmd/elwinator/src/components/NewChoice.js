@@ -18,7 +18,7 @@ const NewChoice = ({ namespaceName, experimentName, paramName, isWeighted, dispa
       }
       dispatch(addChoice(namespaceName, experimentName, paramName, choice.value));
       if (isWeighted) {
-        dispatch(addWeight(namespaceName, experimentName, paramName, weight.value));
+        dispatch(addWeight(namespaceName, experimentName, paramName, parseInt(weight.value, 10)));
       }
       if (!redirectOnSubmit) {
         choice.value = '';
