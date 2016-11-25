@@ -1,12 +1,19 @@
 import React from 'react';
 
-import { togglePublish, namespacesLoaded } from '../actions';
+import { togglePublish, namespacesLoaded, namespaceLocalDelete } from '../actions';
 import { toNamespace, fromNamespace } from '../nsconv';
 
 function createRequest(namespace) {
   return {
     method: 'POST',
     body: JSON.stringify({ namespace: fromNamespace(namespace) }),
+  }
+}
+
+function deleteRequest(namespace) {
+  return {
+    method: 'POST',
+    body: JSON.stringify({name: namespace.name}),
   }
 }
 
@@ -44,9 +51,15 @@ const PublishView = ({ namespaces, dispatch }) => {
       .map(n => {
         let url;
         let req;
-        if (n.isNew) {
+        if (n.isNew && n.delete) {
+          return Promise.resolve(dispatch(namespaceLocalDelete(n.name)));
+        }
+        else if (n.isNew) {
           url = '/api/v1/create';
           req = createRequest(n);
+        } else if (n.delete) {
+          url = '/api/v1/delete';
+          req = deleteRequest(n);
         } else {
           url = '/api/v1/update';
           req = updateRequest(n);

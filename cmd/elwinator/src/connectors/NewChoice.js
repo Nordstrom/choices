@@ -1,7 +1,6 @@
 import { connect } from 'react-redux';
 
 import NewChoice from '../components/NewChoice';
-import { addChoice, addWeight } from '../actions';
 
 const mapStateToProps = (state, ownProps) => {
   const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
@@ -16,11 +15,6 @@ const mapStateToProps = (state, ownProps) => {
   }
 }
 
-const mapDispatchToProps = {
-  addChoice,
-  addWeight,
-}
-
-const connected = connect(mapStateToProps, mapDispatchToProps)(NewChoice);
+const connected = connect(mapStateToProps)(NewChoice);
 
 export default connected;

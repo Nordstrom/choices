@@ -2,17 +2,32 @@ import React from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
-import { removeParam } from '../actions';
+import { paramDelete } from '../actions';
 import { paramURL } from '../urls';
 
-const ParamList = ({ namespaceName, experimentName, params, onParamClick }) => (
-  <ul>
-    {params.map(param => 
-      <li key={param.name} >
-        <Link to={paramURL(namespaceName, experimentName, param.name)}>{param.name}</Link>
-      </li>
+const ParamList = ({ namespaceName, experimentName, params, dispatch }) => (
+  <table className="table table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Param</th>
+        <th>Choices</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+    {params.map((param, i) => 
+      <tr key={param.name} >
+        <td>{i + 1}</td>
+        <td><Link to={paramURL(namespaceName, experimentName, param.name)}>{param.name}</Link></td>
+        <td>{param.choices.join(', ')}</td>
+        <td><button className="btn btn-default btn-xs" onClick={
+          () => dispatch(paramDelete(namespaceName, experimentName, param.name))
+        }>&times;</button></td>
+      </tr>
     )}
-  </ul>
+    </tbody>
+  </table>
 );
 
 const mapStateToProps = (state, ownProps) => {
@@ -23,13 +38,8 @@ const mapStateToProps = (state, ownProps) => {
   }
 };
 
-const mapDispatchToProps = ({
-  onParamClick: removeParam,
-});
-
 const connected = connect(
   mapStateToProps,
-  mapDispatchToProps,
 )(ParamList);
 
 export default connected;

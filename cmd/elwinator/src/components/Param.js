@@ -1,14 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
 import NavSection from './NavSection';
 import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
 import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
-import { addChoice, addWeight, toggleWeighted, clearChoices } from '../actions';
+import { toggleWeighted, clearChoices, paramDelete } from '../actions';
 
-const Param = ({ namespaceName, experimentName, p, addChoice, addWeight, toggleWeighted, clearChoices }) => {
+const Param = ({ namespaceName, experimentName, p, dispatch }) => {
   return (
     <div className="container">
       <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{p.name}</h1></div></div>
@@ -25,8 +25,8 @@ const Param = ({ namespaceName, experimentName, p, addChoice, addWeight, toggleW
               <label>
                 <input type="checkbox"
                   onChange={() => {
-                    toggleWeighted(namespaceName, experimentName, p.name);
-                    clearChoices(namespaceName, experimentName, p.name);
+                    dispatch(toggleWeighted(namespaceName, experimentName, p.name));
+                    dispatch(clearChoices(namespaceName, experimentName, p.name));
                   }}
                   checked={p.isWeighted} /> Weighted choices
               </label>
@@ -34,16 +34,25 @@ const Param = ({ namespaceName, experimentName, p, addChoice, addWeight, toggleW
             </div>
           </form>
           <h2>Choices</h2>
-          <ChoiceList choices={p.choices} />
+          <ChoiceList
+            namespaceName={namespaceName}
+            experimentName={experimentName}
+            paramName={p.name}
+            choices={p.choices}
+            weights={p.weights}
+          />
           <NewChoice
             namespaceName={namespaceName}
             experimentName={experimentName}
             paramName={p.name}
             isWeighted={p.isWeighted}
-            addChoice={addChoice}
-            addWeight={addWeight}
             redirectOnSubmit={false}
+            dispatch={dispatch}
           />
+          <button className="btn btn-warning" onClick={() => {
+            dispatch(paramDelete(namespaceName, experimentName, p.name));
+            browserHistory.push(experimentURL(namespaceName, experimentName));
+          }}>Delete {p.name}</button>
         </div>
       </div>
     </div>
@@ -61,13 +70,6 @@ const mapStateToProps = (state, ownProps) => {
   }
 }
 
-const mapDispatchToProps = {
-  addChoice,
-  addWeight,
-  toggleWeighted,
-  clearChoices,
-}
-
-const connected = connect(mapStateToProps, mapDispatchToProps)(Param);
+const connected = connect(mapStateToProps)(Param);
 
 export default connected;

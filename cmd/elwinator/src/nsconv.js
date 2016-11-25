@@ -83,7 +83,7 @@ const fromParam = (param) => {
     name: param.name,
     value: param.isWeighted ? {
       choices: param.choices,
-      weights: param.weights.map(w => parseInt(w, 10)),
+      weights: param.weights,
     } : { choices: param.choices },
   };
   return p;

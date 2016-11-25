@@ -1,7 +1,6 @@
 import { connect } from 'react-redux';
 
 import NewLabel from '../components/NewLabel';
-import { addLabel } from '../actions';
 
 const mapStateToProps = (state, ownProps) => {
   const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
@@ -11,10 +10,6 @@ const mapStateToProps = (state, ownProps) => {
   }
 }
 
-const mapDispatchToProps = {
-  addLabel,
-}
-
-const connected = connect(mapStateToProps, mapDispatchToProps)(NewLabel);
+const connected = connect(mapStateToProps)(NewLabel);
 
 export default connected;

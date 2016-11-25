@@ -19,8 +19,10 @@ const experiment = (state = experimentInitialState, action) => {
     return { ...state, numSegments: ns, segments: sample(action.namespaceSegments, action.numSegments) };
   case 'PARAM_NAME':
   case 'ADD_PARAM':
+  case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
+  case 'CHOICE_DELETE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     return { ...state, params: params(state.params, action) };
@@ -33,12 +35,16 @@ const experiments = (state = [], action) => {
   switch (action.type) {
   case 'ADD_EXPERIMENT':
     return [...state, experiment(undefined, action)];
+  case 'EXPERIMENT_DELETE':
+    return state.filter(e => e.name !== action.experiment);
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'PARAM_NAME':
   case 'ADD_PARAM':
+  case 'PARAM_DELETE':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
+  case 'CHOICE_DELETE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     const exps = state.map(e => {

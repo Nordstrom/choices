@@ -1,9 +1,10 @@
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 
+import { addChoice, addWeight } from '../actions';
 import { paramURL } from '../urls';
 
-const NewChoice = ({ namespaceName, experimentName, paramName, isWeighted, addChoice, addWeight, redirectOnSubmit }) => {
+const NewChoice = ({ namespaceName, experimentName, paramName, isWeighted, dispatch, redirectOnSubmit }) => {
   let choice;
   let weight;
   return (
@@ -15,9 +16,9 @@ const NewChoice = ({ namespaceName, experimentName, paramName, isWeighted, addCh
       if (isWeighted && !weight.value.trim()) {
         return;
       }
-      addChoice(namespaceName, experimentName, paramName, choice.value);
+      dispatch(addChoice(namespaceName, experimentName, paramName, choice.value));
       if (isWeighted) {
-        addWeight(namespaceName, experimentName, paramName, weight.value);
+        dispatch(addWeight(namespaceName, experimentName, paramName, parseInt(weight.value, 10)));
       }
       if (!redirectOnSubmit) {
         choice.value = '';
@@ -55,8 +56,7 @@ NewChoice.propTypes = {
    experimentName: PropTypes.string.isRequired,
    paramName: PropTypes.string.isRequired,
    isWeighted: PropTypes.bool.isRequired,
-   addChoice: PropTypes.func.isRequired,
-   addWeight: PropTypes.func.isRequired,
+   dispatch: PropTypes.func.isRequired,
    redirectOnSubmit: PropTypes.bool.isRequired,
 }
 

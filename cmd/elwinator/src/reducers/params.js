@@ -15,6 +15,12 @@ const param = (state = paramInitialState, action) => {
     return { ...state, isWeighted: !state.isWeighted };
   case 'ADD_CHOICE':
     return { ...state, choices: [...state.choices, action.choice] };
+  case 'CHOICE_DELETE':
+    return {
+      ...state,
+      choices: state.choices.filter((_, i) => i !== action.index),
+      weights: state.weights.filter((_, i) => i !== action.index)
+    };
   case 'ADD_WEIGHT':
     return { ...state, weights: [...state.weights, action.weight] };
   case 'CLEAR_CHOICES':
@@ -28,9 +34,12 @@ const params = (state = [], action) => {
   switch (action.type) {
   case 'ADD_PARAM':
     return [...state, param(undefined, action)];
+  case 'PARAM_DELETE':
+    return state.filter(p => p.name !== action.name);
   case 'PARAM_NAME':
   case 'TOGGLE_WEIGHTED':
   case 'ADD_CHOICE':
+  case 'CHOICE_DELETE':
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     const pars = state.map(p => {

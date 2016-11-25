@@ -13,6 +13,26 @@ export const addNamespace = (name) => ({
 });
 
 /**
+ * namespaceDelete is an action that marks a namespace to be deleted.
+ * @param {string} namespace - The namespace to delete.
+ */
+export const namespaceDelete = (namespace) => ({
+  type: 'NAMESPACE_DELETE',
+  namespace,
+});
+
+/**
+ * namespaceLocalDelete is an action that removes the given namespace from the
+ * local state. This would be used when you create a new namespace don't
+ * publish it then decide to delete it.
+ * @param {string} namespace - The namespace you want to delete.
+ */
+export const namespaceLocalDelete = (namespace) => ({
+  type: 'NAMESPACE_LOCAL_DELETE',
+  namespace,
+});
+
+/**
  * namespaceName is an action that set the name of the namespace.
  * @param {string} namespace - The original name of the namespace.
  * @param {string} name - The new name of the namespace.
@@ -66,6 +86,17 @@ export const addExperiment = (namespace, name) => ({
 });
 
 /**
+ * experimentDelete is an action that marks an experiment for deletion.
+ * @param {string} namespace - The namespace the experiment is in.
+ * @param {string} experiment - The name of the experiment to delete.
+ */
+export const experimentDelete = (namespace, experiment) => ({
+  type: 'EXPERIMENT_DELETE',
+  namespace,
+  experiment,
+});
+
+/**
  * experimentName is an action that sets the name in an experiment.
  * @param {string} namespace - The namespace for the experiment.
  * @param {string} experiment - The experiment's original name.
@@ -106,7 +137,7 @@ export const experimentPercent = (namespace, experiment, percent) => ({
   namespace,
   experiment,
   percent,
-})
+});
 
 /**
  * paramName is an action that sets the param name in an experiments param.
@@ -125,11 +156,25 @@ export const paramName = (namespace, experiment, param, name) => ({
 
 /**
  * addParam is an action that adds a param to an experiment.
+ * @param {string} namespace - The namespace that the param is in.
  * @param {string} experiment - The experiment name.
  * @param {Object} param - The param you are adding.
  */
 export const addParam = (namespace, experiment, name) => ({
   type: 'ADD_PARAM',
+  namespace,
+  experiment,
+  name,
+});
+
+/**
+ * paramDelete is an action that deletes a param from an experiment.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment that the param is in.
+ * @param {string} name - The name of the param to delete.
+ */
+export const paramDelete = (namespace, experiment, name) => ({
+  type: 'PARAM_DELETE',
   namespace,
   experiment,
   name,
@@ -163,6 +208,21 @@ export const addChoice = (namespace, experiment, param, choice) => ({
   experiment,
   param,
   choice,
+});
+
+/**
+ * choiceDelete is an action that deletes a choice from a param.
+ * @param {string} namespace - The namespace that the param is in.
+ * @param {string} experiment - The experiment that the param is in.
+ * @param {string} param - The param name.
+ * @param {string} index - The index of the choice to delete.
+ */
+export const choiceDelete = (namespace, experiment, param, index) => ({
+  type: 'CHOICE_DELETE',
+  namespace,
+  experiment,
+  param,
+  index,
 });
 
 /**
