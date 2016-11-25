@@ -52,7 +52,7 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
           <button className="btn btn-warning" onClick={() => {
             dispatch(paramDelete(namespaceName, experimentName, p.name));
             browserHistory.push(experimentURL(namespaceName, experimentName));
-          }}>Delete {p.name}</button>
+          }}>Delete param {p.name}</button>
         </div>
       </div>
     </div>
