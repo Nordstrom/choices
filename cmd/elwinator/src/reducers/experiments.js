@@ -16,7 +16,11 @@ const experiment = (state = experimentInitialState, action) => {
     return { ...state, name: action.name };
   case 'EXPERIMENT_NUM_SEGMENTS':
     const ns = parseInt(action.numSegments, 10);
-    return { ...state, numSegments: ns, segments: sample(action.namespaceSegments, action.numSegments) };
+    return {
+      ...state,
+      numSegments: ns,
+      segments: sample(action.namespaceSegments, action.numSegments)
+    };
   case 'PARAM_NAME':
   case 'ADD_PARAM':
   case 'PARAM_DELETE':

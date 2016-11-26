@@ -11,7 +11,12 @@ const ExperimentList = ({ namespaceName, experiments, dispatch }) => {
       <td>{i + 1}</td>
       <td><Link to={experimentURL(namespaceName, e.name)}>{e.name}</Link></td>
       <td>{e.params.map(p => p.name).join(', ')}</td>
-      <td><button className="btn btn-default btn-xs" onClick={() => dispatch(experimentDelete(namespaceName, e.name))}>&times;</button></td>
+      <td>
+        <button
+          className="btn btn-default btn-xs"
+          onClick={() => dispatch(experimentDelete(namespaceName, e.name))}
+        >&times;</button>
+      </td>
     </tr>
   );
   return (
