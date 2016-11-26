@@ -68,7 +68,11 @@ const PublishView = ({ namespaces, dispatch }) => {
       });
       Promise.all(requests).then(responses => {
         const headers = new Headers({'Accept': 'application/json'});
-        const req = { method: 'POST', headers: headers, body: JSON.stringify({ environment: "Staging" }) };
+        const req = {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ environment: "Staging" })
+        };
         const badRequest = (req, resp) =>  ({ err: "bad request", req, resp });
         fetch("/api/v1/all", req)
         .then(resp => {

@@ -4,7 +4,14 @@ import { browserHistory } from 'react-router';
 import { addChoice, addWeight } from '../actions';
 import { paramURL } from '../urls';
 
-const NewChoice = ({ namespaceName, experimentName, paramName, isWeighted, dispatch, redirectOnSubmit }) => {
+const NewChoice = ({
+  namespaceName,
+  experimentName,
+  paramName,
+  isWeighted,
+  dispatch,
+  redirectOnSubmit
+}) => {
   let choice;
   let weight;
   return (

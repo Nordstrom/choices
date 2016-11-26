@@ -13,7 +13,12 @@ const NamespaceList = ({ namespaces, dispatch }) => {
       <td>{i + 1}</td>
       <td><Link to={namespaceURL(n.name)}>{n.name}</Link></td>
       <td>{n.experiments.map(e => e.name).join(', ')}</td>
-      <td><button className="btn btn-default btn-xs" onClick={() => dispatch(namespaceDelete(n.name))}>&times;</button></td>
+      <td>
+        <button
+          className="btn btn-default btn-xs"
+          onClick={() => dispatch(namespaceDelete(n.name))}
+        >&times;</button>
+      </td>
     </tr>
   )
   return (

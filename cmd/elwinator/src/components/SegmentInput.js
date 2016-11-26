@@ -7,7 +7,15 @@ import { experimentNumSegments } from '../actions';
 
 const percents = [1, 25, 50, 100];
 
-const SegmentInput = ({ namespaceName, experimentName, namespaceSegments, numSegments, availableSegments, redirectOnSubmit, dispatch }) => {
+const SegmentInput = ({
+  namespaceName,
+  experimentName,
+  namespaceSegments,
+  numSegments,
+  availableSegments,
+  redirectOnSubmit,
+  dispatch
+}) => {
   let numSeg;
 
   const radio = percents.map(p => {
@@ -17,7 +25,16 @@ const SegmentInput = ({ namespaceName, experimentName, namespaceSegments, numSeg
         <input type="radio"
           name="percent"
           checked={ Math.floor((p/100)*availableSegments) === numSegments }
-          onChange={() => dispatch(experimentNumSegments(namespaceName, experimentName, namespaceSegments,  Math.floor((p/100)*availableSegments)))}
+          onChange={() => 
+            dispatch(
+              experimentNumSegments(
+                namespaceName,
+                experimentName,
+                namespaceSegments,
+                Math.floor((p/100)*availableSegments)
+              )
+            )
+          }
         /> {p}% of available segments
         </label>
       </div>
@@ -29,7 +46,14 @@ const SegmentInput = ({ namespaceName, experimentName, namespaceSegments, numSeg
       if (!numSeg.value.trim()) {
         return;
       }
-      dispatch(experimentNumSegments(namespaceName, experimentName, namespaceSegments, numSeg.value));
+      dispatch(
+        experimentNumSegments(
+          namespaceName,
+          experimentName,
+          namespaceSegments,
+          numSeg.value
+        )
+      );
       if (!redirectOnSubmit) {
         return;
       }
@@ -45,7 +69,16 @@ const SegmentInput = ({ namespaceName, experimentName, namespaceSegments, numSeg
         max={availableSegments}
         className="form-control"
         value={numSegments}
-        onChange={(e) => dispatch(experimentNumSegments(namespaceName, experimentName, namespaceSegments, e.target.value))}
+        onChange={(e) =>
+          dispatch(
+            experimentNumSegments(
+              namespaceName,
+              experimentName,
+              namespaceSegments,
+              e.target.value
+            )
+          )
+        }
         ref={ node => numSeg = node }
       />
       <p className="help-block">The number of segments to use for this experiment</p>

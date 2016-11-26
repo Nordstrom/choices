@@ -14,9 +14,18 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
       <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{p.name}</h1></div></div>
       <div className="row">
         <NavSection>
-          <Link to={namespaceURL(namespaceName)} className="nav-link">{namespaceName} - Namespace</Link>
-          <Link to={experimentURL(namespaceName, experimentName)} className="nav-link">{experimentName} - Experiment</Link>
-          <Link to={choiceNewURL(namespaceName, experimentName, p.name)} className="nav-link">Create a new choice</Link>
+          <Link
+            to={namespaceURL(namespaceName)}
+            className="nav-link"
+          >{namespaceName} - Namespace</Link>
+          <Link
+            to={experimentURL(namespaceName, experimentName)}
+            className="nav-link"
+          >{experimentName} - Experiment</Link>
+          <Link
+            to={choiceNewURL(namespaceName, experimentName, p.name)}
+            className="nav-link"
+          >Create a new choice</Link>
         </NavSection>
         <div className="col-sm-9">
           <h2>Weight</h2>
@@ -30,7 +39,9 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
                   }}
                   checked={p.isWeighted} /> Weighted choices
               </label>
-              <p className="help-block">If you select this then you will need to add weights to your choices.</p>
+	      <p className="help-block">
+                If you select this then you will need to add weights to your choices.
+              </p>
             </div>
           </form>
           <h2>Choices</h2>

@@ -11,7 +11,10 @@ const NewLabelView = ({ params }) => {
       <div className="row"><h1>Create a new experiment</h1></div>
       <div className="row">
         <NavSection>
-          <Link to={ namespaceURL(params.namespace) } className="nav-link">{params.namespace} - Namespace</Link>
+          <Link
+            to={ namespaceURL(params.namespace) }
+            className="nav-link"
+          >{params.namespace} - Namespace</Link>
         </NavSection>
         <div className="col-sm-9">
           <NewLabel params={params}/>

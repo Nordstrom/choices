@@ -33,7 +33,9 @@ const Experiment = ({ ns, exp, dispatch }) => {
   }
   return (
     <div className="container">
-      <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{exp.name}</h1></div></div>
+      <div className="row">
+        <div className="col-sm-9 col-sm-offset-3"><h1>{exp.name}</h1></div>
+      </div>
       <div className="row">
         <NavSection>
           <Link to={namespaceURL(ns.name)} className="nav-link">{ns.name} - Namespace</Link>
@@ -42,10 +44,16 @@ const Experiment = ({ ns, exp, dispatch }) => {
         <div className="col-sm-9">
           <h2>Segments</h2>
           <SegmentInput {...siProps } />
-          <Segment namespaceSegments={siProps.namespaceSegments} experimentSegments={exp.segments} />
+          <Segment
+            namespaceSegments={siProps.namespaceSegments}
+            experimentSegments={exp.segments}
+          />
           <h2>Params</h2>
           <ParamList namespaceName={ns.name} experimentName={exp.name} />
-          <Link to={paramNewURL(ns.name, exp.name)} className="btn btn-default" role="button">Create new param</Link><br />
+          <Link
+            to={paramNewURL(ns.name, exp.name)}
+            className="btn btn-default"
+            role="button">Create new param</Link><br />
           <button className="btn btn-warning" onClick={() => {
             dispatch(experimentDelete(ns.name, exp.name));
             browserHistory.push(namespaceURL(ns.name));
