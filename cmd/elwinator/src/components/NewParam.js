@@ -3,8 +3,9 @@ import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
 import { addParam } from '../actions';
+import { experimentURL } from '../urls';
 
-const NewParam = ({ namespaceName, experimentID, experimentName, dispatch }) => {
+const NewParam = ({ experimentID, dispatch }) => {
   let input;
   return (
     <form onSubmit={e => {
@@ -13,7 +14,7 @@ const NewParam = ({ namespaceName, experimentID, experimentName, dispatch }) => 
         return;
       }
       dispatch(addParam(experimentID, input.value));
-      browserHistory.push(`/n/${namespaceName}/e/${experimentName}/p/${input.value}`)
+      browserHistory.push(experimentURL(experimentID));
     }}>
       <div className="form-group">
         <label>Param Name</label>
@@ -30,18 +31,10 @@ const NewParam = ({ namespaceName, experimentID, experimentName, dispatch }) => 
 };
 
 NewParam.propTypes = {
-  namespaceName: React.PropTypes.string.isRequired,
-  experimentName: React.PropTypes.string.isRequired,
+  experimentID: React.PropTypes.string.isRequired,
   dispatch: React.PropTypes.func.isRequired,
 }
 
-const mapStateToProps = (state, ownProps) => {
-  const experimentID = state.entities.experiments.find(e => e.name === ownProps.experimentName).id;
-  return {
-    experimentID,
-  };
-};
-
-const connected = connect(mapStateToProps)(NewParam);
+const connected = connect()(NewParam);
 
 export default connected;

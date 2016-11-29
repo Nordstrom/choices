@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
@@ -7,8 +7,6 @@ import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
 import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
 import { toggleWeighted, clearChoices, paramDelete } from '../actions';
-import { getExperiments } from '../reducers/experiments';
-import { getParams } from '../reducers/params'; 
 
 const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => {
   return (
@@ -21,11 +19,11 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
             className="nav-link"
           >{namespaceName} - Namespace</Link>
           <Link
-            to={experimentURL(namespaceName, experimentName)}
+            to={experimentURL(experimentID)}
             className="nav-link"
           >{experimentName} - Experiment</Link>
           <Link
-            to={choiceNewURL(namespaceName, experimentName, p.name)}
+            to={choiceNewURL(p.id)}
             className="nav-link"
           >Create a new choice</Link>
         </NavSection>
@@ -48,9 +46,7 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
           </form>
           <h2>Choices</h2>
           <ChoiceList
-            namespaceName={namespaceName}
-            experimentName={experimentName}
-            paramName={p.name}
+            paramID={p.id}
             choices={p.choices}
             weights={p.weights}
           />
@@ -64,7 +60,7 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
           />
           <button className="btn btn-warning" onClick={() => {
             dispatch(paramDelete(experimentID, p.id));
-            browserHistory.push(experimentURL(namespaceName, experimentName));
+            browserHistory.push(experimentURL(experimentID));
           }}>Delete param {p.name}</button>
         </div>
       </div>
@@ -72,10 +68,16 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
   );
 }
 
+Param.propTypes = {
+  namespaceName: PropTypes.string.isRequired,
+  experimentID: PropTypes.string.isRequired,
+  experimentName: PropTypes.string.isRequired,
+}
+
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.entities.namespaces.find(n => n.name === ownProps.params.namespace);
-  const exp = getExperiments(state.entities.experiments, ns.experiments).find(e => e.name === ownProps.params.experiment);
-  const p = getParams(state.entities.params, exp.params).find(p => p.name === ownProps.params.param);
+  const p = state.entities.params.find(p => p.id === ownProps.params.param);
+  const exp = state.entities.experiments.find(e => e.params.find(p => ownProps.params.param));
+  const ns = state.entities.namespaces.find(n => n.experiments.find(e => e === exp.id));
   return {
     namespaceName: ns.name,
     experimentID: exp.id,

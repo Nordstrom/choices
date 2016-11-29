@@ -8,7 +8,7 @@ import NewParam from './NewParam';
 const NewParamView = ({ params }) => {
   return (
     <div className="container">
-      <div className="row"><h1>Create a new experiment</h1></div>
+      <div className="row"><h1>Create a new param</h1></div>
       <div className="row">
         <NavSection>
           <Link
@@ -16,12 +16,12 @@ const NewParamView = ({ params }) => {
             className="nav-link"
           >{params.namespace} - Namespace</Link>
           <Link
-            to={ experimentURL(params.namespace, params.experiment) }
+            to={ experimentURL(params.experiment) }
             className="nav-link"
           >{params.experiment} - Experiment </Link>
         </NavSection>
         <div className="col-sm-9">
-          <NewParam namespaceName={params.namespace} experimentName={params.experiment} />
+          <NewParam experimentID={params.experiment} />
         </div>
       </div>
     </div>

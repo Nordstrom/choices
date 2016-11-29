@@ -56,7 +56,7 @@ const SegmentInput = ({
       if (!redirectOnSubmit) {
         return;
       }
-      browserHistory.push(experimentURL(namespaceName, experimentName));
+      browserHistory.push(experimentURL(experimentID));
     }}>
     Segments available: <strong>{availableSegments}</strong>
     {radio}

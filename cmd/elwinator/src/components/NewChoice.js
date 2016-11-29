@@ -34,7 +34,7 @@ const NewChoice = ({
         weight.value = '';
         return;
       }
-      browserHistory.push(paramURL(namespaceName, experimentName, paramName));
+      browserHistory.push(paramURL(paramName));
     }}>
       <div className="form-group">
         <label>Choice</label>

@@ -3,14 +3,14 @@ import { connect } from 'react-redux';
 
 import { choiceDelete } from '../actions';
 
-const ChoiceList = ({ namespaceName, experimentName, paramName, choices, weights, dispatch }) => {
+const ChoiceList = ({ paramID, choices, weights, dispatch }) => {
   const choiceList = choices.map((c, i) =>
     <tr key={c}>
       <td>{i+1}</td>
       <td>{c}</td>
       <td>{ weights[i] || "uniform"}</td>
       <td><button className="btn btn-default btn-xs" onClick={() => {
-        dispatch(choiceDelete(namespaceName, experimentName, paramName, i));
+        dispatch(choiceDelete(paramID, i));
       }}>&times;</button></td>
     </tr>
   );
@@ -32,9 +32,7 @@ const ChoiceList = ({ namespaceName, experimentName, paramName, choices, weights
 };
 
 ChoiceList.propTypes = {
-  namespaceName: React.PropTypes.string.isRequired,
-  experimentName: React.PropTypes.string.isRequired,
-  paramName: React.PropTypes.string.isRequired,
+  paramID: React.PropTypes.string.isRequired,
   choices: React.PropTypes.arrayOf(React.PropTypes.string),
   weights: React.PropTypes.arrayOf(React.PropTypes.number),
 }

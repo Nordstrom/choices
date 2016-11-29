@@ -9,7 +9,8 @@ import Segment from './Segment';
 import ExperimentList from './ExperimentList';
 import { rootURL, labelNewURL, experimentNewURL } from '../urls';
 import { namespaceDelete } from '../actions';
-import { combinedSegments } from '../reducers/experiments';
+import { combinedSegments, getExperiments } from '../reducers/experiments';
+import { getLabels } from '../reducers/labels';
 
 const Namespace = ({ ns, labels, namespaceSegments, dispatch }) => {
   const llProps = { namespaceName: ns.name, labels: ns.labels.map(lid => labels.find(l => lid === l.id)) };
@@ -48,10 +49,13 @@ const Namespace = ({ ns, labels, namespaceSegments, dispatch }) => {
 const mapStateToProps = (state, ownProps) => {
   const ns = state.entities.namespaces.find(n => n.name === ownProps.params.namespace);
   const namespaceSegments = combinedSegments(state.entities.experiments, ns.experiments);
+  const experiments = getExperiments(state.entities.experiments, ns.experiments);
+  const labels = getLabels(state.entities.labels, ns.labels);
   return {
     ns,
     namespaceSegments,
-    labels: state.entities.labels,
+    experiments,
+    labels,
   }
 };
 

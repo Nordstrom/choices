@@ -36,7 +36,7 @@ const experiment = (state = experimentInitialState, action) => {
   case 'PARAM_DELETE':
     return {
       ...state,
-      params: state.params.filter(id => id !== action.id),
+      params: state.params.filter(id => id !== action.param),
     };
   default:
     return state;

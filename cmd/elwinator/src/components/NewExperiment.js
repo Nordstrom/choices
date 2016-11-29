@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { browserHistory } from 'react-router';
 
 import { addExperiment } from '../actions';
+import { namespaceURL } from '../urls';
 
 const NewExperiment = ({ namespaceName, dispatch }) => {
   let input;
@@ -13,7 +14,7 @@ const NewExperiment = ({ namespaceName, dispatch }) => {
         return;
       }
       dispatch(addExperiment(namespaceName, input.value));
-      browserHistory.push(`/n/${namespaceName}/e/${input.value}`);
+      browserHistory.push(namespaceURL(namespaceName));
     }}>
       <div className="form-group">
         <label>Experiment Name</label>

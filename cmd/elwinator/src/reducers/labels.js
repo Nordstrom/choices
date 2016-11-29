@@ -15,6 +15,10 @@ const label = (state = initialLabelState, action) => {
   }
 }
 
+export const getLabels = (state, labelIDs) => {
+  return labelIDs.map(lid => state.find(l => lid === l.id));
+}
+
 const labels = (state = [], action) => {
   switch (action.type) {
   case 'ADD_LABEL':

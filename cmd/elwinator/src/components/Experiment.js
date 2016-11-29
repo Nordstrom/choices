@@ -8,9 +8,10 @@ import Segment from './Segment';
 import ParamList from './ParamList';
 import { namespaceURL, paramNewURL } from '../urls';
 import { experimentDelete } from '../actions';
-import { getExperiments, availableSegments, combinedSegments } from '../reducers/experiments';
+import { availableSegments, combinedSegments } from '../reducers/experiments';
+import { getParams } from '../reducers/params';
 
-const Experiment = ({ ns, exp, freeSegments, namespaceSegments, dispatch }) => {
+const Experiment = ({ ns, exp, freeSegments, namespaceSegments, params, dispatch }) => {
   const siProps = {
     namespaceName: ns.name,
     experimentName: exp.name,
@@ -28,7 +29,7 @@ const Experiment = ({ ns, exp, freeSegments, namespaceSegments, dispatch }) => {
       <div className="row">
         <NavSection>
           <Link to={namespaceURL(ns.name)} className="nav-link">{ns.name} - Namespace</Link>
-          <Link to={paramNewURL(ns.name, exp.name)} className="nav-link">Create param</Link>
+          <Link to={paramNewURL(exp.id)} className="nav-link">Create param</Link>
         </NavSection>
         <div className="col-sm-9">
           <h2>Segments</h2>
@@ -38,13 +39,13 @@ const Experiment = ({ ns, exp, freeSegments, namespaceSegments, dispatch }) => {
             experimentSegments={exp.segments}
           />
           <h2>Params</h2>
-          <ParamList namespaceName={ns.name} experimentName={exp.name} />
+          <ParamList params={params} />
           <Link
-            to={paramNewURL(ns.name, exp.name)}
+            to={paramNewURL(exp.id)}
             className="btn btn-default"
             role="button">Create new param</Link><br />
           <button className="btn btn-warning" onClick={() => {
-            dispatch(experimentDelete(ns.name, exp.name));
+            dispatch(experimentDelete(ns.name, exp.id));
             browserHistory.push(namespaceURL(ns.name));
           }}>Delete experiment {exp.name}</button>
         </div>
@@ -54,16 +55,17 @@ const Experiment = ({ ns, exp, freeSegments, namespaceSegments, dispatch }) => {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.entities.namespaces.find(n => n.name === ownProps.params.namespace);
-  const exps = getExperiments(state.entities.experiments, ns.experiments);
-  const exp = exps.find(e => e.name === ownProps.params.experiment);
+  const ns = state.entities.namespaces.find(n => n.experiments.find(e => e === ownProps.params.experiment));
+  const exp = state.entities.experiments.find(e => e.id === ownProps.params.experiment);
   const freeSegments = availableSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
   const namespaceSegments = combinedSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
+  const params = getParams(state.entities.params, exp.params);
   return {
     ns,
     exp,
     freeSegments,
     namespaceSegments,
+    params,
   }
 };
 

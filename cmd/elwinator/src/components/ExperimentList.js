@@ -10,7 +10,7 @@ const ExperimentList = ({ namespaceName, experiments, dispatch }) => {
   const exps = experiments.map((e, i) =>
     <tr key={e.name}>
       <td>{i + 1}</td>
-      <td><Link to={experimentURL(namespaceName, e.name)}>{e.name}</Link></td>
+      <td><Link to={experimentURL(e.id)}>{e.name}</Link></td>
       <td>{e.params.map(p => p.name).join(', ')}</td>
       <td>
         <button
