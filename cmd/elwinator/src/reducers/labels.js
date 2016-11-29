@@ -5,7 +5,7 @@ const initialLabelState = {
 
 const label = (state = initialLabelState, action) => {
   switch (action.type) {
-  case 'ADD_LABEL':
+  case 'NAMESPACE_ADD_LABEL':
     return {
       id: action.id,
       name: action.name,
@@ -21,7 +21,7 @@ export const getLabels = (state, labelIDs) => {
 
 const labels = (state = [], action) => {
   switch (action.type) {
-  case 'ADD_LABEL':
+  case 'NAMESPACE_ADD_LABEL':
     return [...state, label(undefined, action)];
   default:
     return state;

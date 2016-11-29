@@ -11,10 +11,12 @@ const NewParamView = ({ params }) => {
       <div className="row"><h1>Create a new param</h1></div>
       <div className="row">
         <NavSection>
+        {/*
           <Link
             to={ namespaceURL(params.namespace) }
             className="nav-link"
           >{params.namespace} - Namespace</Link>
+          */}
           <Link
             to={ experimentURL(params.experiment) }
             className="nav-link"

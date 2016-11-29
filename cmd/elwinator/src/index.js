@@ -8,7 +8,7 @@ import { Router,  Route, browserHistory } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
 
 // import { toNamespace } from './nsconv';
-// import { namespacesLoaded } from './actions';
+// import { entitiesLoaded } from './actions';
 import { loadState, saveState } from './Storage';
 import App from './App';
 import reducers from './reducers';
@@ -68,7 +68,7 @@ ReactDOM.render(
 //   const ns = json.namespaces.map(n => {
 //     return toNamespace(n);
 //   });
-//   store.dispatch(namespacesLoaded(ns));
+//   store.dispatch(entitiesLoaded(ns));
 // })
 // .then(() => {
 //   render()

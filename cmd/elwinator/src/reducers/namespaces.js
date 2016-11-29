@@ -10,7 +10,7 @@ const namespaceInitialState = {
 
 const namespace = (state = namespaceInitialState, action) => {
   switch (action.type) {
-  case 'ADD_NAMESPACE':
+  case 'NAMESPACE_ADD':
       return {
         ...state,
         name: action.name,
@@ -29,12 +29,12 @@ const namespace = (state = namespaceInitialState, action) => {
       name: action.name,
       isDirty: true,
     };
-  case 'ADD_LABEL':
+  case 'NAMESPACE_ADD_LABEL':
     return {
       ...state,
       labels: [...state.labels, action.id],
     };
-  case 'TOGGLE_LABEL':
+  case 'NAMESPACE_TOGGLE_LABEL':
     if (state.labels.find(id => id === action.id)) {
       return {
         ...state,
@@ -47,7 +47,7 @@ const namespace = (state = namespaceInitialState, action) => {
       labels: [...state.labels, action.id],
       isDirty: true,
     };
-  case 'ADD_EXPERIMENT':
+  case 'EXPERIMENT_ADD':
     return {
       ...state,
       experiments: [...state.experiments, action.id],
@@ -57,7 +57,7 @@ const namespace = (state = namespaceInitialState, action) => {
       ...state,
       experiments: state.experiments.filter(eid => eid !== action.experiment),
     }
-  case 'TOGGLE_PUBLISH':
+  case 'NAMESPACE_TOGGLE_PUBLISH':
     return {
       ...state,
       publish: !state.publish,
@@ -71,15 +71,15 @@ const namespaces = (state = [], action) => {
   switch (action.type) {
   case 'NAMESPACES_LOADED':
     return action.namespaces.map(n => Object.assign({}, namespace(undefined, action), n));
-  case 'ADD_NAMESPACE':
+  case 'NAMESPACE_ADD':
     return [...state, namespace(undefined, action)];
   case 'NAMESPACE_DELETE':
   case 'NAMESPACE_NAME':
-  case 'ADD_LABEL':
-  case 'TOGGLE_LABEL':
-  case 'ADD_EXPERIMENT':
+  case 'NAMESPACE_ADD_LABEL':
+  case 'NAMESPACE_TOGGLE_LABEL':
+  case 'EXPERIMENT_ADD':
   case 'EXPERIMENT_DELETE':
-  case 'TOGGLE_PUBLISH':
+  case 'NAMESPACE_TOGGLE_PUBLISH':
     const ns = state.map(n => {
       if (n.name !== action.namespace) {
         return n;

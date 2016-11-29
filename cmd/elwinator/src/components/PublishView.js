@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { togglePublish, namespacesLoaded, namespaceLocalDelete } from '../actions';
+import { namespaceTogglePublish, entitiesLoaded, namespaceLocalDelete } from '../actions';
 import { toNamespace, fromNamespace } from '../nsconv';
 
 function createRequest(namespace) {
@@ -35,7 +35,7 @@ const PublishView = ({ namespaces, dispatch }) => {
       <label><input
         type="checkbox"
         checked={n.publish}
-        onChange={() => dispatch(togglePublish(n.name))}
+        onChange={() => dispatch(namespaceTogglePublish(n.name))}
       /> {`${n.name} - ${n.experiments.map(e => e.name).join(', ')}`}
       </label>
     </div>
@@ -85,7 +85,7 @@ const PublishView = ({ namespaces, dispatch }) => {
           const ns = json.namespaces.map(n => {
             return toNamespace(n);
           });
-          dispatch(namespacesLoaded(ns));
+          dispatch(entitiesLoaded(ns));
         })
       })
       .catch(err => console.log(err.err, err.req, err.resp));

@@ -1,16 +1,24 @@
 import { v4 } from 'node-uuid';
 
-export const namespacesLoaded = (namespaces) => ({
-  type: 'NAMESPACES_LOADED',
+/**
+ * entitiesLoaded is an action that merges all the entities from the elwin storage to the store.
+ * @param {Array} namespaces - an array of Namespaces.
+ * @param {Array} experiments - an array of experiments.
+ * @param {Array} params - an array of params.
+ */
+export const entitiesLoaded = (namespaces, experiments, params) => ({
+  type: 'ENTITIES_LOADED',
   namespaces,
+  experiments,
+  params,
 });
 
 /**
- * addNamespace is an action that adds a namespace to the namespace list.
+ * namespaceAdd is an action that adds a namespace to the namespace list.
  * @param {string} name - The name of the namespace.
  */
-export const addNamespace = (name) => ({
-  type: 'ADD_NAMESPACE',
+export const namespaceAdd = (name) => ({
+  type: 'NAMESPACE_ADD',
   id: v4(),
   name,
 });
@@ -47,44 +55,44 @@ export const namespaceName = (namespace, name) => ({
 });
 
 /**
- * toggleLabel is an action that toggles the specified label.
+ * namespaceToggleLabel is an action that toggles the specified label.
  * @param {string} namespace - name of the namespace the label is in.
  * @param {string} name - name of the label to toggle.
  */
-export const toggleLabel = (namespace, name) => ({
-  type: 'TOGGLE_LABEL',
+export const namespaceToggleLabel = (namespace, name) => ({
+  type: 'NAMESPACE_TOGGLE_LABEL',
   namespace,
   name,
 })
 
 /**
- * addLabel is an action that adds a label to an experiment.
+ * namespaceAddLabel is an action that adds a label to an experiment.
  * @param {string} namespace - The namespace for the label.
  * @param {string} name - The name of the label to add.
  */
-export const addLabel = (namespace, name) => ({
-  type: 'ADD_LABEL',
+export const namespaceAddLabel = (namespace, name) => ({
+  type: 'NAMESPACE_ADD_LABEL',
   id: v4(),
   namespace,
   name,
 });
 
 /**
- * togglePublish is an action that toggles a namespace for publishing.
+ * namespaceTogglePublish is an action that toggles a namespace for publishing.
  * @param {string} namespace - The namespace to publish.
  */
-export const togglePublish = (namespace) => ({
-  type: 'TOGGLE_PUBLISH',
+export const namespaceTogglePublish = (namespace) => ({
+  type: 'NAMESPACE_TOGGLE_PUBLISH',
   namespace,
 });
 
 /** 
- * addExperiment is an action that adds and experiment to the namespace.
+ * experimentAdd is an action that adds and experiment to the namespace.
  * @param {string} namespace - The namespace for the experiment.
  * @param {string} name - The name of the experiment to add to the namespace.
  */
-export const addExperiment = (namespace, name) => ({
-  type: 'ADD_EXPERIMENT',
+export const experimentAdd = (namespace, name) => ({
+  type: 'EXPERIMENT_ADD',
   id: v4(),
   namespace,
   name,
@@ -139,12 +147,12 @@ export const paramName = (param, name) => ({
 });
 
 /**
- * addParam is an action that adds a param to an experiment.
+ * paramAdd is an action that adds a param to an experiment.
  * @param {string} experiment - The experiment id.
  * @param {Object} param - The param you are adding.
  */
-export const addParam = (experiment, name) => ({
-  type: 'ADD_PARAM',
+export const paramAdd = (experiment, name) => ({
+  type: 'PARAM_ADD',
   id: v4(),
   experiment,
   name,
@@ -163,57 +171,57 @@ export const paramDelete = (experiment, param) => ({
 });
 
 /**
- * toggleWeighted is an action that toggles whether a param is weighted or
+ * paramToggleWeighted is an action that toggles whether a param is weighted or
  * uniform.
  * @param {string} param - The name of the param.
  */
-export const toggleWeighted = (param) => ({
-  type: 'TOGGLE_WEIGHTED',
+export const paramToggleWeighted = (param) => ({
+  type: 'PARAM_TOGGLE_WEIGHTED',
   param,
 });
 
 /**
- * addChoice is an action that adds a choice to a param. You must also call
- * addWeight if the param is a weighted param.
+ * paramAddChoice is an action that adds a choice to a param. You must also call
+ * paramAddWeight if the param is a weighted param.
  * @param {string} namespace - The namespace that the param is in.
  * @param {string} experiment - The experiment's name.
  * @param {string} param - The name of the param.
  * @param {string} choice - The choice to add to the param.
  */
-export const addChoice = (param, choice) => ({
-  type: 'ADD_CHOICE',
+export const paramAddChoice = (param, choice) => ({
+  type: 'PARAM_ADD_CHOICE',
   param,
   choice,
 });
 
 /**
- * choiceDelete is an action that deletes a choice from a param.
+ * paramDeleteChoice is an action that deletes a choice from a param.
  * @param {string} param - The param name.
  * @param {string} index - The index of the choice to delete.
  */
-export const choiceDelete = (param, index) => ({
-  type: 'CHOICE_DELETE',
+export const paramDeleteChoice = (param, index) => ({
+  type: 'PARAM_DELETE_CHOICE',
   param,
   index,
 });
 
 /**
- * addWeight is an action that adds a weight to a param. You should always
- * call addChoice before calling this.
+ * paramAddWeight is an action that adds a weight to a param. You should always
+ * call paramAddChoice before calling this.
  * @param {string} param - The name of the param.
  * @param {string} weight - The weight to add to the param.
  */
-export const addWeight = (param, weight) => ({
-  type: 'ADD_WEIGHT',
+export const paramAddWeight = (param, weight) => ({
+  type: 'PARAM_ADD_WEIGHT',
   param,
   weight,
 });
 
 /**
- * clearChoices is an action that removes all the choices and weights.
+ * paramClearChoices is an action that removes all the choices and weights.
  * @param {string} param - The name of the param.
  */
-export const clearChoices = (param) => ({
-  type: 'CLEAR_CHOICES',
+export const paramClearChoices = (param) => ({
+  type: 'PARAM_CLEAR_CHOICES',
   param,
 });

@@ -2,7 +2,7 @@ import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
-import { addChoice, addWeight } from '../actions';
+import { paramAddChoice, paramAddWeight } from '../actions';
 import { paramURL } from '../urls';
 
 const NewChoice = ({
@@ -25,9 +25,9 @@ const NewChoice = ({
       if (isWeighted && !weight.value.trim()) {
         return;
       }
-      dispatch(addChoice(paramID, choice.value));
+      dispatch(paramAddChoice(paramID, choice.value));
       if (isWeighted) {
-        dispatch(addWeight(paramID, parseInt(weight.value, 10)));
+        dispatch(paramAddWeight(paramID, parseInt(weight.value, 10)));
       }
       if (!redirectOnSubmit) {
         choice.value = '';

@@ -10,7 +10,7 @@ const experimentInitialState = {
 
 const experiment = (state = experimentInitialState, action) => {
   switch(action.type) {
-  case 'ADD_EXPERIMENT':
+  case 'EXPERIMENT_ADD':
     return {
       ...state,
       id: action.id,
@@ -28,7 +28,7 @@ const experiment = (state = experimentInitialState, action) => {
       numSegments: ns,
       segments: sample(action.namespaceSegments, action.numSegments),
     };
-  case 'ADD_PARAM':
+  case 'PARAM_ADD':
     return {
       ...state,
       params: [...state.params, action.id],
@@ -80,13 +80,13 @@ export const combinedSegments = (state, experimentIDs) => {
 
 const experiments = (state = [], action) => {
   switch (action.type) {
-  case 'ADD_EXPERIMENT':
+  case 'EXPERIMENT_ADD':
     return [...state, experiment(undefined, action)];
   case 'EXPERIMENT_DELETE':
     return state.filter(e => e.id !== action.experiment);
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
-  case 'ADD_PARAM':
+  case 'PARAM_ADD':
   case 'PARAM_DELETE':
     const exps = state.map(e => {
       if (e.id !== action.experiment) {

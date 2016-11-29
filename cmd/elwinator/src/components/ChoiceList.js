@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { choiceDelete } from '../actions';
+import { paramDeleteChoice } from '../actions';
 
 const ChoiceList = ({ paramID, choices, weights, dispatch }) => {
   const choiceList = choices.map((c, i) =>
@@ -10,7 +10,7 @@ const ChoiceList = ({ paramID, choices, weights, dispatch }) => {
       <td>{c}</td>
       <td>{ weights[i] || "uniform"}</td>
       <td><button className="btn btn-default btn-xs" onClick={() => {
-        dispatch(choiceDelete(paramID, i));
+        dispatch(paramDeleteChoice(paramID, i));
       }}>&times;</button></td>
     </tr>
   );

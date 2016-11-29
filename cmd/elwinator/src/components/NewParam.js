@@ -2,7 +2,7 @@ import React from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
-import { addParam } from '../actions';
+import { paramAdd } from '../actions';
 import { experimentURL } from '../urls';
 
 const NewParam = ({ experimentID, dispatch }) => {
@@ -13,7 +13,7 @@ const NewParam = ({ experimentID, dispatch }) => {
       if (!input.value.trim()) {
         return;
       }
-      dispatch(addParam(experimentID, input.value));
+      dispatch(paramAdd(experimentID, input.value));
       browserHistory.push(experimentURL(experimentID));
     }}>
       <div className="form-group">

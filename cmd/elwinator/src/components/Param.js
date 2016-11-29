@@ -6,7 +6,7 @@ import NavSection from './NavSection';
 import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
 import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
-import { toggleWeighted, clearChoices, paramDelete } from '../actions';
+import { paramToggleWeighted, paramClearChoices, paramDelete } from '../actions';
 
 const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => {
   return (
@@ -34,8 +34,8 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
               <label>
                 <input type="checkbox"
                   onChange={() => {
-                    dispatch(toggleWeighted(p.id));
-                    dispatch(clearChoices(p.id));
+                    dispatch(paramToggleWeighted(p.id));
+                    dispatch(paramClearChoices(p.id));
                   }}
                   checked={p.isWeighted} /> Weighted choices
               </label>

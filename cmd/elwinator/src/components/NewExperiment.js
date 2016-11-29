@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { browserHistory } from 'react-router';
 
-import { addExperiment } from '../actions';
+import { experimentAdd } from '../actions';
 import { namespaceURL } from '../urls';
 
 const NewExperiment = ({ namespaceName, dispatch }) => {
@@ -13,7 +13,7 @@ const NewExperiment = ({ namespaceName, dispatch }) => {
       if (!input.value.trim()) {
         return;
       }
-      dispatch(addExperiment(namespaceName, input.value));
+      dispatch(experimentAdd(namespaceName, input.value));
       browserHistory.push(namespaceURL(namespaceName));
     }}>
       <div className="form-group">
