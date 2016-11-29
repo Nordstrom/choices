@@ -15,7 +15,7 @@ const LabelList = ({ namespaceName, labels, dispatch }) => {
     <li key={l.name}>
       <button
         className={spanClassName}
-        onClick={() => dispatch(toggleLabel(namespaceName, l.name))}
+        onClick={() => dispatch(toggleLabel(namespaceName, l.id))}
        >{l.name}</button>
     </li>
     );

@@ -52,6 +52,11 @@ const namespace = (state = namespaceInitialState, action) => {
       ...state,
       experiments: [...state.experiments, action.id],
     };
+  case 'EXPERIMENT_DELETE':
+    return {
+      ...state,
+      experiments: state.experiments.filter(eid => eid !== action.experiment),
+    }
   case 'TOGGLE_PUBLISH':
     return {
       ...state,
@@ -73,6 +78,7 @@ const namespaces = (state = [], action) => {
   case 'ADD_LABEL':
   case 'TOGGLE_LABEL':
   case 'ADD_EXPERIMENT':
+  case 'EXPERIMENT_DELETE':
   case 'TOGGLE_PUBLISH':
     const ns = state.map(n => {
       if (n.name !== action.namespace) {

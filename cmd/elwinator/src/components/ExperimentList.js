@@ -15,7 +15,7 @@ const ExperimentList = ({ namespaceName, experiments, dispatch }) => {
       <td>
         <button
           className="btn btn-default btn-xs"
-          onClick={() => dispatch(experimentDelete(namespaceName, e.name))}
+          onClick={() => dispatch(experimentDelete(namespaceName, e.id))}
         >&times;</button>
       </td>
     </tr>

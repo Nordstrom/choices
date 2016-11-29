@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
 import { paramDelete } from '../actions';
 import { paramURL } from '../urls';
 
-const ParamList = ({ params, dispatch }) => (
+const ParamList = ({ experimentID, params, dispatch }) => (
   <table className="table table-striped">
     <thead>
       <tr>
@@ -22,13 +22,19 @@ const ParamList = ({ params, dispatch }) => (
         <td><Link to={paramURL(param.id)}>{param.name}</Link></td>
         <td>{param.choices.join(', ')}</td>
         <td><button className="btn btn-default btn-xs" onClick={
-          () => dispatch(paramDelete(param.id))
+          () => dispatch(paramDelete(experimentID, param.id))
         }>&times;</button></td>
       </tr>
     )}
     </tbody>
   </table>
 );
+
+ParamList.propTypes = {
+  experimentID: PropTypes.string.isRequired,
+  params: PropTypes.arrayOf(PropTypes.object).isRequired,
+  dispatch: PropTypes.func.isRequired,
+}
 
 const connected = connect()(ParamList);
 

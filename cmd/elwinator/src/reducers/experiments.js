@@ -83,7 +83,7 @@ const experiments = (state = [], action) => {
   case 'ADD_EXPERIMENT':
     return [...state, experiment(undefined, action)];
   case 'EXPERIMENT_DELETE':
-    return state.filter(e => e.name !== action.experiment);
+    return state.filter(e => e.id !== action.experiment);
   case 'EXPERIMENT_NAME':
   case 'EXPERIMENT_NUM_SEGMENTS':
   case 'ADD_PARAM':

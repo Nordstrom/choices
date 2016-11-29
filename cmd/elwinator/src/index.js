@@ -9,7 +9,7 @@ import { syncHistoryWithStore } from 'react-router-redux';
 
 // import { toNamespace } from './nsconv';
 // import { namespacesLoaded } from './actions';
-// import { loadState, saveState } from './Storage';
+import { loadState, saveState } from './Storage';
 import App from './App';
 import reducers from './reducers';
 import NewNamespaceView from './components/NewNamespaceView';
@@ -22,16 +22,16 @@ import Param from './components/Param';
 import NewChoiceView from './components/NewChoiceView';
 
 
-// const persistedState = loadState();
+const persistedState = loadState();
 const store = createStore(
   reducers,
-//   persistedState,
+  persistedState,
 );
 
 
-// store.subscribe(() => {
-//   saveState(store.getState());
-// });
+store.subscribe(() => {
+  saveState(store.getState());
+});
 
 const history = syncHistoryWithStore(browserHistory, store)
 

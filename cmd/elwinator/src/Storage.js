@@ -4,7 +4,15 @@ export const loadState = () => {
     if (serializedState === null) {
       return undefined;
     }
-    return JSON.parse(serializedState);
+    const s = JSON.parse(serializedState);
+    s.entities.experiments = s.entities.experiments.map(e => {
+      e.segments.length = 16;
+      return {
+        ...e,
+        segments: new Uint8Array(e.segments),
+      }
+    });
+    return s;
   } catch (err) {
     return undefined;
   }

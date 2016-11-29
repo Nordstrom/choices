@@ -39,7 +39,7 @@ const Experiment = ({ ns, exp, freeSegments, namespaceSegments, params, dispatch
             experimentSegments={exp.segments}
           />
           <h2>Params</h2>
-          <ParamList params={params} />
+          <ParamList experimentID={exp.id} params={params} />
           <Link
             to={paramNewURL(exp.id)}
             className="btn btn-default"
