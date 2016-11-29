@@ -10,6 +10,7 @@ const percents = [1, 25, 50, 100];
 const SegmentInput = ({
   namespaceName,
   experimentName,
+  experimentID,
   namespaceSegments,
   numSegments,
   availableSegments,
@@ -28,8 +29,7 @@ const SegmentInput = ({
           onChange={() => 
             dispatch(
               experimentNumSegments(
-                namespaceName,
-                experimentName,
+                experimentID,
                 namespaceSegments,
                 Math.floor((p/100)*availableSegments)
               )
@@ -48,8 +48,7 @@ const SegmentInput = ({
       }
       dispatch(
         experimentNumSegments(
-          namespaceName,
-          experimentName,
+          experimentID,
           namespaceSegments,
           numSeg.value
         )
@@ -72,8 +71,7 @@ const SegmentInput = ({
         onChange={(e) =>
           dispatch(
             experimentNumSegments(
-              namespaceName,
-              experimentName,
+              experimentID,
               namespaceSegments,
               e.target.value
             )

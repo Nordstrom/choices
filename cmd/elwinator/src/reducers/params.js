@@ -1,4 +1,5 @@
 const paramInitialState = {
+  id: '',
   name: '',
   isWeighted: false,
   choices: [],
@@ -8,7 +9,7 @@ const paramInitialState = {
 const param = (state = paramInitialState, action) => {
   switch (action.type) {
   case 'ADD_PARAM':
-    return { ...state, name: action.name };
+    return { ...state, id: action.id, name: action.name };
   case 'PARAM_NAME':
     return { ...state, name: action.name };
   case 'TOGGLE_WEIGHTED':
@@ -28,6 +29,15 @@ const param = (state = paramInitialState, action) => {
   default:
     return state;
   }
+};
+
+/**
+ * getParams retuns the param objects for the id's supplied
+ * @param {Object} state - the param state object.
+ * @param {Array} paramIDs - an array of param id's.
+ */
+export const getParams = (state, paramIDs) => {
+  return paramIDs.map(pid => state.find(p => pid === p.id));
 }
 
 const params = (state = [], action) => {
@@ -43,7 +53,7 @@ const params = (state = [], action) => {
   case 'ADD_WEIGHT':
   case 'CLEAR_CHOICES':
     const pars = state.map(p => {
-      if (p.name !== action.param) {
+      if (p.id !== action.param) {
         return p;
       }
       return param(p, action);
@@ -52,6 +62,6 @@ const params = (state = [], action) => {
   default:
     return state;
   }
-}
+};
 
 export default params;

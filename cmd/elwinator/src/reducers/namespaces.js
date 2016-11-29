@@ -1,6 +1,3 @@
-import labels from './label';
-import experiments from './experiments';
-
 const namespaceInitialState = {
   name: '',
   labels: [],
@@ -14,33 +11,56 @@ const namespaceInitialState = {
 const namespace = (state = namespaceInitialState, action) => {
   switch (action.type) {
   case 'ADD_NAMESPACE':
-      return { ...state, name: action.name, isDirty: true, isNew: true };
-  case 'NAMESPACE_NAME':
-    return { ...state, name: action.name, isDirty: true };
-  case 'ADD_LABEL':
-  case 'TOGGLE_LABEL':
-    return { ...state, labels: labels(state.labels, action), isDirty: true };
+      return {
+        ...state,
+        name: action.name,
+        isDirty: true,
+        isNew: true,
+      };
   case 'NAMESPACE_DELETE':
-    return { ...state, delete: true, isDirty: true };
-  case 'TOGGLE_PUBLISH':
-    return { ...state, publish: !state.publish };
+    return {
+      ...state,
+      delete: true,
+      isDirty: true,
+    };
+  case 'NAMESPACE_NAME':
+    return {
+      ...state,
+      name: action.name,
+      isDirty: true,
+    };
+  case 'ADD_LABEL':
+    return {
+      ...state,
+      labels: [...state.labels, action.id],
+    };
+  case 'TOGGLE_LABEL':
+    if (state.labels.find(id => id === action.id)) {
+      return {
+        ...state,
+        labels: state.labels.filter(n => n !== action.id),
+        isDirty: true,
+      };
+    }
+    return {
+      ...state,
+      labels: [...state.labels, action.id],
+      isDirty: true,
+    };
   case 'ADD_EXPERIMENT':
-  case 'EXPERIMENT_DELETE':
-  case 'EXPERIMENT_NAME':
-  case 'EXPERIMENT_NUM_SEGMENTS':
-  case 'PARAM_NAME':
-  case 'ADD_PARAM':
-  case 'PARAM_DELETE':
-  case 'TOGGLE_WEIGHTED':
-  case 'ADD_CHOICE':
-  case 'CHOICE_DELETE':
-  case 'ADD_WEIGHT':
-  case 'CLEAR_CHOICES':
-    return { ...state, experiments: experiments(state.experiments, action), isDirty: true };
-  default: 
+    return {
+      ...state,
+      experiments: [...state.experiments, action.id],
+    };
+  case 'TOGGLE_PUBLISH':
+    return {
+      ...state,
+      publish: !state.publish,
+    };
+  default:
     return state;
   }
-}
+};
 
 const namespaces = (state = [], action) => {
   switch (action.type) {
@@ -52,19 +72,8 @@ const namespaces = (state = [], action) => {
   case 'NAMESPACE_NAME':
   case 'ADD_LABEL':
   case 'TOGGLE_LABEL':
-  case 'TOGGLE_PUBLISH':
   case 'ADD_EXPERIMENT':
-  case 'EXPERIMENT_DELETE':
-  case 'EXPERIMENT_NAME':
-  case 'EXPERIMENT_NUM_SEGMENTS':
-  case 'PARAM_NAME':
-  case 'ADD_PARAM':
-  case 'PARAM_DELETE':
-  case 'TOGGLE_WEIGHTED':
-  case 'ADD_CHOICE':
-  case 'CHOICE_DELETE':
-  case 'ADD_WEIGHT':
-  case 'CLEAR_CHOICES':
+  case 'TOGGLE_PUBLISH':
     const ns = state.map(n => {
       if (n.name !== action.namespace) {
         return n;
@@ -73,8 +82,11 @@ const namespaces = (state = [], action) => {
     });
     return ns;
   default:
+    if (action.entities && action.entities.namespaces) {
+      return Object.assign({}, state, action.entities.namespaces);
+    }
     return state;
   }
-}
+};
 
 export default namespaces;

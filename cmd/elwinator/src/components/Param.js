@@ -7,8 +7,10 @@ import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
 import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
 import { toggleWeighted, clearChoices, paramDelete } from '../actions';
+import { getExperiments } from '../reducers/experiments';
+import { getParams } from '../reducers/params'; 
 
-const Param = ({ namespaceName, experimentName, p, dispatch }) => {
+const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => {
   return (
     <div className="container">
       <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{p.name}</h1></div></div>
@@ -34,8 +36,8 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
               <label>
                 <input type="checkbox"
                   onChange={() => {
-                    dispatch(toggleWeighted(namespaceName, experimentName, p.name));
-                    dispatch(clearChoices(namespaceName, experimentName, p.name));
+                    dispatch(toggleWeighted(p.id));
+                    dispatch(clearChoices(p.id));
                   }}
                   checked={p.isWeighted} /> Weighted choices
               </label>
@@ -61,7 +63,7 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
             dispatch={dispatch}
           />
           <button className="btn btn-warning" onClick={() => {
-            dispatch(paramDelete(namespaceName, experimentName, p.name));
+            dispatch(paramDelete(experimentID, p.id));
             browserHistory.push(experimentURL(namespaceName, experimentName));
           }}>Delete param {p.name}</button>
         </div>
@@ -71,11 +73,12 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
-  const exp = ns.experiments.find(e => e.name === ownProps.params.experiment);
-  const p = exp.params.find(p => p.name === ownProps.params.param);
+  const ns = state.entities.namespaces.find(n => n.name === ownProps.params.namespace);
+  const exp = getExperiments(state.entities.experiments, ns.experiments).find(e => e.name === ownProps.params.experiment);
+  const p = getParams(state.entities.params, exp.params).find(p => p.name === ownProps.params.param);
   return {
     namespaceName: ns.name,
+    experimentID: exp.id,
     experimentName: exp.name,
     p,
   }

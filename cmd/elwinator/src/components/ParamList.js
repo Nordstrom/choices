@@ -31,10 +31,15 @@ const ParamList = ({ namespaceName, experimentName, params, dispatch }) => (
 );
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.namespaceName);
-  const exp = ns.experiments.find(e => e.name === ownProps.experimentName);
+  const ns = state.entities.namespaces.find(n => n.name === ownProps.namespaceName);
+  const exp = ns.experiments.map(
+    eid => state.entities.experiments.find(
+      e => eid === e.id
+    )
+  )
+  .find(e => e.name === ownProps.experimentName);
   return {
-    params: exp.params,
+    params: exp.params.map(pid => state.entities.params.find(p => pid === p.id)),
   }
 };
 

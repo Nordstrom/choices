@@ -43,7 +43,7 @@ const NamespaceList = ({ namespaces, dispatch }) => {
 };
 
 const mapStateToProps = (state) => ({
-  namespaces: state.namespaces,
+  namespaces: state.entities.namespaces,
 });
 
 const connected = connect(mapStateToProps)(NamespaceList);

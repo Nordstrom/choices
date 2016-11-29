@@ -9,16 +9,11 @@ import Segment from './Segment';
 import ExperimentList from './ExperimentList';
 import { rootURL, labelNewURL, experimentNewURL } from '../urls';
 import { namespaceDelete } from '../actions';
+import { combinedSegments } from '../reducers/experiments';
 
-const Namespace = ({ ns, dispatch }) => {
-  const llProps = { namespaceName: ns.name, labels: ns.labels };
+const Namespace = ({ ns, labels, namespaceSegments, dispatch }) => {
+  const llProps = { namespaceName: ns.name, labels: ns.labels.map(lid => labels.find(l => lid === l.id)) };
   const newLabelProps = { namespaceName: ns.name, dispatch, redirectOnSubmit: false };
-  const nsSegments = ns.experiments.reduce((prev, e) => {
-      e.segments.forEach((seg, i) => {
-        prev[i] |= seg;
-      });
-      return prev;
-    }, new Uint8Array(16).fill(0));
   return (
     <div className="container">
       <div className="row"><h1>{ ns.name }</h1></div>
@@ -32,7 +27,7 @@ const Namespace = ({ ns, dispatch }) => {
           <LabelList { ...llProps } />
           <NewLabel { ...newLabelProps } />
           <h2>Segments</h2>
-          <Segment namespaceSegments={nsSegments} />
+          <Segment namespaceSegments={namespaceSegments} />
           <h2>Experiments</h2>
           <ExperimentList namespaceName={ ns.name } />
           <Link
@@ -51,9 +46,12 @@ const Namespace = ({ ns, dispatch }) => {
 };
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
+  const ns = state.entities.namespaces.find(n => n.name === ownProps.params.namespace);
+  const namespaceSegments = combinedSegments(state.entities.experiments, ns.experiments);
   return {
     ns,
+    namespaceSegments,
+    labels: state.entities.labels,
   }
 };
 

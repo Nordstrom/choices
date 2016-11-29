@@ -8,27 +8,16 @@ import Segment from './Segment';
 import ParamList from './ParamList';
 import { namespaceURL, paramNewURL } from '../urls';
 import { experimentDelete } from '../actions';
+import { getExperiments, availableSegments, combinedSegments } from '../reducers/experiments';
 
-const Experiment = ({ ns, exp, dispatch }) => {
+const Experiment = ({ ns, exp, freeSegments, namespaceSegments, dispatch }) => {
   const siProps = {
     namespaceName: ns.name,
     experimentName: exp.name,
+    experimentID: exp.id,
     numSegments: exp.numSegments,
-    availableSegments: ns.experiments.reduce((prev, e) => {
-      if (e.name === exp.name) {
-        return prev;
-      }
-      return prev - e.numSegments;
-    }, 128),
-    namespaceSegments: ns.experiments.reduce((prev, e) => {
-      if (e.name === exp.name) {
-        return prev;
-      }
-      e.segments.forEach((seg, i) => {
-        prev[i] |= seg
-      });
-      return prev;
-    }, new Uint8Array(16).fill(0)),
+    availableSegments: freeSegments,
+    namespaceSegments,
     redirectOnSubmit: false,
   }
   return (
@@ -45,7 +34,7 @@ const Experiment = ({ ns, exp, dispatch }) => {
           <h2>Segments</h2>
           <SegmentInput {...siProps } />
           <Segment
-            namespaceSegments={siProps.namespaceSegments}
+            namespaceSegments={namespaceSegments}
             experimentSegments={exp.segments}
           />
           <h2>Params</h2>
@@ -65,11 +54,16 @@ const Experiment = ({ ns, exp, dispatch }) => {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
-  const exp = ns.experiments.find(e => e.name === ownProps.params.experiment);
+  const ns = state.entities.namespaces.find(n => n.name === ownProps.params.namespace);
+  const exps = getExperiments(state.entities.experiments, ns.experiments);
+  const exp = exps.find(e => e.name === ownProps.params.experiment);
+  const freeSegments = availableSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
+  const namespaceSegments = combinedSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
   return {
     ns,
     exp,
+    freeSegments,
+    namespaceSegments,
   }
 };
 

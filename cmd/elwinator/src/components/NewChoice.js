@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
+import { connect } from 'react-redux';
 
 import { addChoice, addWeight } from '../actions';
 import { paramURL } from '../urls';
@@ -7,6 +8,7 @@ import { paramURL } from '../urls';
 const NewChoice = ({
   namespaceName,
   experimentName,
+  paramID,
   paramName,
   isWeighted,
   dispatch,
@@ -23,9 +25,9 @@ const NewChoice = ({
       if (isWeighted && !weight.value.trim()) {
         return;
       }
-      dispatch(addChoice(namespaceName, experimentName, paramName, choice.value));
+      dispatch(addChoice(paramID, choice.value));
       if (isWeighted) {
-        dispatch(addWeight(namespaceName, experimentName, paramName, parseInt(weight.value, 10)));
+        dispatch(addWeight(paramID, parseInt(weight.value, 10)));
       }
       if (!redirectOnSubmit) {
         choice.value = '';
@@ -67,4 +69,13 @@ NewChoice.propTypes = {
    redirectOnSubmit: PropTypes.bool.isRequired,
 }
 
-export default NewChoice;
+const mapStateToProps = (state, ownProps) => {
+  const paramID = state.entities.params.find(p => p.name === ownProps.paramName).id;
+  return {
+    paramID,
+  };
+};
+
+const connected = connect(mapStateToProps)(NewChoice);
+
+export default connected;
