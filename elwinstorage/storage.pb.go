@@ -79,6 +79,13 @@ func (m *AllRequest) String() string            { return proto.CompactTextString
 func (*AllRequest) ProtoMessage()               {}
 func (*AllRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
+func (m *AllRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Environment_Staging
+}
+
 // The response message containing the Namespaces
 type AllReply struct {
 	Namespaces []*Namespace `protobuf:"bytes,1,rep,name=namespaces" json:"namespaces,omitempty"`
@@ -114,6 +121,13 @@ func (m *CreateRequest) GetNamespace() *Namespace {
 	return nil
 }
 
+func (m *CreateRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Environment_Staging
+}
+
 // CreateReply response containing the newly created Namespace.
 type CreateReply struct {
 	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
@@ -141,6 +155,20 @@ func (m *ReadRequest) Reset()                    { *m = ReadRequest{} }
 func (m *ReadRequest) String() string            { return proto.CompactTextString(m) }
 func (*ReadRequest) ProtoMessage()               {}
 func (*ReadRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *ReadRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *ReadRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Environment_Staging
+}
 
 // ReadReply response containing the namespace requested.
 type ReadReply struct {
@@ -178,6 +206,13 @@ func (m *UpdateRequest) GetNamespace() *Namespace {
 	return nil
 }
 
+func (m *UpdateRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Environment_Staging
+}
+
 // UpdateReply response containing the updated namespace.
 type UpdateReply struct {
 	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
@@ -206,6 +241,20 @@ func (m *DeleteRequest) Reset()                    { *m = DeleteRequest{} }
 func (m *DeleteRequest) String() string            { return proto.CompactTextString(m) }
 func (*DeleteRequest) ProtoMessage()               {}
 func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *DeleteRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *DeleteRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Environment_Staging
+}
 
 // DeleteReply response containing the deleted namespace.
 type DeleteReply struct {
@@ -236,6 +285,20 @@ func (m *Namespace) String() string            { return proto.CompactTextString(
 func (*Namespace) ProtoMessage()               {}
 func (*Namespace) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
+func (m *Namespace) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Namespace) GetLabels() []string {
+	if m != nil {
+		return m.Labels
+	}
+	return nil
+}
+
 func (m *Namespace) GetExperiments() []*Experiment {
 	if m != nil {
 		return m.Experiments
@@ -255,6 +318,20 @@ func (m *Experiment) String() string            { return proto.CompactTextString
 func (*Experiment) ProtoMessage()               {}
 func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
+func (m *Experiment) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Experiment) GetSegments() []byte {
+	if m != nil {
+		return m.Segments
+	}
+	return nil
+}
+
 func (m *Experiment) GetParams() []*Param {
 	if m != nil {
 		return m.Params
@@ -273,6 +350,13 @@ func (m *Param) String() string            { return proto.CompactTextString(m) }
 func (*Param) ProtoMessage()               {}
 func (*Param) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
 
+func (m *Param) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func (m *Param) GetValue() *Value {
 	if m != nil {
 		return m.Value
@@ -290,6 +374,20 @@ func (m *Value) Reset()                    { *m = Value{} }
 func (m *Value) String() string            { return proto.CompactTextString(m) }
 func (*Value) ProtoMessage()               {}
 func (*Value) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
+
+func (m *Value) GetChoices() []string {
+	if m != nil {
+		return m.Choices
+	}
+	return nil
+}
+
+func (m *Value) GetWeights() []float64 {
+	if m != nil {
+		return m.Weights
+	}
+	return nil
+}
 
 func init() {
 	proto.RegisterType((*AllRequest)(nil), "AllRequest")
@@ -315,7 +413,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for ElwinStorage service
 
@@ -524,7 +622,7 @@ var _ElwinStorage_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "storage.proto",
 }
 
 func init() { proto.RegisterFile("storage.proto", fileDescriptor0) }
