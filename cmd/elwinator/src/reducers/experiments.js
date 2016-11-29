@@ -2,6 +2,7 @@ import { sample } from '../shuffle';
 
 const experimentInitialState = {
   id: '',
+  namespace: '',
   name: '',
   segments: [],
   numSegments: 0,
@@ -14,6 +15,7 @@ const experiment = (state = experimentInitialState, action) => {
     return {
       ...state,
       id: action.id,
+      namespace: action.namespace,
       name: action.name,
     };
   case 'EXPERIMENT_NAME':
@@ -41,6 +43,15 @@ const experiment = (state = experimentInitialState, action) => {
   default:
     return state;
   }
+};
+
+/**
+ * getExperiment returns the experiment for the supplied id.
+ * @param {Object} state - the experiments state object.
+ * @param {string} experiment - the experiment id.
+ */
+export const getExperiment = (state, experiment) => {
+  return state.find(e => e.id === experiment);
 };
 
 /**

@@ -6,8 +6,6 @@ import { paramAddChoice, paramAddWeight } from '../actions';
 import { paramURL } from '../urls';
 
 const NewChoice = ({
-  namespaceName,
-  experimentName,
   paramID,
   paramName,
   isWeighted,
@@ -34,7 +32,7 @@ const NewChoice = ({
         weight.value = '';
         return;
       }
-      browserHistory.push(paramURL(paramName));
+      browserHistory.push(paramURL(paramID));
     }}>
       <div className="form-group">
         <label>Choice</label>
@@ -61,21 +59,13 @@ const NewChoice = ({
 }
 
 NewChoice.propTypes = {
-   namespaceName: PropTypes.string.isRequired,
-   experimentName: PropTypes.string.isRequired,
-   paramName: PropTypes.string.isRequired,
-   isWeighted: PropTypes.bool.isRequired,
-   dispatch: PropTypes.func.isRequired,
-   redirectOnSubmit: PropTypes.bool.isRequired,
+  paramID: PropTypes.string.isRequired,
+  paramName: PropTypes.string.isRequired,
+  isWeighted: PropTypes.bool.isRequired,
+  dispatch: PropTypes.func.isRequired,
+  redirectOnSubmit: PropTypes.bool.isRequired,
 }
 
-const mapStateToProps = (state, ownProps) => {
-  const paramID = state.entities.params.find(p => p.name === ownProps.paramName).id;
-  return {
-    paramID,
-  };
-};
-
-const connected = connect(mapStateToProps)(NewChoice);
+const connected = connect()(NewChoice);
 
 export default connected;

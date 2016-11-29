@@ -67,6 +67,15 @@ const namespace = (state = namespaceInitialState, action) => {
   }
 };
 
+/**
+ * getNamespace returns the namespace requested
+ * @param {Object} state - the namespaces state Object
+ * @param {string} name - the name of the namespace.
+ */
+export const getNamespace = (state, name) => {
+  return state.find(n => n.name === name);
+}
+
 const namespaces = (state = [], action) => {
   switch (action.type) {
   case 'NAMESPACES_LOADED':

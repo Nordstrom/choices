@@ -1,5 +1,6 @@
 const paramInitialState = {
   id: '',
+  experiment: '',
   name: '',
   isWeighted: false,
   choices: [],
@@ -9,7 +10,7 @@ const paramInitialState = {
 const param = (state = paramInitialState, action) => {
   switch (action.type) {
   case 'PARAM_ADD':
-    return { ...state, id: action.id, name: action.name };
+    return { ...state, id: action.id, experiment: action.experiment, name: action.name };
   case 'PARAM_NAME':
     return { ...state, name: action.name };
   case 'PARAM_TOGGLE_WEIGHTED':
@@ -32,13 +33,22 @@ const param = (state = paramInitialState, action) => {
 };
 
 /**
- * getParams retuns the param objects for the id's supplied
+ * getParam returns the param object for the id supplied
+ * @param {Object} state - the param state object.
+ * @param {string} param - the param id.
+ */
+export const getParam = (state, param) => {
+  return state.find(p => p.id === param);
+};
+
+/**
+ * getParams returns the param objects for the id's supplied
  * @param {Object} state - the param state object.
  * @param {Array} paramIDs - an array of param id's.
  */
 export const getParams = (state, paramIDs) => {
   return paramIDs.map(pid => state.find(p => pid === p.id));
-}
+};
 
 const params = (state = [], action) => {
   switch (action.type) {

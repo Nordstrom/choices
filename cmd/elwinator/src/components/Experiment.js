@@ -8,7 +8,8 @@ import Segment from './Segment';
 import ParamList from './ParamList';
 import { namespaceURL, paramNewURL } from '../urls';
 import { experimentDelete } from '../actions';
-import { availableSegments, combinedSegments } from '../reducers/experiments';
+import { getNamespace } from '../reducers/namespaces';
+import { getExperiment, availableSegments, combinedSegments } from '../reducers/experiments';
 import { getParams } from '../reducers/params';
 
 const Experiment = ({ ns, exp, freeSegments, namespaceSegments, params, dispatch }) => {
@@ -55,8 +56,8 @@ const Experiment = ({ ns, exp, freeSegments, namespaceSegments, params, dispatch
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.entities.namespaces.find(n => n.experiments.find(e => e === ownProps.params.experiment));
-  const exp = state.entities.experiments.find(e => e.id === ownProps.params.experiment);
+  const exp = getExperiment(state.entities.experiments, ownProps.params.experiment);
+  const ns = getNamespace(state.entities.namespaces, exp.namespace);
   const freeSegments = availableSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
   const namespaceSegments = combinedSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
   const params = getParams(state.entities.params, exp.params);

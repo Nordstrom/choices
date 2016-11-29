@@ -7,6 +7,9 @@ import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
 import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
 import { paramToggleWeighted, paramClearChoices, paramDelete } from '../actions';
+import { getNamespace } from '../reducers/namespaces';
+import { getExperiment } from '../reducers/experiments';
+import { getParam } from '../reducers/params';
 
 const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => {
   return (
@@ -51,8 +54,7 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
             weights={p.weights}
           />
           <NewChoice
-            namespaceName={namespaceName}
-            experimentName={experimentName}
+            paramID={p.id}
             paramName={p.name}
             isWeighted={p.isWeighted}
             redirectOnSubmit={false}
@@ -75,9 +77,9 @@ Param.propTypes = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const p = state.entities.params.find(p => p.id === ownProps.params.param);
-  const exp = state.entities.experiments.find(e => e.params.find(p => ownProps.params.param));
-  const ns = state.entities.namespaces.find(n => n.experiments.find(e => e === exp.id));
+  const p = getParam(state.entities.params, ownProps.params.param);
+  const exp = getExperiment(state.entities.experiments, p.experiment);
+  const ns = getNamespace(state.entities.namespaces, exp.namespace);
   return {
     namespaceName: ns.name,
     experimentID: exp.id,

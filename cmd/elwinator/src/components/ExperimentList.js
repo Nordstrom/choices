@@ -4,7 +4,9 @@ import { connect } from 'react-redux';
 
 import { experimentURL } from '../urls';
 import { experimentDelete } from '../actions';
+import { getNamespace } from '../reducers/namespaces';
 import { getExperiments } from '../reducers/experiments';
+import { getParams } from '../reducers/params';
 
 const ExperimentList = ({ namespaceName, experiments, dispatch }) => {
   const exps = experiments.map((e, i) =>
@@ -37,11 +39,18 @@ const ExperimentList = ({ namespaceName, experiments, dispatch }) => {
   );
 }
 
+ExperimentList.PropTypes = {
+  namespaceName: React.PropTypes.string.isRequired,
+}
+
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.entities.namespaces.find(n => n.name === ownProps.namespaceName);
-  const experiments = getExperiments(state.entities.experiments, ns.experiments);
+  const ns = getNamespace(state.entities.namespaces, ownProps.namespaceName);
+  const experiments = getExperiments(state.entities.experiments, ns.experiments)
+  .map(e => ({
+    ...e,
+    params: getParams(state.entities.params, e.params),
+  }));
   return {
-    namespaceName: ns.name,
     experiments,
   }
 }
