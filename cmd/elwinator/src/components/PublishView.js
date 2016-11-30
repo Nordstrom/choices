@@ -24,20 +24,23 @@ function updateRequest(namespace) {
   }
 }
 
-const PublishView = ({ namespaces, dispatch }) => {
-  const ns = namespaces.filter(n => {
-    if (n.isDirty) {
-      return true;
-    }
-    return false;
-  }).map(n => 
+const changeList = (changes) => changes.map(c => {
+  const details = Object.keys(c)
+  .filter(k => k !== 'type')
+  .map(k => <p><strong>{k}</strong>={c[k]}</p>);
+  return <li>{c.type}: {details}</li>
+});
+
+const PublishView = ({ namespaces, changes, dispatch }) => {
+  const ns = namespaces.map(n => 
     <div key={n.name} className="checkbox">
       <label><input
         type="checkbox"
         checked={n.publish}
         onChange={() => dispatch(namespaceTogglePublish(n.name))}
-      /> {`${n.name} - ${n.experiments.map(e => e.name).join(', ')}`}
+      /> {n.name}
       </label>
+      <ol>{changeList(changes[n.name])}</ol>
     </div>
   );
   if (ns.length === 0) {
@@ -98,10 +101,7 @@ const PublishView = ({ namespaces, dispatch }) => {
 
 PublishView.propTypes = {
   namespaces: React.PropTypes.array.isRequired,
-}
-
-PublishView.defaultProps = {
-  namespaces: [],
+  changes: React.PropTypes.object.isRequired,
 }
 
 export default PublishView;

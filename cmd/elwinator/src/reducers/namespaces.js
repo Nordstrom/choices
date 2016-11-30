@@ -76,6 +76,15 @@ export const getNamespace = (state, name) => {
   return state.find(n => n.name === name);
 }
 
+/**
+ * getNamespaces returns the namespaces listed in names array
+ * @param {Object} state - the namespaces state object.
+ * @param {string} names - the names of the namespaces you want.
+ */
+export const getNamespaces = (state, names) => {
+  return names.map(name => state.find(n => n.name === name));
+}
+
 const namespaces = (state = [], action) => {
   switch (action.type) {
   case 'NAMESPACES_LOADED':

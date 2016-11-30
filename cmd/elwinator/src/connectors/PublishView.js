@@ -1,9 +1,11 @@
 import { connect } from 'react-redux';
 
 import PublishView from '../components/PublishView';
+import { getNamespaces } from '../reducers/namespaces';
 
 const mapStateToProps = (state) => ({
-  namespaces: state.entities.namespaces,
+  namespaces: getNamespaces(state.entities.namespaces, Object.keys(state.changes)),
+  changes: state.changes,
 });
 
 const connected = connect(mapStateToProps)(PublishView);
