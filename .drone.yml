@@ -6,10 +6,9 @@ pipeline:
   build:
     image: golang:1.7.1
     commands:
-      - go get -d github.com/foolusion/choices/...
       - go install cmd/...
   test:
     image: golang:1.7.1
     commands:
       - cd $GOPATH/src/github.com/foolusion/choices
-      - go test ./... -bench=. -benchmem
+      - go test . -bench=. -benchmem
