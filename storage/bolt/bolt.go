@@ -17,6 +17,9 @@ package bolt
 import (
 	"fmt"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+
 	"golang.org/x/net/context"
 
 	"github.com/boltdb/bolt"
@@ -132,7 +135,7 @@ func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.Rea
 	if err := s.db.View(func(tx *bolt.Tx) error {
 		buf := tx.Bucket(env).Get([]byte(r.Name))
 		if buf == nil {
-			return fmt.Errorf("key not found")
+			return grpc.Errorf(codes.NotFound, "key not found")
 		}
 		if err := proto.Unmarshal(buf, &ns); err != nil {
 			return err
@@ -192,7 +195,7 @@ func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage
 	if err := s.db.Update(func(tx *bolt.Tx) error {
 		buf := tx.Bucket(env).Get([]byte(r.Name))
 		if buf == nil {
-			return fmt.Errorf("key not found")
+			return grpc.Errorf(codes.NotFound, "key not found")
 		}
 		if err := proto.Unmarshal(buf, &ns); err != nil {
 			return err
