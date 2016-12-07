@@ -135,7 +135,7 @@ func main() {
 		ctx,
 		choices.WithGlobalSalt("choices"),
 		choices.WithStorageConfig(config.mongoAddr, storageEnv),
-		choices.WithUpdateInterval(time.Minute),
+		choices.WithUpdateInterval(10*time.Second),
 	)
 	if err != nil {
 		log.Fatal(err)
