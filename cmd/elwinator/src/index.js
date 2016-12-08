@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore } from 'redux';
@@ -7,8 +8,8 @@ import 'bootstrap/dist/css/bootstrap-theme.css';
 import { Router,  Route, browserHistory } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
 
-import { toNamespace } from './nsconv';
-import { namespacesLoaded } from './actions';
+import { toEntities } from './nsconv';
+import { entitiesLoaded } from './actions';
 import { loadState, saveState } from './Storage';
 import App from './App';
 import reducers from './reducers';
@@ -40,14 +41,14 @@ ReactDOM.render(
   <Provider store={store}>
     <Router history={history}>
       <Route path="/" component={App} />
-      <Route path="/n/new" component={NewNamespaceView} />
+      <Route path="/new-namespace" component={NewNamespaceView} />
       <Route path="/n/:namespace" component={Namespace} />
-      <Route path="/n/:namespace/l/new" component={NewLabelView} />
-      <Route path="/n/:namespace/e/new" component={NewExperimentView} />
-      <Route path="/n/:namespace/e/:experiment" component={Experiment} />
-      <Route path="/n/:namespace/e/:experiment/p/new" component={NewParamView} />
-      <Route path="/n/:namespace/e/:experiment/p/:param" component={Param} />
-      <Route path="/n/:namespace/e/:experiment/p/:param/c/new" component={NewChoiceView} />
+      <Route path="/n/:namespace/new-label" component={NewLabelView} />
+      <Route path="/n/:namespace/new-experiment" component={NewExperimentView} />
+      <Route path="/e/:experiment" component={Experiment} />
+      <Route path="/e/:experiment/new-param" component={NewParamView} />
+      <Route path="/p/:param" component={Param} />
+      <Route path="/p/:param/new-choice" component={NewChoiceView} />
     </Router>
   </Provider>,
   document.getElementById('root')
@@ -65,10 +66,8 @@ fetch("/api/v1/all", req)
   return resp.json();
 })
 .then(json => {
-  const ns = json.namespaces.map(n => {
-    return toNamespace(n);
-  });
-  store.dispatch(namespacesLoaded(ns));
+  const entities = toEntities(json.namespaces);
+  store.dispatch(entitiesLoaded(entities));
 })
 .then(() => {
   render()

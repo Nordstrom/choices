@@ -1,9 +1,10 @@
+// @flow
 import React from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
 import { namespaceURL } from '../urls';
-import { addNamespace } from '../actions';
+import { namespaceAdd } from '../actions';
 
 const NewNamespace = ({ dispatch }) => {
   let input;
@@ -13,7 +14,7 @@ const NewNamespace = ({ dispatch }) => {
       if (!input.value.trim()) {
         return;
       }
-      dispatch(addNamespace(input.value));
+      dispatch(namespaceAdd(input.value));
       browserHistory.push(namespaceURL(input.value));
     }}>
       <div className="form-group">

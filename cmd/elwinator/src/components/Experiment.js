@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
@@ -8,27 +9,18 @@ import Segment from './Segment';
 import ParamList from './ParamList';
 import { namespaceURL, paramNewURL } from '../urls';
 import { experimentDelete } from '../actions';
+import { getNamespace } from '../reducers/namespaces';
+import { getExperiment, availableSegments, combinedSegments } from '../reducers/experiments';
+import { getParams } from '../reducers/params';
 
-const Experiment = ({ ns, exp, dispatch }) => {
+const Experiment = ({ ns, exp, freeSegments, namespaceSegments, params, dispatch }) => {
   const siProps = {
     namespaceName: ns.name,
     experimentName: exp.name,
+    experimentID: exp.id,
     numSegments: exp.numSegments,
-    availableSegments: ns.experiments.reduce((prev, e) => {
-      if (e.name === exp.name) {
-        return prev;
-      }
-      return prev - e.numSegments;
-    }, 128),
-    namespaceSegments: ns.experiments.reduce((prev, e) => {
-      if (e.name === exp.name) {
-        return prev;
-      }
-      e.segments.forEach((seg, i) => {
-        prev[i] |= seg
-      });
-      return prev;
-    }, new Uint8Array(16).fill(0)),
+    availableSegments: freeSegments,
+    namespaceSegments,
     redirectOnSubmit: false,
   }
   return (
@@ -39,23 +31,23 @@ const Experiment = ({ ns, exp, dispatch }) => {
       <div className="row">
         <NavSection>
           <Link to={namespaceURL(ns.name)} className="nav-link">{ns.name} - Namespace</Link>
-          <Link to={paramNewURL(ns.name, exp.name)} className="nav-link">Create param</Link>
+          <Link to={paramNewURL(exp.id)} className="nav-link">Create param</Link>
         </NavSection>
         <div className="col-sm-9">
           <h2>Segments</h2>
           <SegmentInput {...siProps } />
           <Segment
-            namespaceSegments={siProps.namespaceSegments}
+            namespaceSegments={namespaceSegments}
             experimentSegments={exp.segments}
           />
           <h2>Params</h2>
-          <ParamList namespaceName={ns.name} experimentName={exp.name} />
+          <ParamList experimentID={exp.id} params={params} />
           <Link
-            to={paramNewURL(ns.name, exp.name)}
+            to={paramNewURL(exp.id)}
             className="btn btn-default"
             role="button">Create new param</Link><br />
           <button className="btn btn-warning" onClick={() => {
-            dispatch(experimentDelete(ns.name, exp.name));
+            dispatch(experimentDelete(ns.name, exp.id));
             browserHistory.push(namespaceURL(ns.name));
           }}>Delete experiment {exp.name}</button>
         </div>
@@ -65,11 +57,17 @@ const Experiment = ({ ns, exp, dispatch }) => {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
-  const exp = ns.experiments.find(e => e.name === ownProps.params.experiment);
+  const exp = getExperiment(state.entities.experiments, ownProps.params.experiment);
+  const ns = getNamespace(state.entities.namespaces, exp.namespace);
+  const freeSegments = availableSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
+  const namespaceSegments = combinedSegments(state.entities.experiments, ns.experiments.filter(eid => eid !== exp.id));
+  const params = getParams(state.entities.params, exp.params);
   return {
     ns,
     exp,
+    freeSegments,
+    namespaceSegments,
+    params,
   }
 };
 

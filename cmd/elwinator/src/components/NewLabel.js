@@ -1,10 +1,12 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 
 import { namespaceURL } from '../urls';
-import { addLabel } from '../actions';
+import { namespaceAddLabel } from '../actions';
 
-const NewLabel = ({ namespaceName, redirectOnSubmit, dispatch }) => {
+const NewLabel = ({ namespaceName, redirectOnSubmit, dispatch }: {namespaceName: string, redirectOnSubmit: boolean, dispatch: Function}) => {
+  // namespaceName: string, redirectOnSubmit: boolean, dispatch: function
   let label;
   return (
     <form onSubmit={e => {
@@ -12,7 +14,7 @@ const NewLabel = ({ namespaceName, redirectOnSubmit, dispatch }) => {
       if (!label.value.trim()) {
         return;
       }
-      dispatch(addLabel(namespaceName, label.value));
+      dispatch(namespaceAddLabel(namespaceName, label.value));
       if (!redirectOnSubmit) {
         label.value = '';
         return;

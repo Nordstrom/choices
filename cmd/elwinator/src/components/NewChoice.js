@@ -1,12 +1,14 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
+import { connect } from 'react-redux';
 
-import { addChoice, addWeight } from '../actions';
+import { paramAddChoice, paramAddWeight } from '../actions';
 import { paramURL } from '../urls';
 
 const NewChoice = ({
   namespaceName,
-  experimentName,
+  paramID,
   paramName,
   isWeighted,
   dispatch,
@@ -23,16 +25,16 @@ const NewChoice = ({
       if (isWeighted && !weight.value.trim()) {
         return;
       }
-      dispatch(addChoice(namespaceName, experimentName, paramName, choice.value));
+      dispatch(paramAddChoice(namespaceName, paramID, choice.value));
       if (isWeighted) {
-        dispatch(addWeight(namespaceName, experimentName, paramName, parseInt(weight.value, 10)));
+        dispatch(paramAddWeight(namespaceName, paramID, parseInt(weight.value, 10)));
       }
       if (!redirectOnSubmit) {
         choice.value = '';
         weight.value = '';
         return;
       }
-      browserHistory.push(paramURL(namespaceName, experimentName, paramName));
+      browserHistory.push(paramURL(paramID));
     }}>
       <div className="form-group">
         <label>Choice</label>
@@ -59,12 +61,14 @@ const NewChoice = ({
 }
 
 NewChoice.propTypes = {
-   namespaceName: PropTypes.string.isRequired,
-   experimentName: PropTypes.string.isRequired,
-   paramName: PropTypes.string.isRequired,
-   isWeighted: PropTypes.bool.isRequired,
-   dispatch: PropTypes.func.isRequired,
-   redirectOnSubmit: PropTypes.bool.isRequired,
+  namespaceName: PropTypes.string.isRequired,
+  paramID: PropTypes.string.isRequired,
+  paramName: PropTypes.string.isRequired,
+  isWeighted: PropTypes.bool.isRequired,
+  dispatch: PropTypes.func.isRequired,
+  redirectOnSubmit: PropTypes.bool.isRequired,
 }
 
-export default NewChoice;
+const connected = connect()(NewChoice);
+
+export default connected;

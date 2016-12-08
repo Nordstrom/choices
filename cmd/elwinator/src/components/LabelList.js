@@ -1,8 +1,9 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-import { toggleLabel } from '../actions';
+import { namespaceToggleLabel } from '../actions';
 
 const LabelList = ({ namespaceName, labels, dispatch }) => {
   const labelList = labels.map(l => {
@@ -15,7 +16,7 @@ const LabelList = ({ namespaceName, labels, dispatch }) => {
     <li key={l.name}>
       <button
         className={spanClassName}
-        onClick={() => dispatch(toggleLabel(namespaceName, l.name))}
+        onClick={() => dispatch(namespaceToggleLabel(namespaceName, l.id))}
        >{l.name}</button>
     </li>
     );

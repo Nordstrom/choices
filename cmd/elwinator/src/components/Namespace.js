@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
@@ -9,16 +10,13 @@ import Segment from './Segment';
 import ExperimentList from './ExperimentList';
 import { rootURL, labelNewURL, experimentNewURL } from '../urls';
 import { namespaceDelete } from '../actions';
+import { getNamespace } from '../reducers/namespaces';
+import { combinedSegments, getExperiments } from '../reducers/experiments';
+import { getLabels } from '../reducers/labels';
 
-const Namespace = ({ ns, dispatch }) => {
-  const llProps = { namespaceName: ns.name, labels: ns.labels };
+const Namespace = ({ ns, labels, namespaceSegments, dispatch }) => {
+  const llProps = { namespaceName: ns.name, labels: ns.labels.map(lid => labels.find(l => lid === l.id)) };
   const newLabelProps = { namespaceName: ns.name, dispatch, redirectOnSubmit: false };
-  const nsSegments = ns.experiments.reduce((prev, e) => {
-      e.segments.forEach((seg, i) => {
-        prev[i] |= seg;
-      });
-      return prev;
-    }, new Uint8Array(16).fill(0));
   return (
     <div className="container">
       <div className="row"><h1>{ ns.name }</h1></div>
@@ -32,7 +30,7 @@ const Namespace = ({ ns, dispatch }) => {
           <LabelList { ...llProps } />
           <NewLabel { ...newLabelProps } />
           <h2>Segments</h2>
-          <Segment namespaceSegments={nsSegments} />
+          <Segment namespaceSegments={namespaceSegments} />
           <h2>Experiments</h2>
           <ExperimentList namespaceName={ ns.name } />
           <Link
@@ -51,9 +49,15 @@ const Namespace = ({ ns, dispatch }) => {
 };
 
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
+  const ns = getNamespace(state.entities.namespaces, ownProps.params.namespace);
+  const namespaceSegments = combinedSegments(state.entities.experiments, ns.experiments);
+  const experiments = getExperiments(state.entities.experiments, ns.experiments);
+  const labels = getLabels(state.entities.labels, ns.labels);
   return {
     ns,
+    namespaceSegments,
+    experiments,
+    labels,
   }
 };
 

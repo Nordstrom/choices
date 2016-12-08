@@ -1,11 +1,12 @@
-import React from 'react';
+// @flow
+import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
 import { paramDelete } from '../actions';
 import { paramURL } from '../urls';
 
-const ParamList = ({ namespaceName, experimentName, params, dispatch }) => (
+const ParamList = ({ namespace, experimentID, params, dispatch }) => (
   <table className="table table-striped">
     <thead>
       <tr>
@@ -19,10 +20,10 @@ const ParamList = ({ namespaceName, experimentName, params, dispatch }) => (
     {params.map((param, i) => 
       <tr key={param.name} >
         <td>{i + 1}</td>
-        <td><Link to={paramURL(namespaceName, experimentName, param.name)}>{param.name}</Link></td>
+        <td><Link to={paramURL(param.id)}>{param.name}</Link></td>
         <td>{param.choices.join(', ')}</td>
         <td><button className="btn btn-default btn-xs" onClick={
-          () => dispatch(paramDelete(namespaceName, experimentName, param.name))
+          () => dispatch(paramDelete(namespace, experimentID, param.id))
         }>&times;</button></td>
       </tr>
     )}
@@ -30,16 +31,12 @@ const ParamList = ({ namespaceName, experimentName, params, dispatch }) => (
   </table>
 );
 
-const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.namespaceName);
-  const exp = ns.experiments.find(e => e.name === ownProps.experimentName);
-  return {
-    params: exp.params,
-  }
-};
+ParamList.propTypes = {
+  experimentID: PropTypes.string.isRequired,
+  params: PropTypes.arrayOf(PropTypes.object).isRequired,
+  dispatch: PropTypes.func.isRequired,
+}
 
-const connected = connect(
-  mapStateToProps,
-)(ParamList);
+const connected = connect()(ParamList);
 
 export default connected;

@@ -1,10 +1,12 @@
+// @flow
 import React from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
-import { addParam } from '../actions';
+import { paramAdd } from '../actions';
+import { experimentURL } from '../urls';
 
-const NewParam = ({ namespaceName, experimentName, dispatch }) => {
+const NewParam = ({ namespaceName, experimentID, dispatch }) => {
   let input;
   return (
     <form onSubmit={e => {
@@ -12,8 +14,8 @@ const NewParam = ({ namespaceName, experimentName, dispatch }) => {
       if (!input.value.trim()) {
         return;
       }
-      dispatch(addParam(namespaceName, experimentName, input.value));
-      browserHistory.push(`/n/${namespaceName}/e/${experimentName}/p/${input.value}`)
+      dispatch(paramAdd(namespaceName, experimentID, input.value));
+      browserHistory.push(experimentURL(experimentID));
     }}>
       <div className="form-group">
         <label>Param Name</label>
@@ -31,7 +33,7 @@ const NewParam = ({ namespaceName, experimentName, dispatch }) => {
 
 NewParam.propTypes = {
   namespaceName: React.PropTypes.string.isRequired,
-  experimentName: React.PropTypes.string.isRequired,
+  experimentID: React.PropTypes.string.isRequired,
   dispatch: React.PropTypes.func.isRequired,
 }
 

@@ -1,4 +1,5 @@
-import React from 'react';
+// @flow
+import React, { PropTypes } from 'react';
 import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
 
@@ -6,9 +7,12 @@ import NavSection from './NavSection';
 import NewChoice from './NewChoice';
 import ChoiceList from './ChoiceList';
 import { namespaceURL, experimentURL, choiceNewURL } from '../urls';
-import { toggleWeighted, clearChoices, paramDelete } from '../actions';
+import { paramToggleWeighted, paramClearChoices, paramDelete } from '../actions';
+import { getNamespace } from '../reducers/namespaces';
+import { getExperiment } from '../reducers/experiments';
+import { getParam } from '../reducers/params';
 
-const Param = ({ namespaceName, experimentName, p, dispatch }) => {
+const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => {
   return (
     <div className="container">
       <div className="row"><div className="col-sm-9 col-sm-offset-3"><h1>{p.name}</h1></div></div>
@@ -19,11 +23,11 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
             className="nav-link"
           >{namespaceName} - Namespace</Link>
           <Link
-            to={experimentURL(namespaceName, experimentName)}
+            to={experimentURL(experimentID)}
             className="nav-link"
           >{experimentName} - Experiment</Link>
           <Link
-            to={choiceNewURL(namespaceName, experimentName, p.name)}
+            to={choiceNewURL(p.id)}
             className="nav-link"
           >Create a new choice</Link>
         </NavSection>
@@ -34,8 +38,8 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
               <label>
                 <input type="checkbox"
                   onChange={() => {
-                    dispatch(toggleWeighted(namespaceName, experimentName, p.name));
-                    dispatch(clearChoices(namespaceName, experimentName, p.name));
+                    dispatch(paramToggleWeighted(namespaceName, p.id));
+                    dispatch(paramClearChoices(namespaceName, p.id));
                   }}
                   checked={p.isWeighted} /> Weighted choices
               </label>
@@ -46,23 +50,22 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
           </form>
           <h2>Choices</h2>
           <ChoiceList
-            namespaceName={namespaceName}
-            experimentName={experimentName}
-            paramName={p.name}
+            namespace={namespaceName}
+            paramID={p.id}
             choices={p.choices}
             weights={p.weights}
           />
           <NewChoice
             namespaceName={namespaceName}
-            experimentName={experimentName}
+            paramID={p.id}
             paramName={p.name}
             isWeighted={p.isWeighted}
             redirectOnSubmit={false}
             dispatch={dispatch}
           />
           <button className="btn btn-warning" onClick={() => {
-            dispatch(paramDelete(namespaceName, experimentName, p.name));
-            browserHistory.push(experimentURL(namespaceName, experimentName));
+            dispatch(paramDelete(namespaceName, experimentID, p.id));
+            browserHistory.push(experimentURL(experimentID));
           }}>Delete param {p.name}</button>
         </div>
       </div>
@@ -70,12 +73,19 @@ const Param = ({ namespaceName, experimentName, p, dispatch }) => {
   );
 }
 
+Param.propTypes = {
+  namespaceName: PropTypes.string.isRequired,
+  experimentID: PropTypes.string.isRequired,
+  experimentName: PropTypes.string.isRequired,
+}
+
 const mapStateToProps = (state, ownProps) => {
-  const ns = state.namespaces.find(n => n.name === ownProps.params.namespace);
-  const exp = ns.experiments.find(e => e.name === ownProps.params.experiment);
-  const p = exp.params.find(p => p.name === ownProps.params.param);
+  const p = getParam(state.entities.params, ownProps.params.param);
+  const exp = getExperiment(state.entities.experiments, p.experiment);
+  const ns = getNamespace(state.entities.namespaces, exp.namespace);
   return {
     namespaceName: ns.name,
+    experimentID: exp.id,
     experimentName: exp.name,
     p,
   }

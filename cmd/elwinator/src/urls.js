@@ -6,56 +6,50 @@ export const rootURL = () => "/";
 /**
  * namespaceNewURL is the url for creating new namespaces.
  */
-export const namespaceNewURL = () => "/n/new";
+export const namespaceNewURL = () => "/new-namespace";
 
 /**
  * namespaceURL is the url for a specified namespace.
- * @param {string} n - The namespace name.
+ * @param {string} n - The namespace id.
  */
 export const namespaceURL = (n) => `/n/${encodeURIComponent(n)}`;
 
 /**
  * labelNewURL is the url for creating labels in a namespace.
- * @param {string} n - The namespace name.
+ * @param {string} n - The namespace id.
  */
-export const labelNewURL = (n) => `/n/${encodeURIComponent(n)}/l/new`;
+export const labelNewURL = (n) => `/n/${encodeURIComponent(n)}/new-label`;
 
 /**
  * experimentNewURL is the url for creating experiments in a namespace.
- * @param {string} n - The namespace name.
+ * @param {string} n - The namespace id.
  */
 
-export const experimentNewURL = (n) => `/n/${encodeURIComponent(n)}/e/new`;
+export const experimentNewURL = (n) => `/n/${encodeURIComponent(n)}/new-experiment`;
 
 /**
  * experimentURL is the url for a specified experiment.
- * @param {string} n - The namespace name.
- * @param {string} e - The experiment name.
+ * @param {string} e - The experiment id.
  */
-export const experimentURL = (n, e) => `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}`;
+export const experimentURL = (e) => `/e/${encodeURIComponent(e)}`;
 
 /**
  * paramNewURL is the url for creating params in an experiment.
- * @param {string} n - The namespace name.
- * @param {string} e - The experiment name.
+ * @param {string} e - The experiment id.
  */
-export const paramNewURL = (n, e) =>
-  `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}/p/new`;
+export const paramNewURL = (e) =>
+  `/e/${encodeURIComponent(e)}/new-param`;
 
 /**
  * paramURL is the url for a specified param.
- * @param {string} n - The namespace name.
- * @param {string} e - The experiment name.
- * @param {string} p - The param name.
+ * @param {string} p - The param id.
  */
-export const paramURL = (n, e, p) =>
-  `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}/p/${encodeURIComponent(p)}`;
+export const paramURL = (p) =>
+  `/p/${encodeURIComponent(p)}`;
 
 /**
  * choiceNewURL is the url for creating a new choice.
- * @param {string} n - The namespace name.
- * @param {string} e - The experiment name.
- * @param {string} p - The param name.
+ * @param {string} p - The param id.
  */
-export const choiceNewURL = (n, e, p) =>
-  `/n/${encodeURIComponent(n)}/e/${encodeURIComponent(e)}/p/${encodeURIComponent(p)}/c/new`;
+export const choiceNewURL = (p) =>
+  `/p/${encodeURIComponent(p)}/new-choice`;

@@ -1,9 +1,11 @@
+// @flow
 import React from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
 
 import { namespaceURL } from '../urls';
 import { namespaceDelete } from '../actions';
+import { getExperiments } from '../reducers/experiments';
 
 const NamespaceList = ({ namespaces, dispatch }) => {
   const namespaceList = namespaces
@@ -42,9 +44,15 @@ const NamespaceList = ({ namespaces, dispatch }) => {
   );
 };
 
-const mapStateToProps = (state) => ({
-  namespaces: state.namespaces,
-});
+const mapStateToProps = (state) => {
+  const ns = state.entities.namespaces.map(n => ({
+    ...n,
+    experiments: getExperiments(state.entities.experiments, n.experiments),
+  }));
+  return {
+    namespaces: ns,
+  }
+};
 
 const connected = connect(mapStateToProps)(NamespaceList);
 

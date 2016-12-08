@@ -1,16 +1,17 @@
+// @flow
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { choiceDelete } from '../actions';
+import { paramDeleteChoice } from '../actions';
 
-const ChoiceList = ({ namespaceName, experimentName, paramName, choices, weights, dispatch }) => {
+const ChoiceList = ({ namespace, paramID, choices, weights, dispatch }) => {
   const choiceList = choices.map((c, i) =>
     <tr key={c}>
       <td>{i+1}</td>
       <td>{c}</td>
       <td>{ weights[i] || "uniform"}</td>
       <td><button className="btn btn-default btn-xs" onClick={() => {
-        dispatch(choiceDelete(namespaceName, experimentName, paramName, i));
+        dispatch(paramDeleteChoice(namespace, paramID, i));
       }}>&times;</button></td>
     </tr>
   );
@@ -32,9 +33,8 @@ const ChoiceList = ({ namespaceName, experimentName, paramName, choices, weights
 };
 
 ChoiceList.propTypes = {
-  namespaceName: React.PropTypes.string.isRequired,
-  experimentName: React.PropTypes.string.isRequired,
-  paramName: React.PropTypes.string.isRequired,
+  namespace: React.PropTypes.string.isRequired,
+  paramID: React.PropTypes.string.isRequired,
   choices: React.PropTypes.arrayOf(React.PropTypes.string),
   weights: React.PropTypes.arrayOf(React.PropTypes.number),
 }

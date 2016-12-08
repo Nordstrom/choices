@@ -1,3 +1,4 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
@@ -10,6 +11,7 @@ const percents = [1, 25, 50, 100];
 const SegmentInput = ({
   namespaceName,
   experimentName,
+  experimentID,
   namespaceSegments,
   numSegments,
   availableSegments,
@@ -29,7 +31,7 @@ const SegmentInput = ({
             dispatch(
               experimentNumSegments(
                 namespaceName,
-                experimentName,
+                experimentID,
                 namespaceSegments,
                 Math.floor((p/100)*availableSegments)
               )
@@ -49,7 +51,7 @@ const SegmentInput = ({
       dispatch(
         experimentNumSegments(
           namespaceName,
-          experimentName,
+          experimentID,
           namespaceSegments,
           numSeg.value
         )
@@ -57,7 +59,7 @@ const SegmentInput = ({
       if (!redirectOnSubmit) {
         return;
       }
-      browserHistory.push(experimentURL(namespaceName, experimentName));
+      browserHistory.push(experimentURL(experimentID));
     }}>
     Segments available: <strong>{availableSegments}</strong>
     {radio}
@@ -73,7 +75,7 @@ const SegmentInput = ({
           dispatch(
             experimentNumSegments(
               namespaceName,
-              experimentName,
+              experimentID,
               namespaceSegments,
               e.target.value
             )

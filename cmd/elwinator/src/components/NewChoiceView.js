@@ -16,11 +16,11 @@ const NewChoiceView = ({ params }) => {
             className="nav-link"
           >{params.namespace} - Namespace</Link>
           <Link
-            to={ experimentURL(params.namespace, params.experiment) }
+            to={ experimentURL(params.experiment) }
             className="nav-link"
           >{params.experiment} - Experiment </Link>
           <Link
-            to={ paramURL(params.namespace, params.experiment, params.param) }
+            to={ paramURL(params.param) }
             className="nav-link"
           >{params.param} - Param </Link>
         </NavSection>
