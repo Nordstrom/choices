@@ -1,3 +1,4 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
@@ -6,6 +7,7 @@ import { paramAddChoice, paramAddWeight } from '../actions';
 import { paramURL } from '../urls';
 
 const NewChoice = ({
+  namespaceName,
   paramID,
   paramName,
   isWeighted,
@@ -23,9 +25,9 @@ const NewChoice = ({
       if (isWeighted && !weight.value.trim()) {
         return;
       }
-      dispatch(paramAddChoice(paramID, choice.value));
+      dispatch(paramAddChoice(namespaceName, paramID, choice.value));
       if (isWeighted) {
-        dispatch(paramAddWeight(paramID, parseInt(weight.value, 10)));
+        dispatch(paramAddWeight(namespaceName, paramID, parseInt(weight.value, 10)));
       }
       if (!redirectOnSubmit) {
         choice.value = '';
@@ -59,6 +61,7 @@ const NewChoice = ({
 }
 
 NewChoice.propTypes = {
+  namespaceName: PropTypes.string.isRequired,
   paramID: PropTypes.string.isRequired,
   paramName: PropTypes.string.isRequired,
   isWeighted: PropTypes.bool.isRequired,

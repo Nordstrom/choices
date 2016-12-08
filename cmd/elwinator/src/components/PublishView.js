@@ -1,12 +1,13 @@
+// @flow
 import React from 'react';
 
-import { namespaceTogglePublish, entitiesLoaded, namespaceLocalDelete } from '../actions';
-import { toNamespace, fromNamespace } from '../nsconv';
+import { changesClear, namespaceTogglePublish, entitiesLoaded, namespaceLocalDelete } from '../actions';
+import { toEntities, fromNamespace } from '../nsconv';
 
-function createRequest(namespace) {
+function createRequest(entities, namespace) {
   return {
     method: 'POST',
-    body: JSON.stringify({ namespace: fromNamespace(namespace) }),
+    body: JSON.stringify({ namespace: fromNamespace(entities, namespace) }),
   }
 }
 
@@ -17,21 +18,21 @@ function deleteRequest(namespace) {
   }
 }
 
-function updateRequest(namespace) {
+function updateRequest(entities, namespace) {
   return {
     method: 'POST',
-    body: JSON.stringify({ namespace: fromNamespace(namespace) }),
+    body: JSON.stringify({ namespace: fromNamespace(entities, namespace) }),
   }
 }
 
-const changeList = (changes) => changes.map(c => {
+const changeList = (changes) => changes.map((c, ci) => {
   const details = Object.keys(c)
   .filter(k => k !== 'type')
-  .map(k => <p><strong>{k}</strong>={c[k]}</p>);
-  return <li>{c.type}: {details}</li>
+  .map((k, ki) => <p key={ki}><strong>{k}</strong>={c[k]}</p>);
+  return <li key={ci}>{c.type}: {details}</li>
 });
 
-const PublishView = ({ namespaces, changes, dispatch }) => {
+const PublishView = ({ namespaces, changes, entities, dispatch }: {namespaces: Array<Object>, changes: Array<Object>, entities: Object, dispatch: Function}) => {
   const ns = namespaces.map(n => 
     <div key={n.name} className="checkbox">
       <label><input
@@ -59,17 +60,19 @@ const PublishView = ({ namespaces, changes, dispatch }) => {
         }
         else if (n.isNew) {
           url = '/api/v1/create';
-          req = createRequest(n);
+          req = createRequest(entities, n);
         } else if (n.delete) {
           url = '/api/v1/delete';
           req = deleteRequest(n);
         } else {
           url = '/api/v1/update';
-          req = updateRequest(n);
+          req = updateRequest(entities, n);
         }
         return fetch(url, req);
       });
       Promise.all(requests).then(responses => {
+        dispatch(changesClear(namespaces.filter(n => n.publish).map(n => n.name)));
+
         const headers = new Headers({'Accept': 'application/json'});
         const req = {
           method: 'POST',
@@ -85,10 +88,8 @@ const PublishView = ({ namespaces, changes, dispatch }) => {
           return resp.json();
         })
         .then(json => {
-          const ns = json.namespaces.map(n => {
-            return toNamespace(n);
-          });
-          dispatch(entitiesLoaded(ns));
+          const entities = toEntities(json.namespaces)
+          dispatch(entitiesLoaded(entities));
         })
       })
       .catch(err => console.log(err.err, err.req, err.resp));
@@ -102,6 +103,7 @@ const PublishView = ({ namespaces, changes, dispatch }) => {
 PublishView.propTypes = {
   namespaces: React.PropTypes.array.isRequired,
   changes: React.PropTypes.object.isRequired,
+  entities: React.PropTypes.object.isRequired,
 }
 
 export default PublishView;

@@ -23,7 +23,7 @@ const NewParamView = ({ namespaceName, experimentID, experimentName }) => {
           >{experimentName} - Experiment </Link>
         </NavSection>
         <div className="col-sm-9">
-          <NewParam experimentID={experimentID} />
+          <NewParam namespaceName={namespaceName} experimentID={experimentID} />
         </div>
       </div>
     </div>

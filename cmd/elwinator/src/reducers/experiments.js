@@ -107,6 +107,9 @@ const experiments = (state = [], action) => {
     });
     return exps;
   default:
+    if (action.entities && action.entities.experiments) {
+      return action.entities.experiments;
+    }
     return state;
   }
 };

@@ -1,3 +1,4 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { Link, browserHistory } from 'react-router';
 import { connect } from 'react-redux';
@@ -37,8 +38,8 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
               <label>
                 <input type="checkbox"
                   onChange={() => {
-                    dispatch(paramToggleWeighted(p.id));
-                    dispatch(paramClearChoices(p.id));
+                    dispatch(paramToggleWeighted(namespaceName, p.id));
+                    dispatch(paramClearChoices(namespaceName, p.id));
                   }}
                   checked={p.isWeighted} /> Weighted choices
               </label>
@@ -49,11 +50,13 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
           </form>
           <h2>Choices</h2>
           <ChoiceList
+            namespace={namespaceName}
             paramID={p.id}
             choices={p.choices}
             weights={p.weights}
           />
           <NewChoice
+            namespaceName={namespaceName}
             paramID={p.id}
             paramName={p.name}
             isWeighted={p.isWeighted}
@@ -61,7 +64,7 @@ const Param = ({ namespaceName, experimentID, experimentName, p, dispatch }) => 
             dispatch={dispatch}
           />
           <button className="btn btn-warning" onClick={() => {
-            dispatch(paramDelete(experimentID, p.id));
+            dispatch(paramDelete(namespaceName, experimentID, p.id));
             browserHistory.push(experimentURL(experimentID));
           }}>Delete param {p.name}</button>
         </div>

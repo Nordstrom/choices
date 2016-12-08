@@ -1,3 +1,4 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { Link } from 'react-router';
 import { connect } from 'react-redux';
@@ -5,7 +6,7 @@ import { connect } from 'react-redux';
 import { paramDelete } from '../actions';
 import { paramURL } from '../urls';
 
-const ParamList = ({ experimentID, params, dispatch }) => (
+const ParamList = ({ namespace, experimentID, params, dispatch }) => (
   <table className="table table-striped">
     <thead>
       <tr>
@@ -22,7 +23,7 @@ const ParamList = ({ experimentID, params, dispatch }) => (
         <td><Link to={paramURL(param.id)}>{param.name}</Link></td>
         <td>{param.choices.join(', ')}</td>
         <td><button className="btn btn-default btn-xs" onClick={
-          () => dispatch(paramDelete(experimentID, param.id))
+          () => dispatch(paramDelete(namespace, experimentID, param.id))
         }>&times;</button></td>
       </tr>
     )}

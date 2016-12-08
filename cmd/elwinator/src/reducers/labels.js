@@ -24,6 +24,9 @@ const labels = (state = [], action) => {
   case 'NAMESPACE_ADD_LABEL':
     return [...state, label(undefined, action)];
   default:
+    if (action.entities && action.entities.labels) {
+      return action.entities.labels;
+    }
     return state;
   }
 }

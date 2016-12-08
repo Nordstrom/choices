@@ -1,10 +1,12 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 
 import { namespaceURL } from '../urls';
 import { namespaceAddLabel } from '../actions';
 
-const NewLabel = ({ namespaceName, redirectOnSubmit, dispatch }) => {
+const NewLabel = ({ namespaceName, redirectOnSubmit, dispatch }: {namespaceName: string, redirectOnSubmit: boolean, dispatch: Function}) => {
+  // namespaceName: string, redirectOnSubmit: boolean, dispatch: function
   let label;
   return (
     <form onSubmit={e => {

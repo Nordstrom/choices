@@ -70,6 +70,9 @@ const params = (state = [], action) => {
     });
     return pars;
   default:
+    if (action.entities && action.entities.params) {
+      return action.entities.params;
+    }
     return state;
   }
 };

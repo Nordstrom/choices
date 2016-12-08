@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore } from 'redux';
@@ -7,8 +8,8 @@ import 'bootstrap/dist/css/bootstrap-theme.css';
 import { Router,  Route, browserHistory } from 'react-router';
 import { syncHistoryWithStore } from 'react-router-redux';
 
-// import { toNamespace } from './nsconv';
-// import { entitiesLoaded } from './actions';
+import { toEntities } from './nsconv';
+import { entitiesLoaded } from './actions';
 import { loadState, saveState } from './Storage';
 import App from './App';
 import reducers from './reducers';
@@ -54,27 +55,24 @@ ReactDOM.render(
 );
 }
 
-// const headers = new Headers({'Accept': 'application/json'});
-// const req = { method: 'POST', headers: headers, body: JSON.stringify({ environment: "Staging" }) };
-// const badRequest =  { err: "bad request" };
-// fetch("/api/v1/all", req)
-// .then(resp => {
-//   if (!resp.ok) {
-//     throw badRequest;
-//   }
-//   return resp.json();
-// })
-// .then(json => {
-//   const ns = json.namespaces.map(n => {
-//     return toNamespace(n);
-//   });
-//   store.dispatch(entitiesLoaded(ns));
-// })
-// .then(() => {
-//   render()
-// })
-// .catch(e => {
-//   console.log(e);
-//   render();
-// });
-render();
+const headers = new Headers({'Accept': 'application/json'});
+const req = { method: 'POST', headers: headers, body: JSON.stringify({ environment: "Staging" }) };
+const badRequest =  { err: "bad request" };
+fetch("/api/v1/all", req)
+.then(resp => {
+  if (!resp.ok) {
+    throw badRequest;
+  }
+  return resp.json();
+})
+.then(json => {
+  const entities = toEntities(json.namespaces);
+  store.dispatch(entitiesLoaded(entities));
+})
+.then(() => {
+  render()
+})
+.catch(e => {
+  console.log(e);
+  render();
+});

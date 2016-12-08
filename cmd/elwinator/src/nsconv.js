@@ -1,7 +1,6 @@
-const toLabel = label => ({
-  name: label || '',
-  active: true,
-});
+import { getLabels } from './reducers/labels';
+import { getExperiments } from './reducers/experiments';
+import { getParams } from './reducers/params';
 
 /**
  * isClaimed returns true when the byte at bit i is 1
@@ -48,6 +47,8 @@ const toSegment = seg => {
 }
 
 const toParam = p => ({
+  id: p.id,
+  experiment: p.experiment,
   name: p.name || '',
   choices: p.value.choices || [],
   weights: p.value.weights || [],
@@ -61,18 +62,56 @@ const toExperiment = exp => {
   const numSegments = segments.reduce((p, v) => p + ones[v], 0);
 
   let params = exp.params || [];
-  params = params.map(toParam);
-  return { name, segments, numSegments, params };
+  params = params.map(p => p.id);
+  return { id: exp.id, namespace: exp.namespace, name, segments, numSegments, params };
 }
+
+const toLabel = label => ({
+  id: label.id,
+  name: label.name || '',
+});
 
 export const toNamespace = ns => {
   let name = ns.name || '';
   let labels = ns.labels || [];
-  labels = labels.map(toLabel);
+  labels = labels.map(l => l.id);
   let experiments = ns.experiments || [];
-  experiments = experiments.map(toExperiment);
+  experiments = experiments.map(e => e.id);
   return { name, labels, experiments }
 }
+
+const flatMap = (array, lambda) => {
+  return [].concat.apply([], array.map(lambda));
+}
+
+export const toEntities = namespaces => {
+  if (!namespaces) {
+    return {};
+  }
+  const ns = namespaces.map(n => ({
+    ...n,
+    labels: n.labels.map(l => ({
+      id: `${n.name}-${l}`,
+      name: l,
+    })),
+    experiments: n.experiments.map(e => ({
+      ...e,
+      id: `${n.name}-${e.name}`,
+      namespace: n.name,
+      params: e.params.map(p => ({
+        ...p,
+        id: `${n.name}-${e.name}-${p.name}`,
+        experiment: `${n.name}-${e.name}`,
+      })),
+    })),
+  }));
+  return {
+    namespaces: ns.map(n => toNamespace(n)),
+    labels: flatMap(ns, n => n.labels).map(l => toLabel(l)),
+    experiments: flatMap(ns, n => n.experiments).map(e => toExperiment(e)),
+    params: flatMap(ns, n => flatMap(n.experiments, e => e.params)).map(p => toParam(p)),
+  };
+};
 
 const fromSegments = (segments) => {
   return btoa(String.fromCharCode.apply(null, segments));
@@ -89,25 +128,24 @@ const fromParam = (param) => {
   return p;
 }
 
-const fromExperiment = (experiment) => {
+const fromExperiment = (state, experiment) => {
   const e = {
     name: experiment.name,
     segments: fromSegments(experiment.segments),
-    params: experiment.params.map(p => fromParam(p)),
+    params: getParams(state.params, experiment.params).map(p => fromParam(p)),
   };
   return e;
 }
 
 const fromLabels = (labels) => {
-  return labels.filter(l => l.active)
-  .map(l => l.name);
+  return labels.map(l => l.name);
 }
 
-export const fromNamespace = (namespace) => {
+export const fromNamespace = (state, namespace) => {
   const n = {
     name: namespace.name,
-    labels: fromLabels(namespace.labels),
-    experiments: namespace.experiments.map(e => fromExperiment(e)),
+    labels: fromLabels(getLabels(state.labels, namespace.labels)),
+    experiments: getExperiments(state.experiments, namespace.experiments).map(e => fromExperiment(state, e)),
   }
   return n;
 }

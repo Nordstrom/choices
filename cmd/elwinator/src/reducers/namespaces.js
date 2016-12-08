@@ -13,7 +13,7 @@ const namespace = (state = namespaceInitialState, action) => {
   case 'NAMESPACE_ADD':
       return {
         ...state,
-        name: action.name,
+        name: action.namespace,
         isDirty: true,
         isNew: true,
       };
@@ -107,7 +107,7 @@ const namespaces = (state = [], action) => {
     return ns;
   default:
     if (action.entities && action.entities.namespaces) {
-      return Object.assign({}, state, action.entities.namespaces);
+      return action.entities.namespaces;
     }
     return state;
   }

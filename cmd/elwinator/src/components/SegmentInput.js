@@ -1,3 +1,4 @@
+// @flow
 import React, { PropTypes } from 'react';
 import { browserHistory } from 'react-router';
 import { connect } from 'react-redux';
@@ -29,6 +30,7 @@ const SegmentInput = ({
           onChange={() => 
             dispatch(
               experimentNumSegments(
+                namespaceName,
                 experimentID,
                 namespaceSegments,
                 Math.floor((p/100)*availableSegments)
@@ -48,6 +50,7 @@ const SegmentInput = ({
       }
       dispatch(
         experimentNumSegments(
+          namespaceName,
           experimentID,
           namespaceSegments,
           numSeg.value
@@ -71,6 +74,7 @@ const SegmentInput = ({
         onChange={(e) =>
           dispatch(
             experimentNumSegments(
+              namespaceName,
               experimentID,
               namespaceSegments,
               e.target.value
