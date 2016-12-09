@@ -27,8 +27,8 @@ import (
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	storage "github.com/foolusion/choices/elwinstorage"
 	"github.com/foolusion/choices/storage/mongo/internal/types"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 )
 
@@ -53,9 +53,9 @@ func NewServer(addr, db string) (*Server, error) {
 func (s *Server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllReply, error) {
 	var env string
 	switch {
-	case r.Environment == storage.Environment_Staging:
+	case r.Environment == storage.Staging:
 		env = environmentStaging
-	case r.Environment == storage.Environment_Production:
+	case r.Environment == storage.Production:
 		env = environmentProduction
 	default:
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment requested")
@@ -91,9 +91,9 @@ func (s *Server) Create(ctx context.Context, r *storage.CreateRequest) (*storage
 	}
 	var env string
 	switch r.Environment {
-	case storage.Environment_Staging:
+	case storage.Staging:
 		env = environmentStaging
-	case storage.Environment_Production:
+	case storage.Production:
 		env = environmentProduction
 	default:
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
@@ -116,9 +116,9 @@ func (s *Server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.Rea
 
 	var env string
 	switch r.Environment {
-	case storage.Environment_Staging:
+	case storage.Staging:
 		env = environmentStaging
-	case storage.Environment_Production:
+	case storage.Production:
 		env = environmentProduction
 	default:
 		return &rr, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
@@ -147,9 +147,9 @@ func (s *Server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage
 	}
 	var env string
 	switch r.Environment {
-	case storage.Environment_Staging:
+	case storage.Staging:
 		env = environmentStaging
-	case storage.Environment_Production:
+	case storage.Production:
 		env = environmentProduction
 	default:
 		return nil, grpc.Errorf(codes.InvalidArgument, "bad environment provided")
@@ -171,9 +171,9 @@ func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage
 
 	var env string
 	switch r.Environment {
-	case storage.Environment_Staging:
+	case storage.Staging:
 		env = environmentStaging
-	case storage.Environment_Production:
+	case storage.Production:
 		env = environmentProduction
 	}
 

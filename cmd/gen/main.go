@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/foolusion/choices"
-	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -108,7 +108,7 @@ var bookmarkletHTML = `<!doctype html>
 
 func genHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	ar := &storage.AllRequest{Environment: storage.Environment_Production}
+	ar := &storage.AllRequest{Environment: storage.Production}
 	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 	resp, err := config.client.All(ctx, ar)

@@ -19,8 +19,8 @@ import (
 	"net"
 	"net/http"
 
-	storage "github.com/foolusion/choices/elwinstorage"
 	"github.com/foolusion/choices/storage/bolt"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"

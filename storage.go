@@ -21,7 +21,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 )
 
@@ -87,11 +87,11 @@ func (n *namespaceStore) update() error {
 	switch n.env {
 	case StorageEnvironmentDev:
 		req = &storage.AllRequest{
-			Environment: storage.Environment_Staging,
+			Environment: storage.Staging,
 		}
 	case StorageEnvironmentProd:
 		req = &storage.AllRequest{
-			Environment: storage.Environment_Production,
+			Environment: storage.Production,
 		}
 	default:
 		return ErrBadStorageEnvironment

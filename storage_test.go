@@ -17,7 +17,7 @@ package choices
 import (
 	"testing"
 
-	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/elwinprotos/storage"
 )
 
 func TestFromNamespace(t *testing.T) {

@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/foolusion/choices"
-	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -225,12 +225,12 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("%s", buf)
 
-	stagingReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Environment_Staging})
+	stagingReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Staging})
 	if err != nil {
 		incErrMetrics(err, labelGen(mint))
 		log.Printf("AllRequest failed: %s", err)
 	}
-	productionReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Environment_Production})
+	productionReply, err := cfg.esc.All(context.TODO(), &storage.AllRequest{Environment: storage.Production})
 	if err != nil {
 		incErrMetrics(err, labelGen(mint))
 		log.Printf("AllRequest failed: %s", err)
@@ -333,7 +333,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	// get the namespace from test
 	stagingReply, err := cfg.esc.Read(
 		context.TODO(),
-		&storage.ReadRequest{Name: namespace, Environment: storage.Environment_Staging},
+		&storage.ReadRequest{Name: namespace, Environment: storage.Staging},
 	)
 	if err != nil {
 		incErrMetrics(err, labelGen(mint))
@@ -356,7 +356,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	// check for namespace in prod
 	productionReply, err := cfg.esc.Read(
 		context.TODO(),
-		&storage.ReadRequest{Name: namespace, Environment: storage.Environment_Production},
+		&storage.ReadRequest{Name: namespace, Environment: storage.Production},
 	)
 	if err != nil {
 		switch grpc.Code(err) {
@@ -406,7 +406,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(prod)
 	ureq := &storage.UpdateRequest{
 		Namespace:   prodNS.ToNamespace(),
-		Environment: storage.Environment_Production,
+		Environment: storage.Production,
 	}
 	log.Println(ureq)
 	_, err = cfg.esc.Update(context.TODO(), ureq)
@@ -423,7 +423,7 @@ func createNamespace(name string, labels []string, exp choices.Experiment) error
 	newProd := choices.Namespace{Name: name, Labels: labels, Experiments: []choices.Experiment{exp}}
 	cr, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{
 		Namespace:   newProd.ToNamespace(),
-		Environment: storage.Environment_Production,
+		Environment: storage.Production,
 	})
 	if err != nil {
 		return err
@@ -446,16 +446,16 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	var storageEnv storage.Environment
 	switch r.Form.Get("environment") {
 	case "staging":
-		storageEnv = storage.Environment_Staging
+		storageEnv = storage.Staging
 	case "production":
-		storageEnv = storage.Environment_Production
+		storageEnv = storage.Production
 	default:
-		storageEnv = storage.Environment_Staging
+		storageEnv = storage.Staging
 	}
 
 	prodReadReq, err := cfg.esc.Read(context.TODO(), &storage.ReadRequest{
 		Name:        r.Form.Get("namespace"),
-		Environment: storage.Environment_Production,
+		Environment: storage.Production,
 	})
 
 	var prodNS choices.Namespace
@@ -478,7 +478,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if prodIndex >= 0 && storageEnv == storage.Environment_Production {
+	if prodIndex >= 0 && storageEnv == storage.Production {
 		if err := deleteExperiment(prodNS, storageEnv, prodIndex); err != nil {
 			errRequests.With(labelGen(mint)).Inc()
 			logAndWriteError(err, "could not delete prod experiment", w, http.StatusInternalServerError)
@@ -486,11 +486,11 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
-	} else if prodIndex >= 0 && storageEnv == storage.Environment_Staging {
+	} else if prodIndex >= 0 && storageEnv == storage.Staging {
 		errRequests.With(labelGen(mbr)).Inc()
 		logAndWriteError(ErrBadRequest, "test still in prod", w, http.StatusBadRequest)
 		return
-	} else if prodIndex < 0 && storageEnv == storage.Environment_Production {
+	} else if prodIndex < 0 && storageEnv == storage.Production {
 		errRequests.With(labelGen(mnf)).Inc()
 		logAndWriteError(ErrNotFound, "test is not in prod", w, http.StatusNotFound)
 		return
@@ -499,7 +499,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	var stagingNS choices.Namespace
 	stagReadReq, err := cfg.esc.Read(context.TODO(), &storage.ReadRequest{
 		Name:        r.Form.Get("namespace"),
-		Environment: storage.Environment_Staging,
+		Environment: storage.Staging,
 	})
 	if err != nil {
 		http.Error(w, "namespace not found: "+err.Error(), http.StatusNotFound)

@@ -29,7 +29,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/foolusion/choices"
-	"github.com/foolusion/choices/elwin"
+	"github.com/foolusion/elwinprotos/elwin"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"

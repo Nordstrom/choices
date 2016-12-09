@@ -23,7 +23,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/boltdb/bolt"
-	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -211,9 +211,9 @@ func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage
 
 func envFromStorageRequest(e storage.Environment) []byte {
 	switch e {
-	case storage.Environment_Staging:
+	case storage.Staging:
 		return environmentStaging
-	case storage.Environment_Production:
+	case storage.Production:
 		return environmentProduction
 	default:
 		return environmentStaging

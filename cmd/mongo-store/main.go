@@ -21,8 +21,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/foolusion/choices/elwinstorage"
 	"github.com/foolusion/choices/storage/mongo"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 )
