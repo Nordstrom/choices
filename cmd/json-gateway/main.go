@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	gw "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 )
@@ -23,7 +23,7 @@ func run() error {
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := gw.RegisterElwinStorageHandlerFromEndpoint(ctx, mux, *storageEndpoint, opts)
+	err := storage.RegisterElwinStorageHandlerFromEndpoint(ctx, mux, *storageEndpoint, opts)
 	if err != nil {
 		return err
 	}

@@ -17,7 +17,7 @@ package choices
 import (
 	"encoding/json"
 
-	storage "github.com/foolusion/choices/elwinstorage"
+	"github.com/foolusion/elwinprotos/storage"
 )
 
 // ParamValue is a key value pair returned from an evalated experiment

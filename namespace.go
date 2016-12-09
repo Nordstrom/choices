@@ -18,9 +18,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
-
-	storage "github.com/foolusion/choices/elwinstorage"
 )
 
 var (
