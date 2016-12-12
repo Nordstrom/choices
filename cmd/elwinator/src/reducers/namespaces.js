@@ -82,7 +82,7 @@ export const getNamespace = (state, name) => {
  * @param {string} names - the names of the namespaces you want.
  */
 export const getNamespaces = (state, names) => {
-  return names.map(name => state.find(n => n.name === name));
+  return names.filter(name => state.find(n => n.name === name)).map(name => state.find(n => n.name === name));
 }
 
 const namespaces = (state = [], action) => {

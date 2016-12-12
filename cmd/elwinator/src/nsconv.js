@@ -86,25 +86,31 @@ const flatMap = (array, lambda) => {
 
 export const toEntities = namespaces => {
   if (!namespaces) {
-    return {};
+    return undefined;
   }
-  const ns = namespaces.map(n => ({
-    ...n,
-    labels: n.labels.map(l => ({
-      id: `${n.name}-${l}`,
-      name: l,
-    })),
-    experiments: n.experiments.map(e => ({
-      ...e,
-      id: `${n.name}-${e.name}`,
-      namespace: n.name,
-      params: e.params.map(p => ({
-        ...p,
-        id: `${n.name}-${e.name}-${p.name}`,
-        experiment: `${n.name}-${e.name}`,
+  const ns = namespaces.map(n => {
+    let { labels = [], experiments = [] } = n;
+    return {
+      ...n,
+      labels: labels.map(l => ({
+        id: `${n.name}-${l}`,
+        name: l,
       })),
-    })),
-  }));
+      experiments: experiments.map(e => {
+        let { params = [] } = e
+        return {
+          ...e,
+          id: `${n.name}-${e.name}`,
+          namespace: n.name,
+          params: params.map(p => ({
+            ...p,
+            id: `${n.name}-${e.name}-${p.name}`,
+            experiment: `${n.name}-${e.name}`,
+          })),
+        };
+      }),
+    };
+  });
   return {
     namespaces: ns.map(n => toNamespace(n)),
     labels: flatMap(ns, n => n.labels).map(l => toLabel(l)),
