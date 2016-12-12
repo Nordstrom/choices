@@ -56,7 +56,7 @@ ReactDOM.render(
 }
 
 const headers = new Headers({'Accept': 'application/json'});
-const req = { method: 'POST', headers: headers, body: JSON.stringify({ environment: "Staging" }) };
+const req = { method: 'POST', headers: headers, body: JSON.stringify({ environment: 0 }) };
 const badRequest =  { err: "bad request" };
 fetch("/api/v1/all", req)
 .then(resp => {
