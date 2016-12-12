@@ -77,7 +77,7 @@ const PublishView = ({ namespaces, changes, entities, dispatch }: {namespaces: A
         const req = {
           method: 'POST',
           headers: headers,
-          body: JSON.stringify({ environment: "Staging" })
+          body: JSON.stringify({ environment: 0 })
         };
         const badRequest = (req, resp) =>  ({ err: "bad request", req, resp });
         fetch("/api/v1/all", req)
