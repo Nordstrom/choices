@@ -6,6 +6,24 @@ import { connect } from 'react-redux';
 import { namespaceURL } from '../urls';
 import { namespaceAdd } from '../actions';
 
+const nameLength = 7;
+const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+const randomName = (len: number): string => {
+  let out = '';
+  for (let i = 0; i < len; i++) {
+    const randIndex = getRandomInt(0, alphabet.length)
+    out += alphabet[randIndex];
+  }
+  return out;
+}
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
 const NewNamespace = ({ dispatch }) => {
   let input;
   return (
@@ -21,6 +39,9 @@ const NewNamespace = ({ dispatch }) => {
         <label>Namespace Name</label>
         <input type="text" className="form-control" ref={node => input = node}/>
       </div>
+      <button type="button" className="btn btn-primary" onClick={
+        () => input.value = randomName(nameLength)
+      }>Random Name</button><br />
       <button type="submit" className="btn btn-primary" >Create namespace</button>
     </form>
   );
