@@ -1,4 +1,4 @@
-// Copyright 2016 Andrew O'Neill
+// Copyright 2016 Andrew O'Neill, Nordstrom
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 package mongo
 
-import "github.com/foolusion/choices/storage/mongo/internal/types"
+import "github.com/Nordstrom/choices/storage/mongo/internal/types"
 
 const (
 	firstHalf   = "ffffffffffffffff0000000000000000"

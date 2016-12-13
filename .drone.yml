@@ -1,6 +1,6 @@
 workspace:
   base: /go
-  path: src/github.com/foolusion/choices
+  path: src/github.com/Nordstrom/choices
 
 pipeline:
   build:
@@ -10,5 +10,5 @@ pipeline:
   test:
     image: golang:1.7.1
     commands:
-      - cd $GOPATH/src/github.com/foolusion/choices
+      - cd $GOPATH/src/github.com/Nordstrom/choices
       - go test . -bench=. -benchmem

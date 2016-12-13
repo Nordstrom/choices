@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/foolusion/choices",
+	"ImportPath": "github.com/Nordstrom/choices",
 	"GoVersion": "devel-41908a5",
 	"GodepVersion": "v74",
 	"Packages": [

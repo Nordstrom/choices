@@ -1,4 +1,4 @@
-// Copyright 2016 Andrew O'Neill
+// Copyright 2016 Andrew O'Neill, Nordstrom
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/foolusion/choices"
+	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"

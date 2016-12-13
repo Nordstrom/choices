@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/foolusion/choices?status.svg)](https://godoc.org/github.com/foolusion/choices)
+[![GoDoc](https://godoc.org/github.com/Nordstrom/choices?status.svg)](https://godoc.org/github.com/Nordstrom/choices)
 
 # choices
 A way to choose things.
@@ -13,14 +13,14 @@ To build choices library and all the included binaries run the following in a
 terminal.
 
 ```bash
-go get -u github.com/foolusion/choices/...
+go get -u github.com/Nordstrom/choices/...
 ```
 
 If you are only interested in the library you can run the following in a
 terminal.
 
 ```bash
-go get -u github.com/foolusion/choices
+go get -u github.com/Nordstrom/choices
 ```
 
 ## Running locally
