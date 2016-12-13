@@ -28,7 +28,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/foolusion/choices"
+	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/elwin"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"

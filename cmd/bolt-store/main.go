@@ -19,7 +19,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/foolusion/choices/storage/bolt"
+	"github.com/Nordstrom/choices/storage/bolt"
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"

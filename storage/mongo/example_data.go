@@ -14,7 +14,7 @@
 
 package mongo
 
-import "github.com/foolusion/choices/storage/mongo/internal/types"
+import "github.com/Nordstrom/choices/storage/mongo/internal/types"
 
 const (
 	firstHalf   = "ffffffffffffffff0000000000000000"

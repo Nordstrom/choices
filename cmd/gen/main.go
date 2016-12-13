@@ -27,7 +27,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/foolusion/choices"
+	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"

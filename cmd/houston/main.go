@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"github.com/foolusion/choices"
+	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"

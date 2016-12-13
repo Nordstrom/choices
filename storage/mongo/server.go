@@ -27,7 +27,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/foolusion/choices/storage/mongo/internal/types"
+	"github.com/Nordstrom/choices/storage/mongo/internal/types"
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 )
