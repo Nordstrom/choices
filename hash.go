@@ -94,7 +94,7 @@ func (h *hashConfig) setUserID(u string) {
 	h.userID = u
 }
 
-// errWriter is a convience struct to eliminate lots of if err != nil.
+// errWriter is a convenience struct to eliminate lots of if err != nil.
 type errWriter struct {
 	buf bytes.Buffer
 	err error
