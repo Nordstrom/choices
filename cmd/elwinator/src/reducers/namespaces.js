@@ -1,3 +1,5 @@
+import merge from 'lodash/merge';
+
 const namespaceInitialState = {
   name: '',
   labels: [],
@@ -107,7 +109,7 @@ const namespaces = (state = [], action) => {
     return ns;
   default:
     if (action.entities && action.entities.namespaces) {
-      return action.entities.namespaces;
+      return merge(state, action.entities.namespaces);
     }
     return state;
   }

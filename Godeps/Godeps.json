@@ -17,11 +17,11 @@
 		},
 		{
 			"ImportPath": "github.com/foolusion/elwinprotos/elwin",
-			"Rev": "f2b894301e041671a07ed350d7681f6a30b967de"
+			"Rev": "2c2e98f9dc5ce493ed30ebacd66db90c83528d0d"
 		},
 		{
 			"ImportPath": "github.com/foolusion/elwinprotos/storage",
-			"Rev": "f2b894301e041671a07ed350d7681f6a30b967de"
+			"Rev": "2c2e98f9dc5ce493ed30ebacd66db90c83528d0d"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
