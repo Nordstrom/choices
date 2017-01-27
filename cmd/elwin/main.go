@@ -207,7 +207,8 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 
 	for _, v := range resp {
 		exp.Experiments[v.Name] = &elwin.Experiment{
-			Params: make([]*elwin.Param, len(v.Params)),
+			Namespace: v.Namespace,
+			Params:    make([]*elwin.Param, len(v.Params)),
 		}
 
 		for i, p := range v.Params {

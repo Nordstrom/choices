@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/Nordstrom/choices",
-	"GoVersion": "devel-41908a5",
-	"GodepVersion": "v74",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v78",
 	"Packages": [
 		"./cmd/..."
 	],
@@ -17,11 +17,11 @@
 		},
 		{
 			"ImportPath": "github.com/foolusion/elwinprotos/elwin",
-			"Rev": "2c2e98f9dc5ce493ed30ebacd66db90c83528d0d"
+			"Rev": "5969fcab47bc87fac5d0170e359cbf7d017ea9fb"
 		},
 		{
 			"ImportPath": "github.com/foolusion/elwinprotos/storage",
-			"Rev": "2c2e98f9dc5ce493ed30ebacd66db90c83528d0d"
+			"Rev": "5969fcab47bc87fac5d0170e359cbf7d017ea9fb"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
