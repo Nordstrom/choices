@@ -64,18 +64,13 @@ var (
 		Name:      "json_requests",
 		Help:      "The number of json requests recieved.",
 	})
-	jsonDurations = prometheus.NewSummary(prometheus.SummaryOpts{
+	jsonDurations = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "nordstrom",
 		Subsystem: "elwin",
 		Name:      "json_durations_nanoseconds",
 		Help:      "json latency distributions.",
+		Buckets:   prometheus.ExponentialBuckets(1, 10, 10),
 	})
-	paramCounts = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "nordstrom",
-		Subsystem: "elwin",
-		Name:      "param_counts",
-		Help:      "Params served to users.",
-	}, []string{"exp", "param", "value"})
 	updateErrors = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "nordstrom",
 		Subsystem: "elwin",
@@ -83,15 +78,6 @@ var (
 		Help:      "The number of errors while updating storage.",
 	})
 )
-
-func init() {
-	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/healthz", healthzHandler)
-	http.HandleFunc("/readiness", readinessHandler)
-	prometheus.MustRegister(jsonRequests)
-	prometheus.MustRegister(jsonDurations)
-	prometheus.MustRegister(paramCounts)
-}
 
 const (
 	envJSONAddr  = "JSON_ADDRESS"
@@ -143,23 +129,45 @@ func main() {
 	config.ec = ec
 	config.readiness.storage = true
 
-	http.Handle("/metrics", prometheus.Handler())
+	// register prometheus metrics
+	prometheus.MustRegister(jsonRequests)
+	prometheus.MustRegister(jsonDurations)
+	prometheus.MustRegister(updateErrors)
 
+	ljson, err := net.Listen("tcp", config.jsonAddr)
+	if err != nil {
+		log.Fatalf("could not listen on %s: %v", config.jsonAddr, err)
+	}
+	defer ljson.Close()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", rootHandler)
+	mux.HandleFunc("/healthz", healthzHandler)
+	mux.HandleFunc("/readiness", readinessHandler)
+	mux.Handle("/metrics", prometheus.Handler())
+
+	srv := http.Server{
+		Handler:      mux,
+		ReadTimeout:  50 * time.Millisecond,
+		WriteTimeout: 50 * time.Millisecond,
+		IdleTimeout:  30 * time.Second,
+	}
 	go func() {
 		config.readiness.httpServer = true
-		config.ec.ErrChan <- http.ListenAndServe(config.jsonAddr, nil)
+		config.ec.ErrChan <- srv.Serve(ljson)
 	}()
 
 	go func() {
-		lis, err := net.Listen("tcp", config.grpcAddr)
+		lgrpc, err := net.Listen("tcp", config.grpcAddr)
 		if err != nil {
 			config.ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
 		}
+		defer lgrpc.Close()
 
 		grpcServer := grpc.NewServer()
 		elwin.RegisterElwinServer(grpcServer, &elwinServer{})
 		config.readiness.grpcServer = true
-		config.ec.ErrChan <- grpcServer.Serve(lis)
+		config.ec.ErrChan <- grpcServer.Serve(lgrpc)
 	}()
 
 	signalChan := make(chan os.Signal, 1)
@@ -230,7 +238,9 @@ func logCloseErr(c io.Closer) {
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	defer jsonRequests.Inc()
-	defer jsonDurations.Observe(float64(time.Since(start)))
+	defer func() {
+		jsonDurations.Observe(float64(time.Since(start)))
+	}()
 	if err := r.ParseForm(); err != nil {
 		log.Printf("could not parse form: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -320,7 +330,6 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 			if j < len(exp.Params)-1 {
 				ew.write(jsonComma)
 			}
-			paramCounts.With(prometheus.Labels{"exp": exp.Name, "param": param.Name, "value": param.Value}).Inc()
 		}
 		ew.write(jsonCloseObj)
 		ew.write(jsonCloseObj)
