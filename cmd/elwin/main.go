@@ -207,7 +207,8 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 
 	for _, v := range resp {
 		exp.Experiments[v.Name] = &elwin.Experiment{
-			Params: make([]*elwin.Param, len(v.Params)),
+			Namespace: v.Namespace,
+			Params:    make([]*elwin.Param, len(v.Params)),
 		}
 
 		for i, p := range v.Params {
@@ -279,6 +280,19 @@ func (ew *errWriter) write(buf []byte) {
 	_, ew.err = ew.w.Write(buf)
 }
 
+func (ew *errWriter) writeKey(buf []byte) {
+	ew.write(jsonQuote)
+	ew.write(buf)
+	ew.write(jsonQuote)
+	ew.write(jsonKeyEnd)
+}
+
+func (ew *errWriter) writeString(buf []byte) {
+	ew.write(jsonQuote)
+	ew.write(buf)
+	ew.write(jsonQuote)
+}
+
 var (
 	jsonQuote    = []byte{'"'}
 	jsonKeyEnd   = []byte{':', ' '}
@@ -290,30 +304,25 @@ var (
 func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 	ew := &errWriter{w: w}
 	ew.write(jsonOpenObj)
-	ew.write(jsonQuote)
-	ew.write([]byte("experiments"))
-	ew.write(jsonQuote)
-	ew.write(jsonKeyEnd)
+	ew.writeKey([]byte("experiments"))
 	ew.write(jsonOpenObj)
 	for i, exp := range er {
-		ew.write(jsonQuote)
-		ew.write([]byte(exp.Name))
-		ew.write(jsonQuote)
-		ew.write(jsonKeyEnd)
+		ew.writeKey([]byte(exp.Name))
+		ew.write(jsonOpenObj)
+		ew.writeKey([]byte("namespace"))
+		ew.writeString([]byte(exp.Namespace))
+		ew.write(jsonComma)
+		ew.writeKey([]byte("params"))
 		ew.write(jsonOpenObj)
 		for j, param := range exp.Params {
-			ew.write(jsonQuote)
-			ew.write([]byte(param.Name))
-			ew.write(jsonQuote)
-			ew.write(jsonKeyEnd)
-			ew.write(jsonQuote)
-			ew.write([]byte(param.Value))
-			ew.write(jsonQuote)
+			ew.writeKey([]byte(param.Name))
+			ew.writeString([]byte(param.Value))
 			if j < len(exp.Params)-1 {
 				ew.write(jsonComma)
 			}
 			paramCounts.With(prometheus.Labels{"exp": exp.Name, "param": param.Name, "value": param.Value}).Inc()
 		}
+		ew.write(jsonCloseObj)
 		ew.write(jsonCloseObj)
 		if i < len(er)-1 {
 			ew.write(jsonComma)

@@ -1,0 +1,99 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "elwin.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/get-namespaces": {
+      "post": {
+        "operationId": "GetNamespaces",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/elwinExperiments"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/elwinIdentifier"
+            }
+          }
+        ],
+        "tags": [
+          "Elwin"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "elwinExperiment": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "type": "string",
+          "format": "string"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/elwinParam"
+          }
+        }
+      }
+    },
+    "elwinExperiments": {
+      "type": "object",
+      "properties": {
+        "experiments": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/elwinExperiment"
+          }
+        }
+      }
+    },
+    "elwinIdentifier": {
+      "type": "object",
+      "properties": {
+        "teamID": {
+          "type": "string",
+          "format": "string"
+        },
+        "userID": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    },
+    "elwinParam": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "string"
+        }
+      }
+    }
+  }
+}

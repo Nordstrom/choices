@@ -97,7 +97,11 @@ func (n *Namespace) eval(h hashConfig) (ExperimentResponse, error) {
 		if err != nil {
 			return ExperimentResponse{}, err
 		}
-		return ExperimentResponse{Name: exp.Name, Params: p}, nil
+		return ExperimentResponse{
+			Name:      exp.Name,
+			Namespace: n.Name,
+			Params:    p,
+		}, nil
 
 	}
 
@@ -123,8 +127,9 @@ func (n *Namespace) MarshalJSON() ([]byte, error) {
 
 // ExperimentResponse holds the data for an evaluated expeiment.
 type ExperimentResponse struct {
-	Name   string
-	Params []ParamValue
+	Name      string
+	Namespace string
+	Params    []ParamValue
 }
 
 // Namespaces determines the assignments for the a given user's id based on the
