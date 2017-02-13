@@ -43,6 +43,9 @@ var config = struct {
 	mongoAddr       string
 	mongoDB         string
 	mongoCollection string
+	readTimeout     string
+	writeTimeout    string
+	idleTimeout     string
 	readiness       struct {
 		storage      bool
 		grpcServer   bool
@@ -55,6 +58,9 @@ var config = struct {
 	mongoAddr:       "elwin-storage:80",
 	mongoDB:         "elwin",
 	mongoCollection: "test",
+	readTimeout:     "150ms",
+	writeTimeout:    "50ms",
+	idleTimeout:     "30s",
 }
 
 var (
@@ -80,11 +86,14 @@ var (
 )
 
 const (
-	envJSONAddr  = "JSON_ADDRESS"
-	envGRPCAddr  = "GRPC_ADDRESS"
-	envMongoAddr = "MONGO_ADDRESS"
-	envMongoDB   = "MONGO_DATABASE"
-	envMongoColl = "MONGO_COLLECTION"
+	envJSONAddr     = "JSON_ADDRESS"
+	envGRPCAddr     = "GRPC_ADDRESS"
+	envMongoAddr    = "MONGO_ADDRESS"
+	envMongoDB      = "MONGO_DATABASE"
+	envMongoColl    = "MONGO_COLLECTION"
+	envReadTimeout  = "READ_TIMEOUT"
+	envWriteTimeout = "WRITE_TIMEOUT"
+	envIdleTimeout  = "IDLE_TIMEOUT"
 )
 
 func env(dst *string, src string) {
@@ -102,6 +111,9 @@ func main() {
 	env(&config.mongoAddr, envMongoAddr)
 	env(&config.mongoDB, envMongoDB)
 	env(&config.mongoCollection, envMongoColl)
+	env(&config.readTimeout, envReadTimeout)
+	env(&config.writeTimeout, envWriteTimeout)
+	env(&config.idleTimeout, envIdleTimeout)
 
 	var storageEnv int
 	switch config.mongoCollection {
@@ -145,13 +157,21 @@ func main() {
 	mux.HandleFunc("/healthz", healthzHandler)
 	mux.HandleFunc("/readiness", readinessHandler)
 	mux.Handle("/metrics", prometheus.Handler())
-
 	srv := http.Server{
-		Handler:      mux,
-		ReadTimeout:  50 * time.Millisecond,
-		WriteTimeout: 50 * time.Millisecond,
-		IdleTimeout:  30 * time.Second,
+		Handler: mux,
 	}
+	if rt, err := time.ParseDuration(config.readTimeout); err != nil {
+		log.Fatal(err)
+	} else if wt, err := time.ParseDuration(config.writeTimeout); err != nil {
+		log.Fatal(err)
+	} else if it, err := time.ParseDuration(config.idleTimeout); err != nil {
+		log.Fatal(err)
+	} else {
+		srv.ReadTimeout = rt
+		srv.WriteTimeout = wt
+		srv.IdleTimeout = it
+	}
+
 	go func() {
 		config.readiness.httpServer = true
 		config.ec.ErrChan <- srv.Serve(ljson)
