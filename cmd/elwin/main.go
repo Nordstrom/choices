@@ -20,7 +20,7 @@ import (
 	"log"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -94,6 +94,7 @@ const (
 	envReadTimeout  = "READ_TIMEOUT"
 	envWriteTimeout = "WRITE_TIMEOUT"
 	envIdleTimeout  = "IDLE_TIMEOUT"
+	envProfiler     = "PROFILER"
 )
 
 func env(dst *string, src string) {
@@ -157,6 +158,9 @@ func main() {
 	mux.HandleFunc("/healthz", healthzHandler)
 	mux.HandleFunc("/readiness", readinessHandler)
 	mux.Handle("/metrics", prometheus.Handler())
+	if len(os.Getenv(envProfiler)) > 0 {
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	}
 	srv := http.Server{
 		Handler: mux,
 	}
