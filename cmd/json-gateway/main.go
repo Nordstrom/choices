@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"flag"
+	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -21,12 +23,18 @@ func run() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	mux := runtime.NewServeMux()
+	gwmux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := storage.RegisterElwinStorageHandlerFromEndpoint(ctx, mux, *storageEndpoint, opts)
+	err := storage.RegisterElwinStorageHandlerFromEndpoint(ctx, gwmux, *storageEndpoint, opts)
 	if err != nil {
 		return err
 	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(w, strings.NewReader(swagger))
+	})
+	mux.Handle("/", gwmux)
 
 	log.Printf("Listening on %s", *listenAddress)
 	return http.ListenAndServe(*listenAddress, mux)
