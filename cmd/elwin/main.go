@@ -58,8 +58,8 @@ var config = struct {
 	mongoAddr:       "elwin-storage:80",
 	mongoDB:         "elwin",
 	mongoCollection: "test",
-	readTimeout:     "150ms",
-	writeTimeout:    "50ms",
+	readTimeout:     "5s",
+	writeTimeout:    "5s",
 	idleTimeout:     "30s",
 }
 
