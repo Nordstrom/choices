@@ -32,6 +32,7 @@ type ParamValue struct {
 // to Namespaces.
 type Experiment struct {
 	Name     string
+	Labels   map[string]string
 	Params   []Param
 	Segments segments
 }
@@ -70,6 +71,7 @@ func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
 		Name:     e.Name,
+		Labels:   e.Labels,
 		Params:   make([]*storage.Param, len(e.Params)),
 		Segments: make([]byte, 16),
 	}

@@ -98,6 +98,33 @@ var swagger = `{
         ]
       }
     },
+    "/api/v1/experiment-intake": {
+      "post": {
+        "summary": "ExperimentIntake takes a request from a web form and creates the\nexperiment in the data store.",
+        "operationId": "ExperimentIntake",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/ExperimentIntakeReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ExperimentIntakeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ElwinStorage"
+        ]
+      }
+    },
     "/api/v1/read": {
       "post": {
         "summary": "Read returns the namespace matching the supplied name from the given\nenvironment.",
@@ -261,6 +288,79 @@ var swagger = `{
         }
       },
       "title": "Experiment structure"
+    },
+    "ExperimentIntakeReply": {
+      "type": "object"
+    },
+    "ExperimentIntakeRequest": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/ExperimentMetadata"
+        },
+        "namespace": {
+          "$ref": "#/definitions/Namespace"
+        }
+      },
+      "title": "ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers"
+    },
+    "ExperimentMetadata": {
+      "type": "object",
+      "properties": {
+        "userID": {
+          "type": "string",
+          "format": "string"
+        },
+        "programManagerID": {
+          "type": "string",
+          "format": "string"
+        },
+        "productManagerID": {
+          "type": "string",
+          "format": "string"
+        },
+        "hypothesis": {
+          "type": "string",
+          "format": "string"
+        },
+        "kpi": {
+          "type": "string",
+          "format": "string"
+        },
+        "timeBound": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "plannedStartTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "plannedEndTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "actualStartTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "actualEndTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "actionPlanNegative": {
+          "type": "string",
+          "format": "string"
+        },
+        "actionPlanNeutral": {
+          "type": "string",
+          "format": "string"
+        },
+        "experimentType": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "ExperimentMetadata all the junk that elwin doesn't care about"
     },
     "Namespace": {
       "type": "object",

@@ -32,6 +32,7 @@ func run() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		io.Copy(w, strings.NewReader(swagger))
 	})
 	mux.Handle("/", gwmux)

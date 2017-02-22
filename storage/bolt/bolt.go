@@ -200,6 +200,10 @@ func (s *Server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage
 	return &storage.DeleteReply{Namespace: &ns}, nil
 }
 
+func (s *Server) ExperimentIntake(ctx context.Context, r *storage.ExperimentIntakeRequest) (*storage.ExperimentIntakeReply, error) {
+	return &storage.ExperimentIntakeReply{}, nil
+}
+
 func envFromStorageRequest(e storage.Environment) []byte {
 	switch e {
 	case storage.Staging:

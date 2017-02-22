@@ -117,7 +117,7 @@ func (n *namespaceStore) update() error {
 
 // FromNamespace converts a *storage.Namespace into a Namespace.
 func FromNamespace(s *storage.Namespace) (Namespace, error) {
-	ns := NewNamespace(s.Name, s.Labels)
+	ns := NewNamespace(s.Name)
 	for _, e := range s.Experiments {
 		err := ns.AddExperiment(FromExperiment(e))
 		if err != nil {
@@ -166,9 +166,10 @@ func TeamNamespaces(s namespaceStore, teamID string) []Namespace {
 	allNamespaces := s.read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {
-		for _, t := range n.Labels {
-			if t == teamID {
+		for _, e := range n.Experiments {
+			if teamID == e.Labels["team"] {
 				teamNamespaces = append(teamNamespaces, n)
+				break
 			}
 		}
 	}
