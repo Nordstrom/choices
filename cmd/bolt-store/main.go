@@ -32,7 +32,7 @@ var cfg = struct {
 	listenAddr string
 }{
 	dbFile:     "test.db",
-	listenAddr: "8080",
+	listenAddr: ":8080",
 }
 
 func main() {

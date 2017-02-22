@@ -132,6 +132,7 @@ func FromExperiment(s *storage.Experiment) Experiment {
 	exp := Experiment{
 		Name:   s.Name,
 		Params: make([]Param, len(s.Params)),
+		Labels: s.Labels,
 	}
 	copy(exp.Segments[:], s.Segments[:16])
 
