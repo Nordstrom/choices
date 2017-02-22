@@ -18,6 +18,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/Nordstrom/choices/storage/bolt"
 	"github.com/foolusion/elwinprotos/storage"
@@ -26,12 +27,27 @@ import (
 	"google.golang.org/grpc"
 )
 
-func main() {
-	log.Println("Starting bolt-store...")
-	server, err := bolt.NewServer("test.db")
+var cfg = struct {
+	dbFile     string
+	listenAddr string
+}{
+	dbFile:     "test.db",
+	listenAddr: "8080",
+}
 
-	log.Printf("lisening for grpc on %q", ":8080")
-	lis, err := net.Listen("tcp", ":8080")
+func main() {
+	if db := os.Getenv("DB_FILE"); db != "" {
+		cfg.dbFile = db
+	}
+	if addr := os.Getenv("LISTEN_ADDRESS"); addr != "" {
+		cfg.listenAddr = addr
+	}
+
+	log.Println("Starting bolt-store...")
+	server, err := bolt.NewServer(cfg.dbFile)
+
+	log.Printf("lisening for grpc on %q", cfg.listenAddr)
+	lis, err := net.Listen("tcp", cfg.listenAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
