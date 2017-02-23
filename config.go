@@ -48,11 +48,6 @@ func (e ErrUpdateStorage) Error() string {
 	return e.error.Error()
 }
 
-// Cause is to implement the errors.causer interface.
-func (e ErrUpdateStorage) Cause() error {
-	return e
-}
-
 // NewChoices sets the storage engine. It starts a ticker that will call
 // s.Update() until the context is cancelled. To change the tick interval call
 // SetUpdateInterval(d time.Duration). Must cancel the context before calling
