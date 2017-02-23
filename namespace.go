@@ -136,7 +136,7 @@ func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range TeamNamespaces(*ec.Storage, teamID) {
+	for _, ns := range TeamNamespaces(ec.Storage, teamID) {
 		eResp, err := ns.eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue

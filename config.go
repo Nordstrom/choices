@@ -15,11 +15,10 @@
 package choices
 
 import (
+	"context"
 	"time"
 
 	"github.com/pkg/errors"
-
-	"golang.org/x/net/context"
 )
 
 // Config is the configuration struct used in an elwin server.

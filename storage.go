@@ -163,7 +163,7 @@ func FromParam(s *storage.Param) Param {
 }
 
 // TeamNamespaces filters the namespaces from storage based on teamID.
-func TeamNamespaces(s namespaceStore, teamID string) []Namespace {
+func TeamNamespaces(s *namespaceStore, teamID string) []Namespace {
 	allNamespaces := s.read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {
