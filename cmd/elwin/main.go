@@ -30,7 +30,6 @@ import (
 
 	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/elwin"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -201,17 +200,9 @@ func main() {
 	for {
 		select {
 		case err := <-config.ec.ErrChan:
-			if err != nil {
-				switch err := errors.Cause(err).(type) {
-				case choices.ErrUpdateStorage:
-					updateErrors.Inc()
-					log.Println(err)
-					continue
-				default:
-					log.Fatal(err)
-				}
-			}
+			log.Fatal(err)
 		case s := <-signalChan:
+			cancel()
 			log.Printf("Captured %v. Exitting...", s)
 			// send StatusServiceUnavailable to new requestors
 			// block server from accepting new requests
