@@ -72,8 +72,7 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 		for {
 			select {
 			case <-ticker.C:
-				err := e.Storage.update()
-				if err != nil {
+				if err := e.Storage.update(); err != nil {
 					e.ErrChan <- ErrUpdateStorage{error: errors.Wrap(err, "could not update storage")}
 					ticker.Stop()
 					return
