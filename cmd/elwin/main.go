@@ -228,8 +228,11 @@ func main() {
 			}
 			log.Println(err)
 		case s := <-signalChan:
-			cancel()
 			log.Printf("Captured %v. Exitting...", s)
+			cancel()
+			ctx, sdcancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer sdcancel()
+			srv.Shutdown(ctx)
 			// send StatusServiceUnavailable to new requestors
 			// block server from accepting new requests
 			os.Exit(0)
