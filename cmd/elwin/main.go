@@ -15,6 +15,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -30,6 +31,7 @@ import (
 
 	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/elwin"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -51,15 +53,19 @@ var config = struct {
 		errorHandler bool
 		httpServer   bool
 	}
+	updateInterval    string
+	maxUpdateFailTime string
 }{
-	jsonAddr:        ":8081",
-	grpcAddr:        ":8080",
-	mongoAddr:       "elwin-storage:80",
-	mongoDB:         "elwin",
-	mongoCollection: "test",
-	readTimeout:     "5s",
-	writeTimeout:    "5s",
-	idleTimeout:     "30s",
+	jsonAddr:          ":8081",
+	grpcAddr:          ":8080",
+	mongoAddr:         "elwin-storage:80",
+	mongoDB:           "elwin",
+	mongoCollection:   "test",
+	readTimeout:       "5s",
+	writeTimeout:      "5s",
+	idleTimeout:       "30s",
+	updateInterval:    "10s",
+	maxUpdateFailTime: "5m",
 }
 
 var (
@@ -85,15 +91,17 @@ var (
 )
 
 const (
-	envJSONAddr     = "JSON_ADDRESS"
-	envGRPCAddr     = "GRPC_ADDRESS"
-	envMongoAddr    = "MONGO_ADDRESS"
-	envMongoDB      = "MONGO_DATABASE"
-	envMongoColl    = "MONGO_COLLECTION"
-	envReadTimeout  = "READ_TIMEOUT"
-	envWriteTimeout = "WRITE_TIMEOUT"
-	envIdleTimeout  = "IDLE_TIMEOUT"
-	envProfiler     = "PROFILER"
+	envJSONAddr          = "JSON_ADDRESS"
+	envGRPCAddr          = "GRPC_ADDRESS"
+	envMongoAddr         = "MONGO_ADDRESS"
+	envMongoDB           = "MONGO_DATABASE"
+	envMongoColl         = "MONGO_COLLECTION"
+	envReadTimeout       = "READ_TIMEOUT"
+	envWriteTimeout      = "WRITE_TIMEOUT"
+	envIdleTimeout       = "IDLE_TIMEOUT"
+	envProfiler          = "PROFILER"
+	envUpdateInterval    = "UPDATE_INTERVAL"
+	envMaxUpdateFailTime = "MAX_UPDATE_FAIL_TIME"
 )
 
 func env(dst *string, src string) {
@@ -114,6 +122,8 @@ func main() {
 	env(&config.readTimeout, envReadTimeout)
 	env(&config.writeTimeout, envWriteTimeout)
 	env(&config.idleTimeout, envIdleTimeout)
+	env(&config.updateInterval, envUpdateInterval)
+	env(&config.maxUpdateFailTime, envMaxUpdateFailTime)
 
 	var storageEnv int
 	switch config.mongoCollection {
@@ -129,11 +139,22 @@ func main() {
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	var updateInterval, maxUpdateFailTime time.Duration
+	if ui, err := time.ParseDuration(config.updateInterval); err != nil {
+		log.Fatal(err)
+	} else if muft, err := time.ParseDuration(config.maxUpdateFailTime); err != nil {
+		log.Fatal(err)
+	} else {
+		updateInterval, maxUpdateFailTime = ui, muft
+	}
+
 	ec, err := choices.NewChoices(
 		ctx,
 		choices.WithGlobalSalt("choices"),
-		choices.WithStorageConfig(config.mongoAddr, storageEnv),
-		choices.WithUpdateInterval(10*time.Second),
+		choices.WithStorageConfig(config.mongoAddr, storageEnv, updateInterval),
+		choices.WithUpdateInterval(updateInterval),
+		choices.WithMaxUpdateFailTime(maxUpdateFailTime),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -154,7 +175,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", rootHandler)
-	mux.HandleFunc("/healthz", healthzHandler)
+	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": config.ec}))
 	mux.HandleFunc("/readiness", readinessHandler)
 	mux.Handle("/metrics", prometheus.Handler())
 	if len(os.Getenv(envProfiler)) > 0 {
@@ -184,6 +205,7 @@ func main() {
 		lgrpc, err := net.Listen("tcp", config.grpcAddr)
 		if err != nil {
 			config.ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
+			return
 		}
 		defer lgrpc.Close()
 
@@ -200,7 +222,11 @@ func main() {
 	for {
 		select {
 		case err := <-config.ec.ErrChan:
-			log.Fatal(err)
+			switch errors.Cause(err).(type) {
+			case choices.ErrUpdateStorage:
+				updateErrors.Inc()
+			}
+			log.Println(err)
 		case s := <-signalChan:
 			cancel()
 			log.Printf("Captured %v. Exitting...", s)
@@ -361,11 +387,36 @@ func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
 	return nil
 }
 
-func healthzHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain")
-	if _, err := w.Write([]byte("OK")); err != nil {
-		log.Printf("could not write to healthz connection: %s", err)
+func healthzHandler(healthChecks map[string]interface{}) http.HandlerFunc {
+	type healthy interface {
+		IsHealthy() error
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		errs := make(map[string]string, len(healthChecks))
+		for key, healthChecker := range healthChecks {
+			if hc, ok := healthChecker.(healthy); ok {
+				err := hc.IsHealthy()
+				if err != nil {
+					errs[key] = err.Error()
+				}
+			}
+		}
+		if len(errs) != 0 {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			enc := json.NewEncoder(w)
+			if err := enc.Encode(errs); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/plain")
+		if _, err := w.Write([]byte("OK")); err != nil {
+			log.Printf("could not write to healthz connection: %s", err)
+		}
 	}
 }
 

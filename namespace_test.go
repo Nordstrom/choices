@@ -17,7 +17,7 @@ package choices
 import "testing"
 
 func BenchmarkNamespaceEval(b *testing.B) {
-	ns := NewNamespace("t1", []string{"test"})
+	ns := NewNamespace("t1")
 	e := NewExperiment("aTest").SetSegments(segmentsAll)
 	e.Params = []Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}}
 	if err := ns.AddExperiment(*e); err != nil {

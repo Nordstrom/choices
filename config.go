@@ -16,16 +16,23 @@ package choices
 
 import (
 	"context"
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 )
 
 // Config is the configuration struct used in an elwin server.
 type Config struct {
-	Storage        *namespaceStore
-	updateInterval time.Duration
-	ErrChan        chan error
+	ErrChan           chan error
+	updateInterval    time.Duration
+	maxUpdateFailTime time.Duration
+	storage           *namespaceStore
+	clientConn        *grpc.ClientConn
+}
+
+func (c *Config) IsHealthy() error {
+	return c.storage.isHealthy
 }
 
 // ConfigOpt is a type that modifies Config. It is used when calling NewChoices
@@ -44,7 +51,7 @@ type ErrUpdateStorage struct {
 
 // Error is to implement the error interface
 func (e ErrUpdateStorage) Error() string {
-	return e.error.Error()
+	return fmt.Sprintf("could not update storage: %v", e.error)
 }
 
 // NewChoices sets the storage engine. It starts a ticker that will call
@@ -64,19 +71,25 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	}
 
 	go func(e *Config) {
-		err := e.Storage.update()
+		defer e.clientConn.Close()
+		err := e.storage.update()
 		if err != nil {
-			e.ErrChan <- ErrUpdateStorage{error: errors.Wrap(err, "could not update storage")}
+			e.ErrChan <- ErrUpdateStorage{error: err}
 		}
 		ticker := time.NewTicker(e.updateInterval)
 		for {
 			select {
 			case <-ticker.C:
-				if err := e.Storage.update(); err != nil {
-					e.ErrChan <- ErrUpdateStorage{error: errors.Wrap(err, "could not update storage")}
-					ticker.Stop()
-					return
+				if err := e.storage.update(); err != nil {
+					e.ErrChan <- ErrUpdateStorage{error: err}
+					e.storage.failedUpdates++
+					if time.Duration(e.storage.failedUpdates)*e.updateInterval > e.maxUpdateFailTime {
+						e.storage.isHealthy = ErrUpdateStorage{error: err}
+					}
+					continue
 				}
+				e.storage.failedUpdates = 0
+				e.storage.isHealthy = nil
 			case <-ctx.Done():
 				ticker.Stop()
 				return
@@ -92,6 +105,14 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 func WithUpdateInterval(dur time.Duration) ConfigOpt {
 	return func(ec *Config) error {
 		ec.updateInterval = dur
+		return nil
+	}
+}
+
+// WithMaxUpdateFailTime changes the max duration allowed for failing updates.
+func WithMaxUpdateFailTime(dur time.Duration) ConfigOpt {
+	return func(ec *Config) error {
+		ec.maxUpdateFailTime = dur
 		return nil
 	}
 }

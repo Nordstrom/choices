@@ -85,7 +85,7 @@ func TestExperimentSampleSegments(t *testing.T) {
 		},
 	}
 
-	ns := NewNamespace("test", []string{})
+	ns := NewNamespace("test")
 
 	for k, test := range tests {
 		ns.Segments = test.nsSeg
