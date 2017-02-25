@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc"
+	"github.com/pkg/errors"
 )
 
 // Config is the configuration struct used in an elwin server.
@@ -28,11 +28,13 @@ type Config struct {
 	updateInterval    time.Duration
 	maxUpdateFailTime time.Duration
 	storage           *namespaceStore
-	clientConn        *grpc.ClientConn
 }
 
 func (c *Config) IsHealthy() error {
-	return c.storage.isHealthy
+	if time.Duration(c.storage.failedUpdates)*c.updateInterval > c.maxUpdateFailTime {
+		return errors.Errorf("failed to update after %v", c.maxUpdateFailTime)
+	}
+	return nil
 }
 
 // ConfigOpt is a type that modifies Config. It is used when calling NewChoices
@@ -71,7 +73,6 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	}
 
 	go func(e *Config) {
-		defer e.clientConn.Close()
 		err := e.storage.update()
 		if err != nil {
 			e.ErrChan <- ErrUpdateStorage{error: err}
@@ -83,13 +84,9 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 				if err := e.storage.update(); err != nil {
 					e.ErrChan <- ErrUpdateStorage{error: err}
 					e.storage.failedUpdates++
-					if time.Duration(e.storage.failedUpdates)*e.updateInterval > e.maxUpdateFailTime {
-						e.storage.isHealthy = ErrUpdateStorage{error: err}
-					}
 					continue
 				}
 				e.storage.failedUpdates = 0
-				e.storage.isHealthy = nil
 			case <-ctx.Done():
 				ticker.Stop()
 				return

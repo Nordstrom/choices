@@ -46,7 +46,6 @@ func WithStorageConfig(addr string, env int, updateInterval time.Duration) Confi
 		if err != nil {
 			return errors.Wrap(err, "could not dial storage service")
 		}
-		c.clientConn = cc
 		if env == StorageEnvironmentBad {
 			return ErrBadStorageEnvironment
 		}
@@ -63,7 +62,6 @@ type namespaceStore struct {
 	env           int
 	cache         []Namespace
 	failedUpdates int
-	isHealthy     error
 }
 
 // newNamespaceStore creates a new in memory store for the data and client to
