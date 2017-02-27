@@ -27,7 +27,7 @@ func TestFromNamespace(t *testing.T) {
 		err  error
 	}{
 		"emptyNamespace": {in: &storage.Namespace{}, want: Namespace{}, err: nil},
-		"oneExperiment":  {in: &storage.Namespace{Name: "ns", Labels: []string{"test"}, Experiments: []*storage.Experiment{{Name: "exp1", Segments: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []*storage.Param{{Name: "param1", Value: &storage.Value{Choices: []string{"a", "b"}}}}}}}, want: Namespace{Name: "ns", Labels: []string{"test"}, Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Experiments: []Experiment{{Name: "exp1", Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []Param{{Name: "param1", Value: &Uniform{Choices: []string{"a", "b"}}}}}}}, err: nil},
+		"oneExperiment":  {in: &storage.Namespace{Name: "ns", Experiments: []*storage.Experiment{{Name: "exp1", Labels: map[string]string{"team": "test"}, Segments: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []*storage.Param{{Name: "param1", Value: &storage.Value{Choices: []string{"a", "b"}}}}}}}, want: Namespace{Name: "ns", Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Experiments: []Experiment{{Name: "exp1", Labels: map[string]string{"team": "test"}, Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []Param{{Name: "param1", Value: &Uniform{Choices: []string{"a", "b"}}}}}}}, err: nil},
 	}
 
 	for k, test := range tests {
@@ -37,9 +37,6 @@ func TestFromNamespace(t *testing.T) {
 		}
 		if out.Segments != test.want.Segments {
 			t.Errorf("%s segments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
-		}
-		if len(out.Labels) != len(test.want.Labels) {
-			t.Errorf("%s teamID: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
 		}
 		if len(out.Experiments) != len(test.want.Experiments) {
 			t.Errorf("%s experiments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)

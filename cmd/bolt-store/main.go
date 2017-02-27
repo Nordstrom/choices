@@ -15,23 +15,44 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 
-	"github.com/Nordstrom/choices/storage/bolt"
+	"golang.org/x/net/context"
+
+	"github.com/boltdb/bolt"
 	"github.com/foolusion/elwinprotos/storage"
+	"github.com/gogo/protobuf/proto"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
-func main() {
-	log.Println("Starting bolt-store...")
-	server, err := bolt.NewServer("test.db")
+var cfg = struct {
+	dbFile     string
+	listenAddr string
+}{
+	dbFile:     "test.db",
+	listenAddr: ":8080",
+}
 
-	log.Printf("lisening for grpc on %q", ":8080")
-	lis, err := net.Listen("tcp", ":8080")
+func main() {
+	if db := os.Getenv("DB_FILE"); db != "" {
+		cfg.dbFile = db
+	}
+	if addr := os.Getenv("LISTEN_ADDRESS"); addr != "" {
+		cfg.listenAddr = addr
+	}
+
+	log.Println("Starting bolt-store...")
+	server, err := newServer(cfg.dbFile)
+
+	log.Printf("lisening for grpc on %q", cfg.listenAddr)
+	lis, err := net.Listen("tcp", cfg.listenAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,4 +69,193 @@ func main() {
 	}()
 
 	log.Fatal(s.Serve(lis))
+}
+
+var (
+	environmentStaging    = []byte("staging")
+	environmentProduction = []byte("production")
+)
+
+type server struct {
+	db *bolt.DB
+}
+
+func newServer(file string) (*server, error) {
+	db, err := bolt.Open(file, 0600, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Update(func(tx *bolt.Tx) error {
+		if _, err := tx.CreateBucket(environmentStaging); err != nil {
+			if err != bolt.ErrBucketExists {
+				return err
+			}
+		}
+		if _, err := tx.CreateBucket(environmentProduction); err != nil {
+			if err != bolt.ErrBucketExists {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &server{db: db}, nil
+}
+
+func (s *server) Close() error {
+	return s.db.Close()
+}
+
+// All returns all the namespaces for a given environment.
+func (s *server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllReply, error) {
+	if r == nil {
+		return nil, fmt.Errorf("request is nil")
+	}
+	env := envFromStorageRequest(r.Environment)
+
+	ar := &storage.AllReply{}
+	if err := s.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket(env).Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var ns storage.Namespace
+			if err := proto.Unmarshal(v, &ns); err != nil {
+				return err
+			}
+			ar.Namespaces = append(ar.Namespaces, &ns)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return ar, nil
+}
+
+// Create creates a namespace in the given environment.
+func (s *server) Create(ctx context.Context, r *storage.CreateRequest) (*storage.CreateReply, error) {
+	if r == nil {
+		return nil, fmt.Errorf("request is nil")
+	}
+	env := envFromStorageRequest(r.Environment)
+
+	ns := r.Namespace
+	if ns == nil {
+		return nil, fmt.Errorf("namespace is nil")
+	}
+
+	pns, err := proto.Marshal(ns)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.db.Update(func(tx *bolt.Tx) error {
+		err := tx.Bucket(env).Put([]byte(ns.Name), pns)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &storage.CreateReply{Namespace: ns}, nil
+}
+
+// Read returns the namespace matching the supplied name from the given
+// environment.
+func (s *server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.ReadReply, error) {
+	if r == nil {
+		return nil, fmt.Errorf("request is nil")
+	}
+	env := envFromStorageRequest(r.Environment)
+
+	if len(r.Name) == 0 {
+		return nil, fmt.Errorf("name is empty")
+	}
+
+	ns := storage.Namespace{}
+	if err := s.db.View(func(tx *bolt.Tx) error {
+		buf := tx.Bucket(env).Get([]byte(r.Name))
+		if buf == nil {
+			return grpc.Errorf(codes.NotFound, "key not found")
+		}
+		if err := proto.Unmarshal(buf, &ns); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &storage.ReadReply{Namespace: &ns}, nil
+}
+
+// Update replaces the namespace in the given environment with the namespace
+// supplied.
+func (s *server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage.UpdateReply, error) {
+	if r == nil {
+		return nil, fmt.Errorf("request is nil")
+	}
+	env := envFromStorageRequest(r.Environment)
+
+	ns := r.GetNamespace()
+	if ns == nil {
+		return nil, fmt.Errorf("namespace is nil")
+	}
+
+	pns, err := proto.Marshal(ns)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.db.Update(func(tx *bolt.Tx) error {
+		err := tx.Bucket(env).Put([]byte(ns.Name), pns)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &storage.UpdateReply{Namespace: ns}, nil
+}
+
+// Delete deletes the namespace from the given environment.
+func (s *server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage.DeleteReply, error) {
+	if r == nil {
+		return nil, fmt.Errorf("request is nil")
+	}
+	env := envFromStorageRequest(r.Environment)
+
+	if len(r.Name) == 0 {
+		return nil, fmt.Errorf("name is empty")
+	}
+
+	ns := storage.Namespace{}
+	if err := s.db.Update(func(tx *bolt.Tx) error {
+		buf := tx.Bucket(env).Get([]byte(r.Name))
+		if buf == nil {
+			return grpc.Errorf(codes.NotFound, "key not found")
+		}
+		if err := proto.Unmarshal(buf, &ns); err != nil {
+			return err
+		}
+		return tx.Bucket(env).Delete([]byte(r.Name))
+	}); err != nil {
+		return nil, err
+	}
+	return &storage.DeleteReply{Namespace: &ns}, nil
+}
+
+func (s *server) ExperimentIntake(ctx context.Context, r *storage.ExperimentIntakeRequest) (*storage.ExperimentIntakeReply, error) {
+	return &storage.ExperimentIntakeReply{}, nil
+}
+
+func envFromStorageRequest(e storage.Environment) []byte {
+	switch e {
+	case storage.Staging:
+		return environmentStaging
+	case storage.Production:
+		return environmentProduction
+	default:
+		return environmentStaging
+	}
+	return environmentStaging
 }

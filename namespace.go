@@ -32,16 +32,14 @@ var (
 type Namespace struct {
 	Name        string
 	Segments    segments
-	Labels      []string
 	Experiments []Experiment
 }
 
 // NewNamespace creates a new namespace with all segments available. It returns
 // an error if no units are given.
-func NewNamespace(name string, labels []string) *Namespace {
+func NewNamespace(name string) *Namespace {
 	n := &Namespace{
-		Name:   name,
-		Labels: labels,
+		Name: name,
 	}
 	return n
 }
@@ -51,7 +49,6 @@ func NewNamespace(name string, labels []string) *Namespace {
 func (n *Namespace) ToNamespace() *storage.Namespace {
 	ns := &storage.Namespace{
 		Name:        n.Name,
-		Labels:      n.Labels,
 		Experiments: make([]*storage.Experiment, len(n.Experiments)),
 	}
 	for i, e := range n.Experiments {
@@ -119,7 +116,6 @@ func (n *Namespace) MarshalJSON() ([]byte, error) {
 	}{
 		Name:        n.Name,
 		Segments:    n.Segments,
-		Labels:      n.Labels,
 		Experiments: n.Experiments,
 	}
 	return json.Marshal(aux)
@@ -140,7 +136,7 @@ func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range TeamNamespaces(*ec.Storage, teamID) {
+	for _, ns := range TeamNamespaces(ec.storage, teamID) {
 		eResp, err := ns.eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue

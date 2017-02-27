@@ -1,0 +1,155 @@
+{
+    "memo": "5cec734d89c05118b924ea256173e9c5e970bd880aa4a7eb533671134c51bcd4",
+    "projects": [
+        {
+            "name": "github.com/beorn7/perks",
+            "branch": "master",
+            "revision": "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9",
+            "packages": [
+                "quantile"
+            ]
+        },
+        {
+            "name": "github.com/boltdb/bolt",
+            "version": "v1.3.0",
+            "revision": "583e8937c61f1af6513608ccc75c97b6abdf4ff9",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/foolusion/elwinprotos",
+            "branch": "master",
+            "revision": "3de4e65990081311478fdf98db8649a402a8d8be",
+            "packages": [
+                "elwin",
+                "storage"
+            ]
+        },
+        {
+            "name": "github.com/gogo/protobuf",
+            "version": "v0.3",
+            "revision": "909568be09de550ed094403c2bf8a261b5bb730a",
+            "packages": [
+                "proto",
+                "sortkeys"
+            ]
+        },
+        {
+            "name": "github.com/golang/protobuf",
+            "branch": "master",
+            "revision": "69b215d01a5606c843240eab4937eab3acee6530",
+            "packages": [
+                "jsonpb",
+                "proto",
+                "protoc-gen-go/descriptor"
+            ]
+        },
+        {
+            "name": "github.com/grpc-ecosystem/go-grpc-prometheus",
+            "version": "v1.1",
+            "revision": "6b7015e65d366bf3f19b2b2a000a831940f0f7e0",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/grpc-ecosystem/grpc-gateway",
+            "version": "v1.1.0",
+            "revision": "a8f25bd1ab549f8b87afd48aa9181221e9d439bb",
+            "packages": [
+                "runtime",
+                "third_party/googleapis/google/api",
+                "utilities"
+            ]
+        },
+        {
+            "name": "github.com/matttproud/golang_protobuf_extensions",
+            "version": "v1.0.0",
+            "revision": "3247c84500bff8d9fb6d579d800f20b3e091582c",
+            "packages": [
+                "pbutil"
+            ]
+        },
+        {
+            "name": "github.com/pkg/errors",
+            "version": "v0.8.0",
+            "revision": "645ef00459ed84a119197bfb8d8205042c6df63d",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/prometheus/client_golang",
+            "version": "v0.8.0",
+            "revision": "c5b7fccd204277076155f10851dad72b76a49317",
+            "packages": [
+                "prometheus"
+            ]
+        },
+        {
+            "name": "github.com/prometheus/client_model",
+            "branch": "master",
+            "revision": "6f3806018612930941127f2a7c6c453ba2c527d2",
+            "packages": [
+                "go"
+            ]
+        },
+        {
+            "name": "github.com/prometheus/common",
+            "branch": "master",
+            "revision": "49fee292b27bfff7f354ee0f64e1bc4850462edf",
+            "packages": [
+                "expfmt",
+                "model"
+            ]
+        },
+        {
+            "name": "github.com/prometheus/procfs",
+            "branch": "master",
+            "revision": "a1dba9ce8baed984a2495b658c82687f8157b98f",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/net",
+            "branch": "master",
+            "revision": "6b27048ae5e6ad1ef927e72e437531493de612fe",
+            "packages": [
+                "context",
+                "http2",
+                "http2/hpack",
+                "trace"
+            ]
+        },
+        {
+            "name": "golang.org/x/sys",
+            "branch": "master",
+            "revision": "075e574b89e4c2d22f2286a7e2b919519c6f3547",
+            "packages": [
+                "unix"
+            ]
+        },
+        {
+            "name": "google.golang.org/grpc",
+            "version": "v1.0.5",
+            "revision": "708a7f9f3283aa2d4f6132d287d78683babe55c8",
+            "packages": [
+                ".",
+                "codes",
+                "grpclog",
+                "metadata"
+            ]
+        },
+        {
+            "name": "gopkg.in/mgo.v2",
+            "branch": "v2",
+            "revision": "3f83fa5005286a7fe593b055f0d7771a7dce4655",
+            "packages": [
+                ".",
+                "bson"
+            ]
+        }
+    ]
+}

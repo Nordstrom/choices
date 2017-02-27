@@ -9,6 +9,9 @@
 		storage.proto
 
 	It has these top-level messages:
+		ExperimentIntakeRequest
+		ExperimentIntakeReply
+		ExperimentMetadata
 		AllRequest
 		AllReply
 		CreateRequest
@@ -36,9 +39,8 @@ import strconv "strconv"
 import bytes "bytes"
 
 import strings "strings"
-import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
-import sort "sort"
 import reflect "reflect"
+import github_com_gogo_protobuf_sortkeys "github.com/gogo/protobuf/sortkeys"
 
 import (
 	context "golang.org/x/net/context"
@@ -77,6 +79,149 @@ var Environment_value = map[string]int32{
 
 func (Environment) EnumDescriptor() ([]byte, []int) { return fileDescriptorStorage, []int{0} }
 
+// ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers
+type ExperimentIntakeRequest struct {
+	Metadata  *ExperimentMetadata `protobuf:"bytes,1,opt,name=metadata" json:"metadata,omitempty"`
+	Namespace *Namespace          `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
+}
+
+func (m *ExperimentIntakeRequest) Reset()                    { *m = ExperimentIntakeRequest{} }
+func (*ExperimentIntakeRequest) ProtoMessage()               {}
+func (*ExperimentIntakeRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{0} }
+
+func (m *ExperimentIntakeRequest) GetMetadata() *ExperimentMetadata {
+	if m != nil {
+		return m.Metadata
+	}
+	return nil
+}
+
+func (m *ExperimentIntakeRequest) GetNamespace() *Namespace {
+	if m != nil {
+		return m.Namespace
+	}
+	return nil
+}
+
+type ExperimentIntakeReply struct {
+}
+
+func (m *ExperimentIntakeReply) Reset()                    { *m = ExperimentIntakeReply{} }
+func (*ExperimentIntakeReply) ProtoMessage()               {}
+func (*ExperimentIntakeReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{1} }
+
+// ExperimentMetadata all the junk that elwin doesn't care about
+type ExperimentMetadata struct {
+	UserID             string `protobuf:"bytes,1,opt,name=userID,proto3" json:"userID,omitempty"`
+	ProgramManagerID   string `protobuf:"bytes,2,opt,name=programManagerID,proto3" json:"programManagerID,omitempty"`
+	ProductManagerID   string `protobuf:"bytes,3,opt,name=productManagerID,proto3" json:"productManagerID,omitempty"`
+	Hypothesis         string `protobuf:"bytes,4,opt,name=hypothesis,proto3" json:"hypothesis,omitempty"`
+	Kpi                string `protobuf:"bytes,5,opt,name=kpi,proto3" json:"kpi,omitempty"`
+	TimeBound          bool   `protobuf:"varint,6,opt,name=timeBound,proto3" json:"timeBound,omitempty"`
+	PlannedStartTime   string `protobuf:"bytes,7,opt,name=plannedStartTime,proto3" json:"plannedStartTime,omitempty"`
+	PlannedEndTime     string `protobuf:"bytes,8,opt,name=plannedEndTime,proto3" json:"plannedEndTime,omitempty"`
+	ActualStartTime    string `protobuf:"bytes,9,opt,name=actualStartTime,proto3" json:"actualStartTime,omitempty"`
+	ActualEndTime      string `protobuf:"bytes,10,opt,name=actualEndTime,proto3" json:"actualEndTime,omitempty"`
+	ActionPlanNegative string `protobuf:"bytes,11,opt,name=actionPlanNegative,proto3" json:"actionPlanNegative,omitempty"`
+	ActionPlanNeutral  string `protobuf:"bytes,12,opt,name=actionPlanNeutral,proto3" json:"actionPlanNeutral,omitempty"`
+	ExperimentType     string `protobuf:"bytes,13,opt,name=experimentType,proto3" json:"experimentType,omitempty"`
+}
+
+func (m *ExperimentMetadata) Reset()                    { *m = ExperimentMetadata{} }
+func (*ExperimentMetadata) ProtoMessage()               {}
+func (*ExperimentMetadata) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{2} }
+
+func (m *ExperimentMetadata) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetProgramManagerID() string {
+	if m != nil {
+		return m.ProgramManagerID
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetProductManagerID() string {
+	if m != nil {
+		return m.ProductManagerID
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetHypothesis() string {
+	if m != nil {
+		return m.Hypothesis
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetKpi() string {
+	if m != nil {
+		return m.Kpi
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetTimeBound() bool {
+	if m != nil {
+		return m.TimeBound
+	}
+	return false
+}
+
+func (m *ExperimentMetadata) GetPlannedStartTime() string {
+	if m != nil {
+		return m.PlannedStartTime
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetPlannedEndTime() string {
+	if m != nil {
+		return m.PlannedEndTime
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetActualStartTime() string {
+	if m != nil {
+		return m.ActualStartTime
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetActualEndTime() string {
+	if m != nil {
+		return m.ActualEndTime
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetActionPlanNegative() string {
+	if m != nil {
+		return m.ActionPlanNegative
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetActionPlanNeutral() string {
+	if m != nil {
+		return m.ActionPlanNeutral
+	}
+	return ""
+}
+
+func (m *ExperimentMetadata) GetExperimentType() string {
+	if m != nil {
+		return m.ExperimentType
+	}
+	return ""
+}
+
 // AllRequest retuns all the experiments from the given environment.
 type AllRequest struct {
 	Environment Environment `protobuf:"varint,1,opt,name=environment,proto3,enum=Environment" json:"environment,omitempty"`
@@ -84,7 +229,14 @@ type AllRequest struct {
 
 func (m *AllRequest) Reset()                    { *m = AllRequest{} }
 func (*AllRequest) ProtoMessage()               {}
-func (*AllRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{0} }
+func (*AllRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{3} }
+
+func (m *AllRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Staging
+}
 
 // The response message containing the Namespaces
 type AllReply struct {
@@ -93,7 +245,7 @@ type AllReply struct {
 
 func (m *AllReply) Reset()                    { *m = AllReply{} }
 func (*AllReply) ProtoMessage()               {}
-func (*AllReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{1} }
+func (*AllReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{4} }
 
 func (m *AllReply) GetNamespaces() []*Namespace {
 	if m != nil {
@@ -110,13 +262,20 @@ type CreateRequest struct {
 
 func (m *CreateRequest) Reset()                    { *m = CreateRequest{} }
 func (*CreateRequest) ProtoMessage()               {}
-func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{2} }
+func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{5} }
 
 func (m *CreateRequest) GetNamespace() *Namespace {
 	if m != nil {
 		return m.Namespace
 	}
 	return nil
+}
+
+func (m *CreateRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Staging
 }
 
 // CreateReply response containing the newly created Namespace.
@@ -126,7 +285,7 @@ type CreateReply struct {
 
 func (m *CreateReply) Reset()                    { *m = CreateReply{} }
 func (*CreateReply) ProtoMessage()               {}
-func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{3} }
+func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{6} }
 
 func (m *CreateReply) GetNamespace() *Namespace {
 	if m != nil {
@@ -143,7 +302,21 @@ type ReadRequest struct {
 
 func (m *ReadRequest) Reset()                    { *m = ReadRequest{} }
 func (*ReadRequest) ProtoMessage()               {}
-func (*ReadRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{4} }
+func (*ReadRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{7} }
+
+func (m *ReadRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *ReadRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Staging
+}
 
 // ReadReply response containing the namespace requested.
 type ReadReply struct {
@@ -152,7 +325,7 @@ type ReadReply struct {
 
 func (m *ReadReply) Reset()                    { *m = ReadReply{} }
 func (*ReadReply) ProtoMessage()               {}
-func (*ReadReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{5} }
+func (*ReadReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{8} }
 
 func (m *ReadReply) GetNamespace() *Namespace {
 	if m != nil {
@@ -170,13 +343,20 @@ type UpdateRequest struct {
 
 func (m *UpdateRequest) Reset()                    { *m = UpdateRequest{} }
 func (*UpdateRequest) ProtoMessage()               {}
-func (*UpdateRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{6} }
+func (*UpdateRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{9} }
 
 func (m *UpdateRequest) GetNamespace() *Namespace {
 	if m != nil {
 		return m.Namespace
 	}
 	return nil
+}
+
+func (m *UpdateRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Staging
 }
 
 // UpdateReply response containing the updated namespace.
@@ -186,7 +366,7 @@ type UpdateReply struct {
 
 func (m *UpdateReply) Reset()                    { *m = UpdateReply{} }
 func (*UpdateReply) ProtoMessage()               {}
-func (*UpdateReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{7} }
+func (*UpdateReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{10} }
 
 func (m *UpdateReply) GetNamespace() *Namespace {
 	if m != nil {
@@ -204,7 +384,21 @@ type DeleteRequest struct {
 
 func (m *DeleteRequest) Reset()                    { *m = DeleteRequest{} }
 func (*DeleteRequest) ProtoMessage()               {}
-func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{8} }
+func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{11} }
+
+func (m *DeleteRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *DeleteRequest) GetEnvironment() Environment {
+	if m != nil {
+		return m.Environment
+	}
+	return Staging
+}
 
 // DeleteReply response containing the deleted namespace.
 type DeleteReply struct {
@@ -213,7 +407,7 @@ type DeleteReply struct {
 
 func (m *DeleteReply) Reset()                    { *m = DeleteReply{} }
 func (*DeleteReply) ProtoMessage()               {}
-func (*DeleteReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{9} }
+func (*DeleteReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{12} }
 
 func (m *DeleteReply) GetNamespace() *Namespace {
 	if m != nil {
@@ -225,13 +419,19 @@ func (m *DeleteReply) GetNamespace() *Namespace {
 // Namespace structure
 type Namespace struct {
 	Name        string        `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Labels      []string      `protobuf:"bytes,2,rep,name=labels" json:"labels,omitempty"`
 	Experiments []*Experiment `protobuf:"bytes,3,rep,name=experiments" json:"experiments,omitempty"`
 }
 
 func (m *Namespace) Reset()                    { *m = Namespace{} }
 func (*Namespace) ProtoMessage()               {}
-func (*Namespace) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{10} }
+func (*Namespace) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{13} }
+
+func (m *Namespace) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
 
 func (m *Namespace) GetExperiments() []*Experiment {
 	if m != nil {
@@ -242,21 +442,58 @@ func (m *Namespace) GetExperiments() []*Experiment {
 
 // Experiment structure
 type Experiment struct {
-	Name     string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Segments []byte   `protobuf:"bytes,2,opt,name=segments,proto3" json:"segments,omitempty"`
-	Params   []*Param `protobuf:"bytes,3,rep,name=params" json:"params,omitempty"`
-	Id       string   `protobuf:"bytes,4,opt,name=id,proto3" json:"id,omitempty"`
+	Name       string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Segments   []byte            `protobuf:"bytes,2,opt,name=segments,proto3" json:"segments,omitempty"`
+	Params     []*Param          `protobuf:"bytes,3,rep,name=params" json:"params,omitempty"`
+	Id         string            `protobuf:"bytes,4,opt,name=id,proto3" json:"id,omitempty"`
+	Labels     map[string]string `protobuf:"bytes,5,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	DetailName string            `protobuf:"bytes,6,opt,name=detailName,proto3" json:"detailName,omitempty"`
 }
 
 func (m *Experiment) Reset()                    { *m = Experiment{} }
 func (*Experiment) ProtoMessage()               {}
-func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{11} }
+func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{14} }
+
+func (m *Experiment) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Experiment) GetSegments() []byte {
+	if m != nil {
+		return m.Segments
+	}
+	return nil
+}
 
 func (m *Experiment) GetParams() []*Param {
 	if m != nil {
 		return m.Params
 	}
 	return nil
+}
+
+func (m *Experiment) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *Experiment) GetLabels() map[string]string {
+	if m != nil {
+		return m.Labels
+	}
+	return nil
+}
+
+func (m *Experiment) GetDetailName() string {
+	if m != nil {
+		return m.DetailName
+	}
+	return ""
 }
 
 // Param structure
@@ -268,13 +505,27 @@ type Param struct {
 
 func (m *Param) Reset()                    { *m = Param{} }
 func (*Param) ProtoMessage()               {}
-func (*Param) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{12} }
+func (*Param) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{15} }
+
+func (m *Param) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
 
 func (m *Param) GetValue() *Value {
 	if m != nil {
 		return m.Value
 	}
 	return nil
+}
+
+func (m *Param) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
 }
 
 // Value structure
@@ -285,9 +536,26 @@ type Value struct {
 
 func (m *Value) Reset()                    { *m = Value{} }
 func (*Value) ProtoMessage()               {}
-func (*Value) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{13} }
+func (*Value) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{16} }
+
+func (m *Value) GetChoices() []string {
+	if m != nil {
+		return m.Choices
+	}
+	return nil
+}
+
+func (m *Value) GetWeights() []float64 {
+	if m != nil {
+		return m.Weights
+	}
+	return nil
+}
 
 func init() {
+	proto.RegisterType((*ExperimentIntakeRequest)(nil), "ExperimentIntakeRequest")
+	proto.RegisterType((*ExperimentIntakeReply)(nil), "ExperimentIntakeReply")
+	proto.RegisterType((*ExperimentMetadata)(nil), "ExperimentMetadata")
 	proto.RegisterType((*AllRequest)(nil), "AllRequest")
 	proto.RegisterType((*AllReply)(nil), "AllReply")
 	proto.RegisterType((*CreateRequest)(nil), "CreateRequest")
@@ -310,6 +578,132 @@ func (x Environment) String() string {
 		return s
 	}
 	return strconv.Itoa(int(x))
+}
+func (this *ExperimentIntakeRequest) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*ExperimentIntakeRequest)
+	if !ok {
+		that2, ok := that.(ExperimentIntakeRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Metadata.Equal(that1.Metadata) {
+		return false
+	}
+	if !this.Namespace.Equal(that1.Namespace) {
+		return false
+	}
+	return true
+}
+func (this *ExperimentIntakeReply) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*ExperimentIntakeReply)
+	if !ok {
+		that2, ok := that.(ExperimentIntakeReply)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	return true
+}
+func (this *ExperimentMetadata) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*ExperimentMetadata)
+	if !ok {
+		that2, ok := that.(ExperimentMetadata)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.UserID != that1.UserID {
+		return false
+	}
+	if this.ProgramManagerID != that1.ProgramManagerID {
+		return false
+	}
+	if this.ProductManagerID != that1.ProductManagerID {
+		return false
+	}
+	if this.Hypothesis != that1.Hypothesis {
+		return false
+	}
+	if this.Kpi != that1.Kpi {
+		return false
+	}
+	if this.TimeBound != that1.TimeBound {
+		return false
+	}
+	if this.PlannedStartTime != that1.PlannedStartTime {
+		return false
+	}
+	if this.PlannedEndTime != that1.PlannedEndTime {
+		return false
+	}
+	if this.ActualStartTime != that1.ActualStartTime {
+		return false
+	}
+	if this.ActualEndTime != that1.ActualEndTime {
+		return false
+	}
+	if this.ActionPlanNegative != that1.ActionPlanNegative {
+		return false
+	}
+	if this.ActionPlanNeutral != that1.ActionPlanNeutral {
+		return false
+	}
+	if this.ExperimentType != that1.ExperimentType {
+		return false
+	}
+	return true
 }
 func (this *AllRequest) Equal(that interface{}) bool {
 	if that == nil {
@@ -656,14 +1050,6 @@ func (this *Namespace) Equal(that interface{}) bool {
 	if this.Name != that1.Name {
 		return false
 	}
-	if len(this.Labels) != len(that1.Labels) {
-		return false
-	}
-	for i := range this.Labels {
-		if this.Labels[i] != that1.Labels[i] {
-			return false
-		}
-	}
 	if len(this.Experiments) != len(that1.Experiments) {
 		return false
 	}
@@ -714,6 +1100,17 @@ func (this *Experiment) Equal(that interface{}) bool {
 		}
 	}
 	if this.Id != that1.Id {
+		return false
+	}
+	if len(this.Labels) != len(that1.Labels) {
+		return false
+	}
+	for i := range this.Labels {
+		if this.Labels[i] != that1.Labels[i] {
+			return false
+		}
+	}
+	if this.DetailName != that1.DetailName {
 		return false
 	}
 	return true
@@ -796,6 +1193,52 @@ func (this *Value) Equal(that interface{}) bool {
 		}
 	}
 	return true
+}
+func (this *ExperimentIntakeRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 6)
+	s = append(s, "&storage.ExperimentIntakeRequest{")
+	if this.Metadata != nil {
+		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
+	}
+	if this.Namespace != nil {
+		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *ExperimentIntakeReply) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 4)
+	s = append(s, "&storage.ExperimentIntakeReply{")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *ExperimentMetadata) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 17)
+	s = append(s, "&storage.ExperimentMetadata{")
+	s = append(s, "UserID: "+fmt.Sprintf("%#v", this.UserID)+",\n")
+	s = append(s, "ProgramManagerID: "+fmt.Sprintf("%#v", this.ProgramManagerID)+",\n")
+	s = append(s, "ProductManagerID: "+fmt.Sprintf("%#v", this.ProductManagerID)+",\n")
+	s = append(s, "Hypothesis: "+fmt.Sprintf("%#v", this.Hypothesis)+",\n")
+	s = append(s, "Kpi: "+fmt.Sprintf("%#v", this.Kpi)+",\n")
+	s = append(s, "TimeBound: "+fmt.Sprintf("%#v", this.TimeBound)+",\n")
+	s = append(s, "PlannedStartTime: "+fmt.Sprintf("%#v", this.PlannedStartTime)+",\n")
+	s = append(s, "PlannedEndTime: "+fmt.Sprintf("%#v", this.PlannedEndTime)+",\n")
+	s = append(s, "ActualStartTime: "+fmt.Sprintf("%#v", this.ActualStartTime)+",\n")
+	s = append(s, "ActualEndTime: "+fmt.Sprintf("%#v", this.ActualEndTime)+",\n")
+	s = append(s, "ActionPlanNegative: "+fmt.Sprintf("%#v", this.ActionPlanNegative)+",\n")
+	s = append(s, "ActionPlanNeutral: "+fmt.Sprintf("%#v", this.ActionPlanNeutral)+",\n")
+	s = append(s, "ExperimentType: "+fmt.Sprintf("%#v", this.ExperimentType)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
 }
 func (this *AllRequest) GoString() string {
 	if this == nil {
@@ -919,10 +1362,9 @@ func (this *Namespace) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 7)
+	s := make([]string, 0, 6)
 	s = append(s, "&storage.Namespace{")
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
-	s = append(s, "Labels: "+fmt.Sprintf("%#v", this.Labels)+",\n")
 	if this.Experiments != nil {
 		s = append(s, "Experiments: "+fmt.Sprintf("%#v", this.Experiments)+",\n")
 	}
@@ -933,7 +1375,7 @@ func (this *Experiment) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 8)
+	s := make([]string, 0, 10)
 	s = append(s, "&storage.Experiment{")
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
 	s = append(s, "Segments: "+fmt.Sprintf("%#v", this.Segments)+",\n")
@@ -941,6 +1383,20 @@ func (this *Experiment) GoString() string {
 		s = append(s, "Params: "+fmt.Sprintf("%#v", this.Params)+",\n")
 	}
 	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	keysForLabels := make([]string, 0, len(this.Labels))
+	for k, _ := range this.Labels {
+		keysForLabels = append(keysForLabels, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
+	mapStringForLabels := "map[string]string{"
+	for _, k := range keysForLabels {
+		mapStringForLabels += fmt.Sprintf("%#v: %#v,", k, this.Labels[k])
+	}
+	mapStringForLabels += "}"
+	if this.Labels != nil {
+		s = append(s, "Labels: "+mapStringForLabels+",\n")
+	}
+	s = append(s, "DetailName: "+fmt.Sprintf("%#v", this.DetailName)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -977,24 +1433,6 @@ func valueToGoStringStorage(v interface{}, typ string) string {
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func extensionToGoStringStorage(m github_com_gogo_protobuf_proto.Message) string {
-	e := github_com_gogo_protobuf_proto.GetUnsafeExtensionsMap(m)
-	if e == nil {
-		return "nil"
-	}
-	s := "proto.NewUnsafeXXX_InternalExtensions(map[int32]proto.Extension{"
-	keys := make([]int, 0, len(e))
-	for k := range e {
-		keys = append(keys, int(k))
-	}
-	sort.Ints(keys)
-	ss := []string{}
-	for _, k := range keys {
-		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
-	}
-	s += strings.Join(ss, ",") + "})"
-	return s
-}
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
@@ -1019,6 +1457,9 @@ type ElwinStorageClient interface {
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateReply, error)
 	// Delete deletes the namespace from the given environment.
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
+	// ExperimentIntake takes a request from a web form and creates the
+	// experiment in the data store.
+	ExperimentIntake(ctx context.Context, in *ExperimentIntakeRequest, opts ...grpc.CallOption) (*ExperimentIntakeReply, error)
 }
 
 type elwinStorageClient struct {
@@ -1074,6 +1515,15 @@ func (c *elwinStorageClient) Delete(ctx context.Context, in *DeleteRequest, opts
 	return out, nil
 }
 
+func (c *elwinStorageClient) ExperimentIntake(ctx context.Context, in *ExperimentIntakeRequest, opts ...grpc.CallOption) (*ExperimentIntakeReply, error) {
+	out := new(ExperimentIntakeReply)
+	err := grpc.Invoke(ctx, "/ElwinStorage/ExperimentIntake", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for ElwinStorage service
 
 type ElwinStorageServer interface {
@@ -1089,6 +1539,9 @@ type ElwinStorageServer interface {
 	Update(context.Context, *UpdateRequest) (*UpdateReply, error)
 	// Delete deletes the namespace from the given environment.
 	Delete(context.Context, *DeleteRequest) (*DeleteReply, error)
+	// ExperimentIntake takes a request from a web form and creates the
+	// experiment in the data store.
+	ExperimentIntake(context.Context, *ExperimentIntakeRequest) (*ExperimentIntakeReply, error)
 }
 
 func RegisterElwinStorageServer(s *grpc.Server, srv ElwinStorageServer) {
@@ -1185,6 +1638,24 @@ func _ElwinStorage_Delete_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ElwinStorage_ExperimentIntake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExperimentIntakeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ElwinStorageServer).ExperimentIntake(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ElwinStorage/ExperimentIntake",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ElwinStorageServer).ExperimentIntake(ctx, req.(*ExperimentIntakeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _ElwinStorage_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "ElwinStorage",
 	HandlerType: (*ElwinStorageServer)(nil),
@@ -1209,9 +1680,169 @@ var _ElwinStorage_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Delete",
 			Handler:    _ElwinStorage_Delete_Handler,
 		},
+		{
+			MethodName: "ExperimentIntake",
+			Handler:    _ElwinStorage_ExperimentIntake_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "storage.proto",
+}
+
+func (m *ExperimentIntakeRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ExperimentIntakeRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Metadata != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(m.Metadata.Size()))
+		n1, err := m.Metadata.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n1
+	}
+	if m.Namespace != nil {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
+		n2, err := m.Namespace.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n2
+	}
+	return i, nil
+}
+
+func (m *ExperimentIntakeReply) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ExperimentIntakeReply) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	return i, nil
+}
+
+func (m *ExperimentMetadata) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ExperimentMetadata) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.UserID) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.UserID)))
+		i += copy(dAtA[i:], m.UserID)
+	}
+	if len(m.ProgramManagerID) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.ProgramManagerID)))
+		i += copy(dAtA[i:], m.ProgramManagerID)
+	}
+	if len(m.ProductManagerID) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.ProductManagerID)))
+		i += copy(dAtA[i:], m.ProductManagerID)
+	}
+	if len(m.Hypothesis) > 0 {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Hypothesis)))
+		i += copy(dAtA[i:], m.Hypothesis)
+	}
+	if len(m.Kpi) > 0 {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Kpi)))
+		i += copy(dAtA[i:], m.Kpi)
+	}
+	if m.TimeBound {
+		dAtA[i] = 0x30
+		i++
+		if m.TimeBound {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
+	}
+	if len(m.PlannedStartTime) > 0 {
+		dAtA[i] = 0x3a
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.PlannedStartTime)))
+		i += copy(dAtA[i:], m.PlannedStartTime)
+	}
+	if len(m.PlannedEndTime) > 0 {
+		dAtA[i] = 0x42
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.PlannedEndTime)))
+		i += copy(dAtA[i:], m.PlannedEndTime)
+	}
+	if len(m.ActualStartTime) > 0 {
+		dAtA[i] = 0x4a
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActualStartTime)))
+		i += copy(dAtA[i:], m.ActualStartTime)
+	}
+	if len(m.ActualEndTime) > 0 {
+		dAtA[i] = 0x52
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActualEndTime)))
+		i += copy(dAtA[i:], m.ActualEndTime)
+	}
+	if len(m.ActionPlanNegative) > 0 {
+		dAtA[i] = 0x5a
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActionPlanNegative)))
+		i += copy(dAtA[i:], m.ActionPlanNegative)
+	}
+	if len(m.ActionPlanNeutral) > 0 {
+		dAtA[i] = 0x62
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActionPlanNeutral)))
+		i += copy(dAtA[i:], m.ActionPlanNeutral)
+	}
+	if len(m.ExperimentType) > 0 {
+		dAtA[i] = 0x6a
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.ExperimentType)))
+		i += copy(dAtA[i:], m.ExperimentType)
+	}
+	return i, nil
 }
 
 func (m *AllRequest) Marshal() (dAtA []byte, err error) {
@@ -1286,11 +1917,11 @@ func (m *CreateRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n1, err := m.Namespace.MarshalTo(dAtA[i:])
+		n3, err := m.Namespace.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n1
+		i += n3
 	}
 	if m.Environment != 0 {
 		dAtA[i] = 0x10
@@ -1319,11 +1950,11 @@ func (m *CreateReply) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n2, err := m.Namespace.MarshalTo(dAtA[i:])
+		n4, err := m.Namespace.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n2
+		i += n4
 	}
 	return i, nil
 }
@@ -1376,11 +2007,11 @@ func (m *ReadReply) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n3, err := m.Namespace.MarshalTo(dAtA[i:])
+		n5, err := m.Namespace.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n3
+		i += n5
 	}
 	return i, nil
 }
@@ -1404,11 +2035,11 @@ func (m *UpdateRequest) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n4, err := m.Namespace.MarshalTo(dAtA[i:])
+		n6, err := m.Namespace.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n4
+		i += n6
 	}
 	if m.Environment != 0 {
 		dAtA[i] = 0x10
@@ -1437,11 +2068,11 @@ func (m *UpdateReply) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n5, err := m.Namespace.MarshalTo(dAtA[i:])
+		n7, err := m.Namespace.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n5
+		i += n7
 	}
 	return i, nil
 }
@@ -1494,11 +2125,11 @@ func (m *DeleteReply) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n6, err := m.Namespace.MarshalTo(dAtA[i:])
+		n8, err := m.Namespace.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n6
+		i += n8
 	}
 	return i, nil
 }
@@ -1523,21 +2154,6 @@ func (m *Namespace) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(len(m.Name)))
 		i += copy(dAtA[i:], m.Name)
-	}
-	if len(m.Labels) > 0 {
-		for _, s := range m.Labels {
-			dAtA[i] = 0x12
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
 	}
 	if len(m.Experiments) > 0 {
 		for _, msg := range m.Experiments {
@@ -1599,6 +2215,29 @@ func (m *Experiment) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintStorage(dAtA, i, uint64(len(m.Id)))
 		i += copy(dAtA[i:], m.Id)
 	}
+	if len(m.Labels) > 0 {
+		for k, _ := range m.Labels {
+			dAtA[i] = 0x2a
+			i++
+			v := m.Labels[k]
+			mapSize := 1 + len(k) + sovStorage(uint64(len(k))) + 1 + len(v) + sovStorage(uint64(len(v)))
+			i = encodeVarintStorage(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintStorage(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintStorage(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if len(m.DetailName) > 0 {
+		dAtA[i] = 0x32
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.DetailName)))
+		i += copy(dAtA[i:], m.DetailName)
+	}
 	return i, nil
 }
 
@@ -1627,11 +2266,11 @@ func (m *Param) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Value.Size()))
-		n7, err := m.Value.MarshalTo(dAtA[i:])
+		n9, err := m.Value.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n7
+		i += n9
 	}
 	if len(m.Id) > 0 {
 		dAtA[i] = 0x22
@@ -1677,22 +2316,22 @@ func (m *Value) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(len(m.Weights)*8))
 		for _, num := range m.Weights {
-			f8 := math.Float64bits(float64(num))
-			dAtA[i] = uint8(f8)
+			f10 := math.Float64bits(float64(num))
+			dAtA[i] = uint8(f10)
 			i++
-			dAtA[i] = uint8(f8 >> 8)
+			dAtA[i] = uint8(f10 >> 8)
 			i++
-			dAtA[i] = uint8(f8 >> 16)
+			dAtA[i] = uint8(f10 >> 16)
 			i++
-			dAtA[i] = uint8(f8 >> 24)
+			dAtA[i] = uint8(f10 >> 24)
 			i++
-			dAtA[i] = uint8(f8 >> 32)
+			dAtA[i] = uint8(f10 >> 32)
 			i++
-			dAtA[i] = uint8(f8 >> 40)
+			dAtA[i] = uint8(f10 >> 40)
 			i++
-			dAtA[i] = uint8(f8 >> 48)
+			dAtA[i] = uint8(f10 >> 48)
 			i++
-			dAtA[i] = uint8(f8 >> 56)
+			dAtA[i] = uint8(f10 >> 56)
 			i++
 		}
 	}
@@ -1726,6 +2365,83 @@ func encodeVarintStorage(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
+func (m *ExperimentIntakeRequest) Size() (n int) {
+	var l int
+	_ = l
+	if m.Metadata != nil {
+		l = m.Metadata.Size()
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	if m.Namespace != nil {
+		l = m.Namespace.Size()
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
+func (m *ExperimentIntakeReply) Size() (n int) {
+	var l int
+	_ = l
+	return n
+}
+
+func (m *ExperimentMetadata) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.UserID)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.ProgramManagerID)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.ProductManagerID)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.Hypothesis)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.Kpi)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	if m.TimeBound {
+		n += 2
+	}
+	l = len(m.PlannedStartTime)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.PlannedEndTime)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.ActualStartTime)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.ActualEndTime)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.ActionPlanNegative)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.ActionPlanNeutral)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	l = len(m.ExperimentType)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
 func (m *AllRequest) Size() (n int) {
 	var l int
 	_ = l
@@ -1846,12 +2562,6 @@ func (m *Namespace) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovStorage(uint64(l))
 	}
-	if len(m.Labels) > 0 {
-		for _, s := range m.Labels {
-			l = len(s)
-			n += 1 + l + sovStorage(uint64(l))
-		}
-	}
 	if len(m.Experiments) > 0 {
 		for _, e := range m.Experiments {
 			l = e.Size()
@@ -1879,6 +2589,18 @@ func (m *Experiment) Size() (n int) {
 		}
 	}
 	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	if len(m.Labels) > 0 {
+		for k, v := range m.Labels {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovStorage(uint64(len(k))) + 1 + len(v) + sovStorage(uint64(len(v)))
+			n += mapEntrySize + 1 + sovStorage(uint64(mapEntrySize))
+		}
+	}
+	l = len(m.DetailName)
 	if l > 0 {
 		n += 1 + l + sovStorage(uint64(l))
 	}
@@ -1930,6 +2652,48 @@ func sovStorage(x uint64) (n int) {
 }
 func sozStorage(x uint64) (n int) {
 	return sovStorage(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (this *ExperimentIntakeRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ExperimentIntakeRequest{`,
+		`Metadata:` + strings.Replace(fmt.Sprintf("%v", this.Metadata), "ExperimentMetadata", "ExperimentMetadata", 1) + `,`,
+		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ExperimentIntakeReply) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ExperimentIntakeReply{`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ExperimentMetadata) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ExperimentMetadata{`,
+		`UserID:` + fmt.Sprintf("%v", this.UserID) + `,`,
+		`ProgramManagerID:` + fmt.Sprintf("%v", this.ProgramManagerID) + `,`,
+		`ProductManagerID:` + fmt.Sprintf("%v", this.ProductManagerID) + `,`,
+		`Hypothesis:` + fmt.Sprintf("%v", this.Hypothesis) + `,`,
+		`Kpi:` + fmt.Sprintf("%v", this.Kpi) + `,`,
+		`TimeBound:` + fmt.Sprintf("%v", this.TimeBound) + `,`,
+		`PlannedStartTime:` + fmt.Sprintf("%v", this.PlannedStartTime) + `,`,
+		`PlannedEndTime:` + fmt.Sprintf("%v", this.PlannedEndTime) + `,`,
+		`ActualStartTime:` + fmt.Sprintf("%v", this.ActualStartTime) + `,`,
+		`ActualEndTime:` + fmt.Sprintf("%v", this.ActualEndTime) + `,`,
+		`ActionPlanNegative:` + fmt.Sprintf("%v", this.ActionPlanNegative) + `,`,
+		`ActionPlanNeutral:` + fmt.Sprintf("%v", this.ActionPlanNeutral) + `,`,
+		`ExperimentType:` + fmt.Sprintf("%v", this.ExperimentType) + `,`,
+		`}`,
+	}, "")
+	return s
 }
 func (this *AllRequest) String() string {
 	if this == nil {
@@ -2041,7 +2805,6 @@ func (this *Namespace) String() string {
 	}
 	s := strings.Join([]string{`&Namespace{`,
 		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
-		`Labels:` + fmt.Sprintf("%v", this.Labels) + `,`,
 		`Experiments:` + strings.Replace(fmt.Sprintf("%v", this.Experiments), "Experiment", "Experiment", 1) + `,`,
 		`}`,
 	}, "")
@@ -2051,11 +2814,23 @@ func (this *Experiment) String() string {
 	if this == nil {
 		return "nil"
 	}
+	keysForLabels := make([]string, 0, len(this.Labels))
+	for k, _ := range this.Labels {
+		keysForLabels = append(keysForLabels, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
+	mapStringForLabels := "map[string]string{"
+	for _, k := range keysForLabels {
+		mapStringForLabels += fmt.Sprintf("%v: %v,", k, this.Labels[k])
+	}
+	mapStringForLabels += "}"
 	s := strings.Join([]string{`&Experiment{`,
 		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
 		`Segments:` + fmt.Sprintf("%v", this.Segments) + `,`,
 		`Params:` + strings.Replace(fmt.Sprintf("%v", this.Params), "Param", "Param", 1) + `,`,
 		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`Labels:` + mapStringForLabels + `,`,
+		`DetailName:` + fmt.Sprintf("%v", this.DetailName) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2090,6 +2865,590 @@ func valueToStringStorage(v interface{}) string {
 	}
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("*%v", pv)
+}
+func (m *ExperimentIntakeRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ExperimentIntakeRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ExperimentIntakeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Metadata == nil {
+				m.Metadata = &ExperimentMetadata{}
+			}
+			if err := m.Metadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Namespace == nil {
+				m.Namespace = &Namespace{}
+			}
+			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ExperimentIntakeReply) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ExperimentIntakeReply: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ExperimentIntakeReply: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ExperimentMetadata) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ExperimentMetadata: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ExperimentMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UserID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UserID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProgramManagerID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ProgramManagerID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProductManagerID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ProductManagerID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hypothesis", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hypothesis = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Kpi", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Kpi = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TimeBound", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.TimeBound = bool(v != 0)
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PlannedStartTime", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PlannedStartTime = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PlannedEndTime", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PlannedEndTime = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActualStartTime", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ActualStartTime = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActualEndTime", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ActualEndTime = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActionPlanNegative", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ActionPlanNegative = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActionPlanNeutral", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ActionPlanNeutral = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 13:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExperimentType", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ExperimentType = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *AllRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -3031,35 +4390,6 @@ func (m *Namespace) Unmarshal(dAtA []byte) error {
 			}
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Labels", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Labels = append(m.Labels, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Experiments", wireType)
@@ -3260,6 +4590,151 @@ func (m *Experiment) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Labels", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var keykey uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				keykey |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			var stringLenmapkey uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLenmapkey |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLenmapkey := int(stringLenmapkey)
+			if intStringLenmapkey < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postStringIndexmapkey := iNdEx + intStringLenmapkey
+			if postStringIndexmapkey > l {
+				return io.ErrUnexpectedEOF
+			}
+			mapkey := string(dAtA[iNdEx:postStringIndexmapkey])
+			iNdEx = postStringIndexmapkey
+			if m.Labels == nil {
+				m.Labels = make(map[string]string)
+			}
+			if iNdEx < postIndex {
+				var valuekey uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowStorage
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					valuekey |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				var stringLenmapvalue uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowStorage
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLenmapvalue |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLenmapvalue := int(stringLenmapvalue)
+				if intStringLenmapvalue < 0 {
+					return ErrInvalidLengthStorage
+				}
+				postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+				if postStringIndexmapvalue > l {
+					return io.ErrUnexpectedEOF
+				}
+				mapvalue := string(dAtA[iNdEx:postStringIndexmapvalue])
+				iNdEx = postStringIndexmapvalue
+				m.Labels[mapkey] = mapvalue
+			} else {
+				var mapvalue string
+				m.Labels[mapkey] = mapvalue
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DetailName", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DetailName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3482,7 +4957,23 @@ func (m *Value) Unmarshal(dAtA []byte) error {
 			m.Choices = append(m.Choices, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 2:
-			if wireType == 2 {
+			if wireType == 1 {
+				var v uint64
+				if (iNdEx + 8) > l {
+					return io.ErrUnexpectedEOF
+				}
+				iNdEx += 8
+				v = uint64(dAtA[iNdEx-8])
+				v |= uint64(dAtA[iNdEx-7]) << 8
+				v |= uint64(dAtA[iNdEx-6]) << 16
+				v |= uint64(dAtA[iNdEx-5]) << 24
+				v |= uint64(dAtA[iNdEx-4]) << 32
+				v |= uint64(dAtA[iNdEx-3]) << 40
+				v |= uint64(dAtA[iNdEx-2]) << 48
+				v |= uint64(dAtA[iNdEx-1]) << 56
+				v2 := float64(math.Float64frombits(v))
+				m.Weights = append(m.Weights, v2)
+			} else if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -3522,22 +5013,6 @@ func (m *Value) Unmarshal(dAtA []byte) error {
 					v2 := float64(math.Float64frombits(v))
 					m.Weights = append(m.Weights, v2)
 				}
-			} else if wireType == 1 {
-				var v uint64
-				if (iNdEx + 8) > l {
-					return io.ErrUnexpectedEOF
-				}
-				iNdEx += 8
-				v = uint64(dAtA[iNdEx-8])
-				v |= uint64(dAtA[iNdEx-7]) << 8
-				v |= uint64(dAtA[iNdEx-6]) << 16
-				v |= uint64(dAtA[iNdEx-5]) << 24
-				v |= uint64(dAtA[iNdEx-4]) << 32
-				v |= uint64(dAtA[iNdEx-3]) << 40
-				v |= uint64(dAtA[iNdEx-2]) << 48
-				v |= uint64(dAtA[iNdEx-1]) << 56
-				v2 := float64(math.Float64frombits(v))
-				m.Weights = append(m.Weights, v2)
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field Weights", wireType)
 			}
@@ -3670,44 +5145,65 @@ var (
 func init() { proto.RegisterFile("storage.proto", fileDescriptorStorage) }
 
 var fileDescriptorStorage = []byte{
-	// 619 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x54, 0xc1, 0x6e, 0xd3, 0x4a,
-	0x14, 0xcd, 0x24, 0x6d, 0x5a, 0x5f, 0x3b, 0x56, 0xdf, 0x3c, 0xa9, 0x18, 0xab, 0xb2, 0xaa, 0x59,
-	0x45, 0x11, 0x4c, 0x45, 0x51, 0xa9, 0x28, 0x6c, 0x0a, 0x74, 0xc1, 0x06, 0x95, 0xa9, 0x60, 0x3f,
-	0x8d, 0x07, 0x77, 0xa4, 0xa9, 0x6d, 0x6c, 0xa7, 0x85, 0x1d, 0xe2, 0x0b, 0x90, 0xf8, 0x09, 0x3e,
-	0x05, 0x76, 0x95, 0xd8, 0xb0, 0xa4, 0x86, 0x05, 0xcb, 0x7e, 0x02, 0xf2, 0x38, 0x93, 0x38, 0xb4,
-	0x12, 0x44, 0x42, 0xec, 0x72, 0xef, 0x99, 0x7b, 0xce, 0xc9, 0x78, 0xce, 0x85, 0x5e, 0x5e, 0x24,
-	0x19, 0x8f, 0x04, 0x4d, 0xb3, 0xa4, 0x48, 0xfc, 0xb5, 0x28, 0x49, 0x22, 0x25, 0x36, 0x78, 0x2a,
-	0x37, 0x78, 0x1c, 0x27, 0x05, 0x2f, 0x64, 0x12, 0xe7, 0x35, 0x4a, 0xee, 0x03, 0xec, 0x2a, 0xc5,
-	0xc4, 0xcb, 0x91, 0xc8, 0x0b, 0x4c, 0xc1, 0x16, 0xf1, 0x89, 0xcc, 0x92, 0xf8, 0x58, 0xc4, 0x85,
-	0x87, 0xd6, 0x51, 0xdf, 0xdd, 0x74, 0xe8, 0xde, 0xb4, 0xc7, 0x9a, 0x07, 0xc8, 0x1d, 0x58, 0xd6,
-	0xd3, 0xa9, 0x7a, 0x8d, 0x07, 0x00, 0x31, 0x3f, 0x16, 0x79, 0xca, 0x87, 0x22, 0xf7, 0xd0, 0x7a,
-	0xa7, 0x6f, 0x6f, 0x02, 0x7d, 0x62, 0x5a, 0xac, 0x81, 0x12, 0x09, 0xbd, 0x87, 0x99, 0xe0, 0x85,
-	0x30, 0xc2, 0x7d, 0xb0, 0x26, 0xb0, 0x96, 0x9d, 0x9d, 0x9d, 0x82, 0xbf, 0x5a, 0x6c, 0xff, 0xce,
-	0xe2, 0x36, 0xd8, 0x46, 0xaa, 0x72, 0xf9, 0xc7, 0x42, 0xe4, 0x29, 0xd8, 0x4c, 0xf0, 0xd0, 0x38,
-	0xc4, 0xb0, 0x50, 0x61, 0x7a, 0xc6, 0x62, 0xfa, 0xf7, 0xdc, 0x5e, 0xb6, 0xc0, 0xaa, 0x29, 0xe7,
-	0x73, 0x22, 0xa1, 0xf7, 0x2c, 0x0d, 0xff, 0xd5, 0x6d, 0x19, 0xa9, 0xf9, 0x3c, 0x1e, 0x40, 0xef,
-	0x91, 0x50, 0x62, 0xea, 0xf1, 0x6f, 0xdc, 0xd7, 0x36, 0xd8, 0x86, 0x74, 0x3e, 0x37, 0x2f, 0xc0,
-	0x9a, 0xf4, 0xaf, 0x74, 0xb2, 0x0a, 0x5d, 0xc5, 0x0f, 0x85, 0xca, 0xbd, 0xf6, 0x7a, 0xa7, 0x6f,
-	0xb1, 0x71, 0x85, 0x6f, 0x82, 0x2d, 0x5e, 0xa5, 0x22, 0x93, 0x95, 0x7e, 0xee, 0x75, 0xf4, 0x2b,
-	0xb6, 0xe9, 0xde, 0xa4, 0xc7, 0x9a, 0x38, 0x51, 0x00, 0x53, 0xe8, 0x4a, 0x21, 0x1f, 0x96, 0x73,
-	0x11, 0xd5, 0x6c, 0xd5, 0xff, 0x75, 0xd8, 0xa4, 0xc6, 0x01, 0x74, 0x53, 0x9e, 0xf1, 0x63, 0xa3,
-	0xd3, 0xa5, 0xfb, 0x55, 0xc9, 0xc6, 0x5d, 0xec, 0x42, 0x5b, 0x86, 0xde, 0x82, 0x66, 0x6b, 0xcb,
-	0x90, 0x3c, 0x86, 0x45, 0x7d, 0xe0, 0x4a, 0xa1, 0x35, 0x58, 0x3c, 0xe1, 0x6a, 0x24, 0xb4, 0x4a,
-	0xc5, 0xf5, 0xbc, 0xaa, 0x58, 0xdd, 0xbc, 0x44, 0x75, 0x0f, 0x16, 0x35, 0x8e, 0x3d, 0x58, 0x1a,
-	0x1e, 0x25, 0xd2, 0x44, 0xd6, 0x62, 0xa6, 0xac, 0x90, 0x53, 0x21, 0xa3, 0xa3, 0xa2, 0xbe, 0x23,
-	0xc4, 0x4c, 0x39, 0x18, 0x80, 0xdd, 0xf8, 0x64, 0xd8, 0x86, 0xa5, 0x83, 0x82, 0x47, 0x32, 0x8e,
-	0x56, 0x5a, 0xd8, 0x05, 0xd8, 0xcf, 0x92, 0x70, 0x34, 0xac, 0x96, 0xcc, 0x0a, 0xda, 0xfc, 0xd4,
-	0x06, 0x67, 0x4f, 0x9d, 0xca, 0xf8, 0xa0, 0x5e, 0x4a, 0x78, 0x0b, 0x3a, 0xbb, 0x4a, 0x61, 0x9b,
-	0x4e, 0xd7, 0x8e, 0x6f, 0x51, 0xb3, 0x45, 0xc8, 0xea, 0xdb, 0xcf, 0xdf, 0xdf, 0xb7, 0x57, 0x88,
-	0xad, 0xf7, 0xd5, 0xc9, 0xad, 0x0d, 0xae, 0xd4, 0x0e, 0x1a, 0xe0, 0x5d, 0xe8, 0xd6, 0x31, 0xc6,
-	0x2e, 0x9d, 0x59, 0x1d, 0xbe, 0x43, 0x1b, 0xf9, 0x26, 0xd7, 0xf5, 0xfc, 0xff, 0xc4, 0x35, 0xf3,
-	0x43, 0x0d, 0x56, 0x14, 0x77, 0x61, 0xa1, 0x4a, 0x1f, 0x76, 0x68, 0x23, 0xd7, 0x3e, 0xd0, 0x49,
-	0x24, 0xc9, 0x35, 0x3d, 0xfc, 0x1f, 0x71, 0xcc, 0x70, 0x26, 0x78, 0x38, 0x56, 0xaf, 0x63, 0x81,
-	0x5d, 0x3a, 0x13, 0x45, 0xdf, 0xa1, 0x8d, 0xbc, 0x5c, 0x56, 0x1f, 0x69, 0x70, 0x4c, 0x51, 0xbf,
-	0x65, 0xec, 0xd2, 0x99, 0xa4, 0xf8, 0x0e, 0x6d, 0x3c, 0xf2, 0xcb, 0x14, 0xa1, 0x06, 0x77, 0xd0,
-	0xe0, 0xc1, 0x8d, 0xb3, 0xf3, 0xa0, 0xf5, 0xe5, 0x3c, 0x68, 0x5d, 0x9c, 0x07, 0xe8, 0x4d, 0x19,
-	0xa0, 0x0f, 0x65, 0x80, 0x3e, 0x96, 0x01, 0x3a, 0x2b, 0x03, 0xf4, 0xb5, 0x0c, 0xd0, 0x8f, 0x32,
-	0x68, 0x5d, 0x94, 0x01, 0x7a, 0xf7, 0x2d, 0x68, 0x1d, 0x76, 0xf5, 0x82, 0xbf, 0xfd, 0x33, 0x00,
-	0x00, 0xff, 0xff, 0x7b, 0xe1, 0x36, 0x9e, 0x0f, 0x06, 0x00, 0x00,
+	// 949 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0x4d, 0x8f, 0xdb, 0x44,
+	0x18, 0xce, 0x24, 0x9b, 0x6c, 0xf2, 0xda, 0x09, 0xe9, 0x14, 0x76, 0x5d, 0x6b, 0x65, 0xad, 0xac,
+	0x0a, 0x45, 0x51, 0x3b, 0x11, 0x8b, 0x4a, 0xe9, 0xc2, 0x65, 0x4b, 0x73, 0x58, 0x89, 0xae, 0x16,
+	0x6f, 0xe1, 0x3e, 0x8d, 0x47, 0xde, 0xa1, 0x93, 0xb1, 0xb1, 0x27, 0x5b, 0x72, 0x43, 0xfc, 0x02,
+	0x24, 0xfe, 0x04, 0x7f, 0x80, 0xff, 0xc0, 0xb1, 0x12, 0x17, 0x8e, 0x6c, 0xe0, 0xc0, 0xb1, 0x47,
+	0x4e, 0x08, 0x79, 0x6c, 0xc7, 0xce, 0x07, 0x1f, 0x2b, 0x21, 0x6e, 0x9e, 0xe7, 0x79, 0xde, 0x2f,
+	0xfb, 0x7d, 0x5f, 0x0f, 0x74, 0x13, 0x15, 0xc6, 0x34, 0x60, 0x24, 0x8a, 0x43, 0x15, 0xda, 0x07,
+	0x41, 0x18, 0x06, 0x82, 0x8d, 0x68, 0xc4, 0x47, 0x54, 0xca, 0x50, 0x51, 0xc5, 0x43, 0x99, 0x64,
+	0xac, 0xab, 0x60, 0x7f, 0xfc, 0x65, 0xc4, 0x62, 0x3e, 0x65, 0x52, 0x9d, 0x4a, 0x45, 0x5f, 0x30,
+	0x8f, 0x7d, 0x31, 0x63, 0x89, 0xc2, 0x23, 0x68, 0x4f, 0x99, 0xa2, 0x3e, 0x55, 0xd4, 0x42, 0x87,
+	0x68, 0x60, 0x1c, 0xdd, 0x26, 0xa5, 0xf6, 0x69, 0x4e, 0x79, 0x4b, 0x11, 0x1e, 0x40, 0x47, 0xd2,
+	0x29, 0x4b, 0x22, 0x3a, 0x61, 0x56, 0x5d, 0x5b, 0x00, 0x39, 0x2b, 0x10, 0xaf, 0x24, 0xdd, 0x7d,
+	0x78, 0x6b, 0x33, 0x6a, 0x24, 0xe6, 0xee, 0x1f, 0x0d, 0xc0, 0x9b, 0x31, 0xf0, 0x1e, 0xb4, 0x66,
+	0x09, 0x8b, 0x4f, 0x9f, 0xe8, 0x44, 0x3a, 0x5e, 0x7e, 0xc2, 0x43, 0xe8, 0x47, 0x71, 0x18, 0xc4,
+	0x74, 0xfa, 0x94, 0x4a, 0x1a, 0x68, 0x45, 0x5d, 0x2b, 0x36, 0xf0, 0x5c, 0xeb, 0xcf, 0x26, 0xaa,
+	0xd4, 0x36, 0x96, 0xda, 0x15, 0x1c, 0x3b, 0x00, 0x97, 0xf3, 0x28, 0x54, 0x97, 0x2c, 0xe1, 0x89,
+	0xb5, 0xa3, 0x55, 0x15, 0x04, 0xf7, 0xa1, 0xf1, 0x22, 0xe2, 0x56, 0x53, 0x13, 0xe9, 0x23, 0x3e,
+	0x80, 0x8e, 0xe2, 0x53, 0xf6, 0x38, 0x9c, 0x49, 0xdf, 0x6a, 0x1d, 0xa2, 0x41, 0xdb, 0x2b, 0x01,
+	0x1d, 0x5b, 0x50, 0x29, 0x99, 0x7f, 0xa1, 0x68, 0xac, 0x9e, 0xf1, 0x29, 0xb3, 0x76, 0xf3, 0xd8,
+	0x6b, 0x38, 0x7e, 0x1b, 0x7a, 0x39, 0x36, 0x96, 0xbe, 0x56, 0xb6, 0xb5, 0x72, 0x0d, 0xc5, 0x03,
+	0x78, 0x83, 0x4e, 0xd4, 0x8c, 0x8a, 0xd2, 0x65, 0x47, 0x0b, 0xd7, 0x61, 0x7c, 0x17, 0xba, 0x19,
+	0x54, 0x38, 0x04, 0xad, 0x5b, 0x05, 0x31, 0x01, 0x4c, 0x27, 0x69, 0x6b, 0x9c, 0x0b, 0x2a, 0xcf,
+	0x58, 0x40, 0x15, 0xbf, 0x62, 0x96, 0xa1, 0xa5, 0x5b, 0x18, 0x7c, 0x0f, 0x6e, 0x55, 0xd1, 0x99,
+	0x8a, 0xa9, 0xb0, 0x4c, 0x2d, 0xdf, 0x24, 0xd2, 0xaa, 0xd8, 0xf2, 0xbb, 0x3e, 0x9b, 0x47, 0xcc,
+	0xea, 0x66, 0x55, 0xad, 0xa2, 0xee, 0x87, 0x00, 0x27, 0x42, 0x14, 0x2d, 0x48, 0xc0, 0x60, 0xf2,
+	0x8a, 0xc7, 0xa1, 0x4c, 0x05, 0xfa, 0xe3, 0xf7, 0x8e, 0x4c, 0x32, 0x2e, 0x31, 0xaf, 0x2a, 0x70,
+	0xdf, 0x83, 0xb6, 0xb6, 0x8e, 0xc4, 0x1c, 0x0f, 0x01, 0x96, 0x0d, 0x97, 0x58, 0xe8, 0xb0, 0xb1,
+	0xd6, 0x8e, 0x15, 0xd6, 0xe5, 0xd0, 0xfd, 0x28, 0x66, 0x54, 0x2d, 0x7b, 0x7f, 0xa5, 0x95, 0xd1,
+	0xdf, 0xb4, 0xf2, 0x7a, 0x8a, 0xf5, 0x7f, 0x4a, 0xf1, 0x21, 0x18, 0x45, 0xa8, 0x34, 0xcb, 0x7f,
+	0x1d, 0xc8, 0xfd, 0x04, 0x0c, 0x8f, 0x51, 0xbf, 0xc8, 0x10, 0xc3, 0x4e, 0xca, 0xe5, 0x03, 0xa1,
+	0x9f, 0x6f, 0x9c, 0xcb, 0x03, 0xe8, 0x64, 0x2e, 0x6f, 0x96, 0x09, 0x87, 0xee, 0xa7, 0x91, 0xff,
+	0x7f, 0xbd, 0xad, 0x22, 0xd4, 0xcd, 0x72, 0xbc, 0x80, 0xee, 0x13, 0x26, 0x58, 0x99, 0xe3, 0x7f,
+	0xf1, 0xbe, 0x1e, 0x82, 0x51, 0x38, 0xbd, 0x59, 0x36, 0x67, 0xd0, 0x59, 0xe2, 0x5b, 0x33, 0xb9,
+	0x0f, 0x46, 0x39, 0x08, 0x89, 0xd5, 0xd0, 0xdd, 0x6a, 0x54, 0xd6, 0xad, 0x57, 0xe5, 0xdd, 0xdf,
+	0x11, 0x40, 0xc9, 0x6d, 0xf5, 0x68, 0x43, 0x3b, 0x61, 0x41, 0xe6, 0x2e, 0x2d, 0xcc, 0xf4, 0x96,
+	0x67, 0xec, 0x40, 0x2b, 0xa2, 0x31, 0x9d, 0x16, 0x81, 0x5a, 0xe4, 0x3c, 0x3d, 0x7a, 0x39, 0x8a,
+	0x7b, 0x50, 0xe7, 0x7e, 0xbe, 0xf6, 0xea, 0xdc, 0xc7, 0x23, 0x68, 0x09, 0xfa, 0x9c, 0x89, 0xc4,
+	0x6a, 0x6a, 0xfd, 0x7e, 0x25, 0x31, 0xf2, 0xb1, 0x66, 0xc6, 0x52, 0xc5, 0x73, 0x2f, 0x97, 0xa5,
+	0xfb, 0xd3, 0x67, 0x8a, 0x72, 0x91, 0x56, 0xad, 0xd7, 0x61, 0xc7, 0xab, 0x20, 0xf6, 0x23, 0x30,
+	0x2a, 0x66, 0x7a, 0x9d, 0xb2, 0x79, 0x9e, 0x7e, 0xfa, 0x88, 0xdf, 0x84, 0xe6, 0x15, 0x15, 0x33,
+	0x96, 0x6f, 0xf3, 0xec, 0x70, 0x5c, 0x7f, 0x1f, 0xb9, 0xa7, 0xd0, 0xd4, 0xc9, 0x6e, 0x2d, 0xfa,
+	0xa0, 0x6a, 0x96, 0xd6, 0xf5, 0x59, 0x7a, 0xca, 0xcd, 0xd7, 0xcb, 0x72, 0x3f, 0x80, 0xa6, 0xe6,
+	0xb1, 0x05, 0xbb, 0x93, 0xcb, 0x90, 0x17, 0x7b, 0xa2, 0xe3, 0x15, 0xc7, 0x94, 0x79, 0xc9, 0x78,
+	0x70, 0xa9, 0x5f, 0x62, 0x63, 0x80, 0xbc, 0xe2, 0x38, 0x1c, 0x82, 0x51, 0xe9, 0x13, 0x6c, 0xc0,
+	0xee, 0x85, 0xa2, 0x01, 0x97, 0x41, 0xbf, 0x86, 0x7b, 0x00, 0xe7, 0xd9, 0x2f, 0x85, 0x87, 0xb2,
+	0x8f, 0x8e, 0xbe, 0x6f, 0x80, 0x39, 0x16, 0x2f, 0xb9, 0xbc, 0xc8, 0xfe, 0xcc, 0xf8, 0x01, 0x34,
+	0x4e, 0x84, 0xc0, 0x06, 0x29, 0x77, 0x9d, 0xdd, 0x21, 0xc5, 0xea, 0x72, 0xf7, 0xbe, 0xfe, 0xf1,
+	0xd7, 0x6f, 0xeb, 0x7d, 0xd7, 0xd0, 0x3f, 0xed, 0xab, 0x77, 0x46, 0x54, 0x88, 0x63, 0x34, 0xc4,
+	0x27, 0xd0, 0xca, 0x76, 0x07, 0xee, 0x91, 0x95, 0x7d, 0x65, 0x9b, 0xa4, 0xb2, 0x54, 0xdc, 0x3b,
+	0xda, 0xfe, 0xb6, 0xdb, 0x2b, 0xec, 0x27, 0x9a, 0x4c, 0x5d, 0x3c, 0x82, 0x9d, 0x74, 0xe4, 0xb1,
+	0x49, 0x2a, 0xcb, 0xc4, 0x06, 0xb2, 0xdc, 0x03, 0xee, 0xbe, 0x36, 0xbe, 0xe5, 0x9a, 0x85, 0x71,
+	0xcc, 0xa8, 0x9f, 0x47, 0xcf, 0x66, 0x11, 0xf7, 0xc8, 0xca, 0xfc, 0xdb, 0x26, 0xa9, 0x0c, 0xe9,
+	0x66, 0xf4, 0x99, 0x26, 0x73, 0x17, 0xd9, 0x00, 0xe1, 0x1e, 0x59, 0x19, 0x4f, 0xdb, 0x24, 0x95,
+	0xc9, 0xda, 0x74, 0xe1, 0x6b, 0x32, 0x75, 0xf1, 0x39, 0xf4, 0xd7, 0xaf, 0x0e, 0xd8, 0x22, 0x7f,
+	0x71, 0x87, 0xb1, 0xf7, 0xc8, 0xf6, 0x7b, 0xc6, 0x5d, 0x1d, 0xc0, 0x71, 0xef, 0x14, 0x01, 0xca,
+	0xe9, 0xba, 0xcf, 0xb5, 0xee, 0x18, 0x0d, 0x1f, 0xdf, 0x7b, 0x75, 0xed, 0xd4, 0x7e, 0xba, 0x76,
+	0x6a, 0xaf, 0xaf, 0x1d, 0xf4, 0xd5, 0xc2, 0x41, 0xdf, 0x2d, 0x1c, 0xf4, 0xc3, 0xc2, 0x41, 0xaf,
+	0x16, 0x0e, 0xfa, 0x79, 0xe1, 0xa0, 0xdf, 0x16, 0x4e, 0xed, 0xf5, 0xc2, 0x41, 0xdf, 0xfc, 0xe2,
+	0xd4, 0x9e, 0xb7, 0xf4, 0x8d, 0xea, 0xdd, 0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x11, 0x6c, 0xdc,
+	0x4a, 0x80, 0x09, 0x00, 0x00,
 }

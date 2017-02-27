@@ -16,6 +16,7 @@ package choices
 
 import (
 	"sync"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -39,16 +40,16 @@ var ErrBadStorageEnvironment = errors.New("bad storage environment")
 
 // WithStorageConfig is where you set the address and environment you'd like to
 // point. This is used as a ConfigOpt in NewChoices.
-func WithStorageConfig(addr string, env int) ConfigOpt {
+func WithStorageConfig(addr string, env int, updateInterval time.Duration) ConfigOpt {
 	return func(c *Config) error {
-		cc, err := grpc.Dial(addr, grpc.WithInsecure())
+		cc, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBackoffMaxDelay(updateInterval))
 		if err != nil {
 			return errors.Wrap(err, "could not dial storage service")
 		}
 		if env == StorageEnvironmentBad {
 			return ErrBadStorageEnvironment
 		}
-		c.Storage = newNamespaceStore(cc, env)
+		c.storage = newNamespaceStore(cc, env)
 		return nil
 	}
 }
@@ -56,10 +57,11 @@ func WithStorageConfig(addr string, env int) ConfigOpt {
 // namespaceStore is the in memory copy of the storage. el is the
 // storage.ElwinStorageClient used to get the data out of storage.
 type namespaceStore struct {
-	mu    sync.RWMutex
-	el    storage.ElwinStorageClient
-	env   int
-	cache []Namespace
+	mu            sync.RWMutex
+	el            storage.ElwinStorageClient
+	env           int
+	cache         []Namespace
+	failedUpdates int
 }
 
 // newNamespaceStore creates a new in memory store for the data and client to
@@ -117,7 +119,7 @@ func (n *namespaceStore) update() error {
 
 // FromNamespace converts a *storage.Namespace into a Namespace.
 func FromNamespace(s *storage.Namespace) (Namespace, error) {
-	ns := NewNamespace(s.Name, s.Labels)
+	ns := NewNamespace(s.Name)
 	for _, e := range s.Experiments {
 		err := ns.AddExperiment(FromExperiment(e))
 		if err != nil {
@@ -132,6 +134,7 @@ func FromExperiment(s *storage.Experiment) Experiment {
 	exp := Experiment{
 		Name:   s.Name,
 		Params: make([]Param, len(s.Params)),
+		Labels: s.Labels,
 	}
 	copy(exp.Segments[:], s.Segments[:16])
 
@@ -162,13 +165,14 @@ func FromParam(s *storage.Param) Param {
 }
 
 // TeamNamespaces filters the namespaces from storage based on teamID.
-func TeamNamespaces(s namespaceStore, teamID string) []Namespace {
+func TeamNamespaces(s *namespaceStore, teamID string) []Namespace {
 	allNamespaces := s.read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {
-		for _, t := range n.Labels {
-			if t == teamID {
+		for _, e := range n.Experiments {
+			if teamID == e.Labels["team"] {
 				teamNamespaces = append(teamNamespaces, n)
+				break
 			}
 		}
 	}
