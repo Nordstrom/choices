@@ -15,7 +15,7 @@ for your customers.
 endpoint.
 
 `http://dev.elwin.aws.cloud.nordstrom.net` is our current _dev_
-endpoint.
+endpoint. This is in the 
 
 We are in the process of migrating to a supported Kubernetes cluster.
 When that migration occurs we will update our _prod_ endpoint to
@@ -36,6 +36,13 @@ it will prefer them in the order specified before.
 The user id is specified in the param `userid`. In most cases this
 should be the `ExperimentID` from the `experiments` cookie on web
 requests.
+
+A request for experiments that are labeled with `ato` for the userid
+`andrew` would look like the following.
+
+```
+http://dev.elwin.aws.cloud.nordstrom.net/?label=ato&userid=andrew
+```
 
 ## Elwin response
 
