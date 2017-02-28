@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -148,9 +149,9 @@ func main() {
 // TableData container for data to be output.
 type TableData struct {
 	Name        string
-	Labels      string
 	Experiments []struct {
 		Name   string
+		Labels string
 		Params []struct {
 			Name   string
 			Values string
@@ -169,10 +170,10 @@ func namespaceToTableData(ns []*storage.Namespace) []TableData {
 	tableData := make([]TableData, len(ns))
 	for i, v := range ns {
 		tableData[i].Name = v.Name
-		tableData[i].Labels = strings.Join(v.Labels, ", ")
 		experiments := make(
 			[]struct {
 				Name   string
+				Labels string
 				Params []struct {
 					Name   string
 					Values string
@@ -181,6 +182,7 @@ func namespaceToTableData(ns []*storage.Namespace) []TableData {
 		tableData[i].Experiments = experiments
 		for j, e := range v.Experiments {
 			tableData[i].Experiments[j].Name = e.Name
+			tableData[i].Experiments[j].Labels = mustString(json.Marshal(e.Labels))
 			params := make(
 				[]struct {
 					Name   string
@@ -194,6 +196,13 @@ func namespaceToTableData(ns []*storage.Namespace) []TableData {
 		}
 	}
 	return tableData
+}
+
+func mustString(b []byte, err error) string {
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(b)
 }
 
 func incErrMetrics(err error, labels prometheus.Labels) {
@@ -276,7 +285,7 @@ const rootTmpl = `<!doctype html>
 {{range $exp := .Experiments}}
 <tr>
 	<th>{{$ns.Name}}</th>
-	<th>{{$ns.Labels}}</th>
+	<th>{{$exp.Labels}}</th>
 	<th>{{$exp.Name}}</th>
 	<th>{{range .Params}}<strong>{{.Name}}</strong>: ({{.Values}})<br/>{{end}}</th>
 	<th><a href="/delete?namespace={{$ns.Name}}&experiment={{$exp.Name}}&environment=staging">Delete</a></th>
@@ -302,7 +311,7 @@ const rootTmpl = `<!doctype html>
 {{range $exp := .Experiments}}
 <tr>
 	<th>{{$ns.Name}}</th>
-	<th>{{$ns.Labels}}</th>
+	<th>{{$exp.Labels}}</th>
 	<th>{{$exp.Name}}</th>
 	<th>{{range .Params}}<strong>{{.Name}}</strong>: ({{.Values}})<br/>{{end}}</th>
 	<th><a href="/delete?namespace={{$ns.Name}}&experiment={{$exp.Name}}&environment=production">Delete</a></th>
@@ -362,7 +371,7 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 		switch grpc.Code(err) {
 		case codes.NotFound:
 			log.Println("not found in production")
-			createErr := createNamespace(ns.Name, ns.Labels, exp)
+			createErr := createNamespace(ns.Name, exp)
 			if createErr != nil {
 				errRequests.With(labelGen(mint)).Inc()
 				logAndWriteError(err, "error launching to prod", w, http.StatusInternalServerError)
@@ -418,9 +427,9 @@ func launchHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func createNamespace(name string, labels []string, exp choices.Experiment) error {
+func createNamespace(name string, exp choices.Experiment) error {
 	log.Println("starting create namespace")
-	newProd := choices.Namespace{Name: name, Labels: labels, Experiments: []choices.Experiment{exp}}
+	newProd := choices.Namespace{Name: name, Experiments: []choices.Experiment{exp}}
 	cr, err := cfg.esc.Create(context.TODO(), &storage.CreateRequest{
 		Namespace:   newProd.ToNamespace(),
 		Environment: storage.Production,

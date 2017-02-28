@@ -121,7 +121,7 @@ func (n *namespaceStore) update() error {
 func FromNamespace(s *storage.Namespace) (Namespace, error) {
 	ns := NewNamespace(s.Name)
 	for _, e := range s.Experiments {
-		err := ns.AddExperiment(FromExperiment(e))
+		err := ns.addExperiment(FromExperiment(e))
 		if err != nil {
 			return Namespace{}, errors.Wrap(err, "could not remove add experiment")
 		}
@@ -164,8 +164,8 @@ func FromParam(s *storage.Param) Param {
 	return par
 }
 
-// TeamNamespaces filters the namespaces from storage based on teamID.
-func TeamNamespaces(s *namespaceStore, teamID string) []Namespace {
+// teamNamespaces filters the namespaces from storage based on teamID.
+func teamNamespaces(s *namespaceStore, teamID string) []Namespace {
 	allNamespaces := s.read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {

@@ -23,7 +23,8 @@ import (
 )
 
 var (
-	// ErrSegmentNotInExperiment occurs when a user is hashed into a segment that has not been claimed by an experiment.
+	// ErrSegmentNotInExperiment occurs when a user is hashed into a
+	// segment that has not been claimed by an experiment.
 	ErrSegmentNotInExperiment = errors.New("Segment is not assigned to an experiment")
 )
 
@@ -57,11 +58,10 @@ func (n *Namespace) ToNamespace() *storage.Namespace {
 	return ns
 }
 
-// AddExperiment adds an experiment to the namespace. It takes the the given
+// addExperiment adds an experiment to the namespace. It takes the the given
 // number of segments from the namespace. It returns an error if the number of
 // segments is larger than the number of available segments in the namespace.
-// TODO: make sure this is still needed
-func (n *Namespace) AddExperiment(e Experiment) error {
+func (n *Namespace) addExperiment(e Experiment) error {
 	seg, err := n.Segments.Claim(e.Segments)
 	if err != nil {
 		return errors.Wrap(err, "could not claim segments from namespace")
@@ -136,7 +136,7 @@ func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range TeamNamespaces(ec.storage, teamID) {
+	for _, ns := range teamNamespaces(ec.storage, teamID) {
 		eResp, err := ns.eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue
