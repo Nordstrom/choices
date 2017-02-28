@@ -20,7 +20,7 @@ func BenchmarkNamespaceEval(b *testing.B) {
 	ns := NewNamespace("t1")
 	e := NewExperiment("aTest").SetSegments(segmentsAll)
 	e.Params = []Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}}
-	if err := ns.AddExperiment(*e); err != nil {
+	if err := ns.addExperiment(*e); err != nil {
 		b.Fatal(err)
 	}
 	h := hashConfig{}

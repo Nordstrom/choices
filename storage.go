@@ -121,7 +121,7 @@ func (n *namespaceStore) update() error {
 func FromNamespace(s *storage.Namespace) (Namespace, error) {
 	ns := NewNamespace(s.Name)
 	for _, e := range s.Experiments {
-		err := ns.AddExperiment(FromExperiment(e))
+		err := ns.addExperiment(FromExperiment(e))
 		if err != nil {
 			return Namespace{}, errors.Wrap(err, "could not remove add experiment")
 		}

@@ -58,11 +58,10 @@ func (n *Namespace) ToNamespace() *storage.Namespace {
 	return ns
 }
 
-// AddExperiment adds an experiment to the namespace. It takes the the given
+// addExperiment adds an experiment to the namespace. It takes the the given
 // number of segments from the namespace. It returns an error if the number of
 // segments is larger than the number of available segments in the namespace.
-// TODO: make sure this is still needed
-func (n *Namespace) AddExperiment(e Experiment) error {
+func (n *Namespace) addExperiment(e Experiment) error {
 	seg, err := n.Segments.Claim(e.Segments)
 	if err != nil {
 		return errors.Wrap(err, "could not claim segments from namespace")
