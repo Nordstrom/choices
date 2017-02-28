@@ -30,6 +30,10 @@ type Config struct {
 	storage           *namespaceStore
 }
 
+// IsHealthy returns an error if the time since the last successful update is
+// longer than the max allowed time to fail. The interval for updates can be
+// set by WithUpdateInterval. The time until failure can be set with
+// WithMaxUpdateFailTime.
 func (c *Config) IsHealthy() error {
 	if time.Duration(c.storage.failedUpdates)*c.updateInterval > c.maxUpdateFailTime {
 		return errors.Errorf("failed to update after %v", c.maxUpdateFailTime)
