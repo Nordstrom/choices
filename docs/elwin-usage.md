@@ -14,12 +14,17 @@ for your customers.
 `http://elwin.ttoapps.aws.cloud.nordstorm.net` is our current _prod_
 endpoint.
 
-`http://dev.elwin.aws.cloud.nordstrom.net` is our current _dev_
-endpoint. This is in the 
+> We are in the process of migrating to a supported Kubernetes
+> cluster. When that migration occurs we will update our _prod_
+> endpoint to `http://prod.elwin.aws.cloud.nordstrom.net`.
 
-We are in the process of migrating to a supported Kubernetes cluster.
-When that migration occurs we will update our _prod_ endpoint to
-`http://prod.elwin.aws.cloud.nordstrom.net`.
+`http://dev.elwin.aws.cloud.nordstrom.net` is our current _dev_
+endpoint.
+
+> There are other dev endpoints but they should pointed to the same
+> service as the above. They are
+> `http://elwin.k8s-a.ttoapps.aws.cloud.nordstrom.net` and
+> `http://elwin-test.ttoapps.aws.cloud.nordstrom.net`.
 
 ## Elwin request
 
@@ -52,30 +57,41 @@ experiment response. The response is JSON.
 ```javascript
 {
   "experiments": {
-    "some-experiment": {
+    "personalized-header-experiment": {
       "namespace": "aaaaaa",
       "params": {
-        "my-param-name": "value-for-my-user"
+        "personalized": "default"
       }
     },
-    "another-experiment": {
+    "button-experiment": {
       "namespace": "bbbbbb",
       "params": {
-        "first-param": "some-value",
-        "second-param": "another-value"
+        "button-color": "blue",
+        "button-size": "large"
       }
     }
   }
 }
 ```
 
+> In this example there are two experiments:
+> `personalized-header-experiment` and `button-experiment`. In
+> `personalized-header-experiment` the user was hashed into the
+> `default` experience. In `button-experiment` they were hashed into
+> `blue` + `large` MVT experience.
+
 The top level of the object will contain only a single key,
 `experiments`. The `experiments` key contains a map of experiment
-names to experiment values, represented as an object. Experiment names
-will be keys in the object. Experiment values will be objects with two
-keys. `namespace`, the first key, contains a string value. It is not
-essential to the experiment but is required for the data collection.
-`params`, the second key, contains an object of param names and param
-values. If you are running an A/B/N test there will only be one key.
-If you are running a multivariate test then there be keys for each
-arm. The values for params will always be returned as strings.
+names to experiment values, represented as an object. 
+
+Experiment names will be keys in the `experiments` object. The values
+for the experiment names will be objects with two keys. `namespace`,
+the first key, contains a string value. It is not essential to the
+experiment but is required for the data collection. `params`, the
+second key, contains an object of param names and param values.
+
+The `params` object has keys that correspond to param names. The
+values of these keys will be the experience the user has been hashed
+into. If you are running an A/B/N test there will only be one key. If
+you are running a multivariate test then there be keys for each arm.
+The values for params will always be returned as strings.
