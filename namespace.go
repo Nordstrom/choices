@@ -23,7 +23,8 @@ import (
 )
 
 var (
-	// ErrSegmentNotInExperiment occurs when a user is hashed into a segment that has not been claimed by an experiment.
+	// ErrSegmentNotInExperiment occurs when a user is hashed into a
+	// segment that has not been claimed by an experiment.
 	ErrSegmentNotInExperiment = errors.New("Segment is not assigned to an experiment")
 )
 
@@ -136,7 +137,7 @@ func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range TeamNamespaces(ec.storage, teamID) {
+	for _, ns := range teamNamespaces(ec.storage, teamID) {
 		eResp, err := ns.eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue
