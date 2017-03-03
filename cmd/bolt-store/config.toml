@@ -1,3 +1,8 @@
 db_file = "test.db"
 listen_address = ":8080"
 metrics_address = ":8081"
+user = "elwin"
+password = ""
+sql_conn_str = ""
+mail_server = "exchange.nordstrom.net:25"
+mail_from = "ndrcttps@nordstrom.com"
