@@ -18,6 +18,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 )
@@ -131,12 +133,12 @@ type ExperimentResponse struct {
 // Namespaces determines the assignments for the a given user's id based on the
 // current set of namespaces and experiments. It returns a []ExperimentResponse
 // if it is successful or an error if something went wrong.
-func (ec *Config) Namespaces(teamID, userID string) ([]ExperimentResponse, error) {
+func (ec *Config) Namespaces(userID string, selector labels.Selector) ([]ExperimentResponse, error) {
 	h := hashConfig{}
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, ns := range teamNamespaces(ec.storage, teamID) {
+	for _, ns := range teamNamespaces(ec.storage, selector) {
 		eResp, err := ns.eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue

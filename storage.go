@@ -18,6 +18,8 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
@@ -165,12 +167,12 @@ func FromParam(s *storage.Param) Param {
 }
 
 // teamNamespaces filters the namespaces from storage based on teamID.
-func teamNamespaces(s *namespaceStore, teamID string) []Namespace {
+func teamNamespaces(s *namespaceStore, selector labels.Selector) []Namespace {
 	allNamespaces := s.read()
 	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
 	for _, n := range allNamespaces {
 		for _, e := range n.Experiments {
-			if teamID == e.Labels["team"] {
+			if selector.Matches(e.Labels) {
 				teamNamespaces = append(teamNamespaces, n)
 				break
 			}

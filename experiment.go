@@ -17,6 +17,8 @@ package choices
 import (
 	"encoding/json"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/foolusion/elwinprotos/storage"
 )
 
@@ -32,7 +34,7 @@ type ParamValue struct {
 // to Namespaces.
 type Experiment struct {
 	Name     string
-	Labels   map[string]string
+	Labels   labels.Set
 	Params   []Param
 	Segments segments
 }
