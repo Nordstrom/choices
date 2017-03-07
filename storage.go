@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// constants for storage enviroments. So far only support a staging and
+// constants for storage environments. So far only support a staging and
 // production.
 const (
 	StorageEnvironmentBad = iota

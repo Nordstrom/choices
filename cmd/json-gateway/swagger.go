@@ -200,7 +200,7 @@ var swagger = `{
           "$ref": "#/definitions/Environment"
         }
       },
-      "description": "AllRequest retuns all the experiments from the given environment."
+      "description": "AllRequest returns all the experiments from the given environment."
     },
     "CreateReply": {
       "type": "object",
