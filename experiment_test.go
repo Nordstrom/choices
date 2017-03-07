@@ -14,7 +14,12 @@
 
 package choices
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/foolusion/elwinprotos/storage"
+	"k8s.io/apimachinery/pkg/labels"
+)
 
 func TestExperiment(t *testing.T) {
 	backup := globalSalt
@@ -151,6 +156,49 @@ func BenchmarkExperimentEval(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		if _, err := e.eval(h); err != nil {
 			b.Fatal(err)
+		}
+	}
+}
+
+func TestSetSegments(t *testing.T) {
+	e := NewExperiment("test")
+	tests := map[string]struct {
+		seg  segments
+		want segments
+	}{
+		"none": {seg: segments{}, want: segments{}},
+		"all":  {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, want: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
+		"some": {seg: segments{255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0}, want: segments{255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0}},
+	}
+	for tname, test := range tests {
+		e.SetSegments(test.seg)
+		if e.Segments != test.want {
+			t.Fatalf("%s: e.SetSegments(%v) = %v, want %v", tname, test.seg, e.Segments, test.want)
+		}
+	}
+}
+
+func TestToExperiment(t *testing.T) {
+	tests := map[string]struct {
+		e    Experiment
+		want storage.Experiment
+	}{
+		"simple": {
+			e:    Experiment{Name: "test", Labels: labels.Set{"team": "ato", "platform": "desktop"}, Segments: segments{}, Params: []Param{}},
+			want: storage.Experiment{Name: "test", Labels: map[string]string{"team": "ato", "platform": "desktop"}, Segments: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		},
+	}
+	for tname, test := range tests {
+		out := test.e.ToExperiment()
+		if out.Name != test.want.Name {
+			t.Fatalf("%s: e.ToExperiment() = %v, want %v", tname, *out, test.want)
+		}
+		for k, v := range test.want.Labels {
+			if ov, ok := out.Labels[k]; !ok {
+				t.Fatalf("%s: e.ToExperiment(): key %v does not exist in output", tname, k)
+			} else if v != ov {
+				t.Fatalf("%s: e.ToExperiment(): key %v = got %v, want %v", tname, k, ov, v)
+			}
 		}
 	}
 }
