@@ -213,7 +213,6 @@ func unkey(p paramKey) []param {
 		}
 		p = p.more.(paramKey)
 	}
-	return ps
 }
 
 func cookie(buf []byte, namespace string, experiment choices.Experiment) (map[paramKey]string, error) {

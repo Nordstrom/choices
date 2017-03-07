@@ -257,5 +257,4 @@ func envFromStorageRequest(e storage.Environment) []byte {
 	default:
 		return environmentStaging
 	}
-	return environmentStaging
 }
