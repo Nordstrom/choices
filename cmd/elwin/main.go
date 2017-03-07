@@ -76,7 +76,7 @@ var (
 		Namespace: "nordstrom",
 		Subsystem: "elwin",
 		Name:      "json_requests",
-		Help:      "The number of json requests recieved.",
+		Help:      "The number of json requests received.",
 	})
 	jsonDurations = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "nordstrom",
@@ -248,7 +248,7 @@ type elwinServer struct{}
 func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
 	log.Printf("GetNamespaces: %v", id)
 	if id == nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier recieved")
+		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier received")
 	}
 	// TODO: we really need to pass in the requirements in the request. This requires an update to elwin.proto
 	selector := labels.NewSelector()
