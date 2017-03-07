@@ -55,7 +55,7 @@ an *and* selection on the labels of your experiments. The results
 returned will be the union of all experiments whose labels match.
 
 The full request for experiments that are for the ato team in the dev
-and prod _env_ironment for customers browsing on desktop platform for
+and prod environment for customers browsing on desktop platform for
 the userid `andrew` would look like the following.
 
 ```
