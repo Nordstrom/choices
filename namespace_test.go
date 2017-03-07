@@ -16,6 +16,36 @@ package choices
 
 import "testing"
 
+func TestNamespaceEval(t *testing.T) {
+	tests := map[string]struct {
+		ns   Namespace
+		want ExperimentResponse
+		err  error
+	}{
+		"simple": {
+			ns:   Namespace{Name: "test", Segments: segmentsAll, Experiments: []Experiment{{Name: "simple", Segments: segmentsAll, Params: []Param{{Name: "p1", Value: &Uniform{Choices: []string{"a", "b"}}}}}}},
+			want: ExperimentResponse{Name: "simple", Namespace: "test", Params: []ParamValue{{Name: "p1", Value: "a"}}},
+			err:  nil,
+		},
+		"none": {
+			ns:   Namespace{Name: "2", Segments: segments{}},
+			want: ExperimentResponse{},
+			err:  ErrSegmentNotInExperiment,
+		},
+	}
+	h := hashConfig{}
+	h.setUserID("11171986")
+	for tname, test := range tests {
+		if er, err := test.ns.eval(h); err != test.err {
+			t.Fatalf("%s: err = %v, want %v", tname, err, test.err)
+		} else if er.Name != test.want.Name {
+			t.Fatalf("%s: name = %v, want %v", tname, er.Name, test.want.Name)
+		} else if er.Namespace != test.want.Namespace {
+			t.Fatalf("%s: namespace = %v, want %v", tname, er.Namespace, test.want.Namespace)
+		}
+	}
+}
+
 func BenchmarkNamespaceEval(b *testing.B) {
 	ns := NewNamespace("t1")
 	e := NewExperiment("aTest").SetSegments(segmentsAll)
