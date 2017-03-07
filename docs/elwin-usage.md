@@ -33,20 +33,33 @@ clients will make a GET request to one of the endpoints. The request
 requires two params. One is specifies the team making the request. The
 second specifies the user's id.
 
-The team name can currently be specified in query params `label`,
-`teamid`, or `group-id`. If any of those are params are not blank,
-they will be used to filter the experiments. If more than one is used,
-it will prefer them in the order specified before.
+The team name can currently be specified in query params `team`,
+`label`, `teamid`, or `group-id`. If any of those params are not
+blank, they will be used to filter the experiments.
 
 The user id is specified in the param `userid`. In most cases this
 should be the `ExperimentID` from the `experiments` cookie on web
 requests.
 
-A request for experiments that are labeled with `ato` for the userid
-`andrew` would look like the following.
+You can also supply other query params to match labels on your
+experiments. For example if you are running a test that should only be
+shown to desktop users, you could set the label `platform` with the
+value `desktop` on your experiment. When you query for desktop
+experiments you would then include the `platform=desktop` query param.
+Another example is if you wanted to run a test internal only before
+deploying it to customers you could add a label
+`traffic-source=internal` and query for it the same way. You can query
+for multiple values for the same label key by repeating the query in
+the request. For example, `?env=prod&env=dev`. The query params create
+an *and* selection on the labels of your experiments. The results
+returned will be the union of all experiments whose labels match.
+
+The full request for experiments that are for the ato team in the dev
+and prod _env_ironment for customers browsing on desktop platform for
+the userid `andrew` would look like the following.
 
 ```
-http://dev.elwin.aws.cloud.nordstrom.net/?label=ato&userid=andrew
+http://dev.elwin.aws.cloud.nordstrom.net/?team=ato&env=prod&env=dev&platform=desktop&userid=andrew
 ```
 
 ## Elwin response
