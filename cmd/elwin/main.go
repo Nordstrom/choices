@@ -27,6 +27,9 @@ import (
 	"syscall"
 	"time"
 
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
+
 	"golang.org/x/net/context"
 
 	"github.com/Nordstrom/choices"
@@ -247,8 +250,14 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 	if id == nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier recieved")
 	}
-
-	resp, err := config.ec.Namespaces(id.TeamID, id.UserID)
+	// TODO: we really need to pass in the requirements in the request. This requires an update to elwin.proto
+	selector := labels.NewSelector()
+	r, err := labels.NewRequirement("team", selection.In, []string{id.TeamID})
+	if err != nil {
+		return nil, errors.Wrap(err, "could not create requirement")
+	}
+	selector = selector.Add(*r)
+	resp, err := config.ec.Namespaces(id.UserID, selector)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", id.TeamID, id.UserID, err)
 	}
@@ -298,19 +307,30 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		defer logCloseErr(r.Body)
 	}
 
-	var label string
-	switch {
-	case r.Form.Get("label") != "":
-		label = r.Form.Get("label")
-	case r.Form.Get("teamid") != "":
-		label = r.Form.Get("teamid")
-	case r.Form.Get("group-id") != "":
-		label = r.Form.Get("group-id")
-	default:
-		label = ""
+	sel := labels.NewSelector()
+
+	for k, v := range r.Form {
+		switch k {
+		case "userid":
+			continue
+		case "label", "teamid", "group-id":
+			r, err := labels.NewRequirement("team", selection.In, v)
+			if err != nil {
+				config.ec.ErrChan <- errors.Wrap(err, "could not create selection requirement")
+				return
+			}
+			sel = sel.Add(*r)
+		default:
+			r, err := labels.NewRequirement(k, selection.In, v)
+			if err != nil {
+				config.ec.ErrChan <- errors.Wrap(err, "could not create selection requirement")
+				return
+			}
+			sel = sel.Add(*r)
+		}
 	}
 
-	resp, err := config.ec.Namespaces(label, r.Form.Get("userid"))
+	resp, err := config.ec.Namespaces(r.Form.Get("userid"), sel)
 	if err != nil {
 		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
 		return

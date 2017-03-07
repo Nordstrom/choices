@@ -1,5 +1,5 @@
 {
-    "memo": "5cec734d89c05118b924ea256173e9c5e970bd880aa4a7eb533671134c51bcd4",
+    "memo": "b1aba088e1ee141b0188ec54bb58ee65cf9319a104a095d3f57aaf1553ebbc38",
     "projects": [
         {
             "name": "github.com/beorn7/perks",
@@ -36,9 +36,17 @@
             ]
         },
         {
+            "name": "github.com/golang/glog",
+            "branch": "master",
+            "revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
+            "packages": [
+                "."
+            ]
+        },
+        {
             "name": "github.com/golang/protobuf",
             "branch": "master",
-            "revision": "69b215d01a5606c843240eab4937eab3acee6530",
+            "revision": "c9c7427a2a70d2eb3bafa0ab2dc163e45f143317",
             "packages": [
                 "jsonpb",
                 "proto",
@@ -115,7 +123,7 @@
         {
             "name": "golang.org/x/net",
             "branch": "master",
-            "revision": "6b27048ae5e6ad1ef927e72e437531493de612fe",
+            "revision": "d379faa25cbdc04d653984913a2ceb43b0bc46d7",
             "packages": [
                 "context",
                 "http2",
@@ -126,7 +134,7 @@
         {
             "name": "golang.org/x/sys",
             "branch": "master",
-            "revision": "075e574b89e4c2d22f2286a7e2b919519c6f3547",
+            "revision": "e48874b42435b4347fc52bdee0424a52abc974d7",
             "packages": [
                 "unix"
             ]
@@ -149,6 +157,15 @@
             "packages": [
                 ".",
                 "bson"
+            ]
+        },
+        {
+            "name": "k8s.io/apimachinery",
+            "branch": "master",
+            "revision": "c810e4931f2cf80a6f0a007f8ba9c05ef0165cee",
+            "packages": [
+                "pkg/labels",
+                "pkg/selection"
             ]
         }
     ]
