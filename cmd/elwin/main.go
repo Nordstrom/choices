@@ -36,40 +36,10 @@ import (
 	"github.com/foolusion/elwinprotos/elwin"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
-
-var config = struct {
-	ec              *choices.Config
-	grpcAddr        string
-	jsonAddr        string
-	mongoAddr       string
-	mongoDB         string
-	mongoCollection string
-	readTimeout     string
-	writeTimeout    string
-	idleTimeout     string
-	readiness       struct {
-		storage      bool
-		grpcServer   bool
-		errorHandler bool
-		httpServer   bool
-	}
-	updateInterval    string
-	maxUpdateFailTime string
-}{
-	jsonAddr:          ":8081",
-	grpcAddr:          ":8080",
-	mongoAddr:         "elwin-storage:80",
-	mongoDB:           "elwin",
-	mongoCollection:   "test",
-	readTimeout:       "5s",
-	writeTimeout:      "5s",
-	idleTimeout:       "30s",
-	updateInterval:    "10s",
-	maxUpdateFailTime: "5m",
-}
 
 var (
 	jsonRequests = prometheus.NewCounter(prometheus.CounterOpts{
@@ -94,42 +64,67 @@ var (
 )
 
 const (
-	envJSONAddr          = "JSON_ADDRESS"
-	envGRPCAddr          = "GRPC_ADDRESS"
-	envMongoAddr         = "MONGO_ADDRESS"
-	envMongoDB           = "MONGO_DATABASE"
-	envMongoColl         = "MONGO_COLLECTION"
-	envReadTimeout       = "READ_TIMEOUT"
-	envWriteTimeout      = "WRITE_TIMEOUT"
-	envIdleTimeout       = "IDLE_TIMEOUT"
-	envProfiler          = "PROFILER"
-	envUpdateInterval    = "UPDATE_INTERVAL"
-	envMaxUpdateFailTime = "MAX_UPDATE_FAIL_TIME"
+	cfgStorageAddr = "storage_address"
+	cfgStorageEnv  = "storage_environment"
+	cfgJSONAddr    = "json_address"
+	cfgGRPCAddr    = "grpc_address"
+	cfgUInterval   = "update_interval"
+	cfgRTimeout    = "read_timeout"
+	cfgWTimeout    = "write_timeout"
+	cfgITimeout    = "idle_timeout"
+	cfgUFTimeout   = "update_fail_timeout"
+	cfgProf        = "profiler"
 )
 
-func env(dst *string, src string) {
-	if os.Getenv(src) != "" {
-		*dst = os.Getenv(src)
-		log.Printf("Set %s to %s", src, *dst)
+func bind(s []string) error {
+	if len(s) == 0 {
+		return nil
 	}
+	if err := viper.BindEnv(s[0]); err != nil {
+		return err
+	}
+	return bind(s[1:])
 }
 
 func main() {
 	log.Println("Starting elwin...")
 
-	env(&config.jsonAddr, envJSONAddr)
-	env(&config.grpcAddr, envGRPCAddr)
-	env(&config.mongoAddr, envMongoAddr)
-	env(&config.mongoDB, envMongoDB)
-	env(&config.mongoCollection, envMongoColl)
-	env(&config.readTimeout, envReadTimeout)
-	env(&config.writeTimeout, envWriteTimeout)
-	env(&config.idleTimeout, envIdleTimeout)
-	env(&config.updateInterval, envUpdateInterval)
-	env(&config.maxUpdateFailTime, envMaxUpdateFailTime)
+	viper.SetDefault(cfgStorageAddr, "elwin-storage:80")
+	viper.SetDefault(cfgStorageEnv, "dev")
+	viper.SetDefault(cfgJSONAddr, ":8080")
+	viper.SetDefault(cfgGRPCAddr, ":8081")
+	viper.SetDefault(cfgUInterval, "10s")
+	viper.SetDefault(cfgRTimeout, "5s")
+	viper.SetDefault(cfgWTimeout, "5s")
+	viper.SetDefault(cfgITimeout, "30s")
+	viper.SetDefault(cfgUFTimeout, "15m")
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("/etc/elwin")
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("could not read config: %v", err)
+	}
+
+	viper.SetEnvPrefix("elwin")
+	if err := bind([]string{
+		cfgStorageAddr,
+		cfgStorageEnv,
+		cfgJSONAddr,
+		cfgGRPCAddr,
+		cfgUInterval,
+		cfgRTimeout,
+		cfgWTimeout,
+		cfgITimeout,
+		cfgUFTimeout,
+		"profiler",
+	}); err != nil {
+		log.Fatal(err)
+	}
 
 	var storageEnv int
-	switch config.mongoCollection {
+	switch viper.GetString(cfgStorageEnv) {
 	case "staging", "dev", "test":
 		storageEnv = choices.StorageEnvironmentDev
 	case "production", "prod":
@@ -137,61 +132,59 @@ func main() {
 	default:
 		log.Fatal("bad storage environment")
 	}
-	log.Println(config.mongoCollection, storageEnv)
+	log.Println(viper.GetString(cfgStorageEnv), storageEnv)
 
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var updateInterval, maxUpdateFailTime time.Duration
-	if ui, err := time.ParseDuration(config.updateInterval); err != nil {
+	var interval, failTimeout time.Duration
+	if ui, err := time.ParseDuration(viper.GetString(cfgUInterval)); err != nil {
 		log.Fatal(err)
-	} else if muft, err := time.ParseDuration(config.maxUpdateFailTime); err != nil {
+	} else if muft, err := time.ParseDuration(viper.GetString(cfgUFTimeout)); err != nil {
 		log.Fatal(err)
 	} else {
-		updateInterval, maxUpdateFailTime = ui, muft
+		interval, failTimeout = ui, muft
 	}
 
 	ec, err := choices.NewChoices(
 		ctx,
 		choices.WithGlobalSalt("choices"),
-		choices.WithStorageConfig(config.mongoAddr, storageEnv, updateInterval),
-		choices.WithUpdateInterval(updateInterval),
-		choices.WithMaxUpdateFailTime(maxUpdateFailTime),
+		choices.WithStorageConfig(viper.GetString(cfgStorageAddr), storageEnv, interval),
+		choices.WithUpdateInterval(interval),
+		choices.WithMaxUpdateFailTime(failTimeout),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	config.ec = ec
-	config.readiness.storage = true
 
 	// register prometheus metrics
 	prometheus.MustRegister(jsonRequests)
 	prometheus.MustRegister(jsonDurations)
 	prometheus.MustRegister(updateErrors)
 
-	ljson, err := net.Listen("tcp", config.jsonAddr)
+	ljson, err := net.Listen("tcp", viper.GetString(cfgJSONAddr))
 	if err != nil {
-		log.Fatalf("could not listen on %s: %v", config.jsonAddr, err)
+		log.Fatalf("could not listen on %s: %v", viper.GetString(cfgJSONAddr), err)
 	}
 	defer ljson.Close()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", rootHandler)
-	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": config.ec}))
-	mux.HandleFunc("/readiness", readinessHandler)
+	mux.Handle("/", &jsonServer{ec})
+	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": ec}))
+	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.Handle("/metrics", prometheus.Handler())
-	if len(os.Getenv(envProfiler)) > 0 {
+	if viper.IsSet(cfgProf) {
 		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	}
 	srv := http.Server{
 		Handler: mux,
 	}
-	if rt, err := time.ParseDuration(config.readTimeout); err != nil {
+	if rt, err := time.ParseDuration(viper.GetString(cfgRTimeout)); err != nil {
 		log.Fatal(err)
-	} else if wt, err := time.ParseDuration(config.writeTimeout); err != nil {
+	} else if wt, err := time.ParseDuration(viper.GetString(cfgWTimeout)); err != nil {
 		log.Fatal(err)
-	} else if it, err := time.ParseDuration(config.idleTimeout); err != nil {
+	} else if it, err := time.ParseDuration(viper.GetString(cfgITimeout)); err != nil {
 		log.Fatal(err)
 	} else {
 		srv.ReadTimeout = rt
@@ -200,31 +193,28 @@ func main() {
 	}
 
 	go func() {
-		config.readiness.httpServer = true
-		config.ec.ErrChan <- srv.Serve(ljson)
+		ec.ErrChan <- srv.Serve(ljson)
 	}()
 
 	go func() {
-		lgrpc, err := net.Listen("tcp", config.grpcAddr)
+		lgrpc, err := net.Listen("tcp", viper.GetString(cfgGRPCAddr))
 		if err != nil {
-			config.ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
+			ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
 			return
 		}
 		defer lgrpc.Close()
 
 		grpcServer := grpc.NewServer()
-		elwin.RegisterElwinServer(grpcServer, &elwinServer{})
-		config.readiness.grpcServer = true
-		config.ec.ErrChan <- grpcServer.Serve(lgrpc)
+		elwin.RegisterElwinServer(grpcServer, &elwinServer{ec})
+		ec.ErrChan <- grpcServer.Serve(lgrpc)
 	}()
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	config.readiness.errorHandler = true
 	for {
 		select {
-		case err := <-config.ec.ErrChan:
+		case err := <-ec.ErrChan:
 			switch errors.Cause(err).(type) {
 			case choices.ErrUpdateStorage:
 				updateErrors.Inc()
@@ -243,7 +233,9 @@ func main() {
 	}
 }
 
-type elwinServer struct{}
+type elwinServer struct {
+	*choices.Config
+}
 
 func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
 	log.Printf("GetNamespaces: %v", id)
@@ -257,7 +249,7 @@ func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (
 		return nil, errors.Wrap(err, "could not create requirement")
 	}
 	selector = selector.Add(*r)
-	resp, err := config.ec.Namespaces(id.UserID, selector)
+	resp, err := e.Namespaces(id.UserID, selector)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", id.TeamID, id.UserID, err)
 	}
@@ -288,7 +280,11 @@ func logCloseErr(c io.Closer) {
 	}
 }
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
+type jsonServer struct {
+	*choices.Config
+}
+
+func (j *jsonServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	defer jsonRequests.Inc()
 	defer func() {
@@ -316,28 +312,28 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		case "team", "label", "teamid", "group-id":
 			r, err := labels.NewRequirement("team", selection.In, v)
 			if err != nil {
-				config.ec.ErrChan <- errors.Wrap(err, "could not create selection requirement")
+				j.ErrChan <- errors.Wrap(err, "could not create selection requirement")
 				return
 			}
 			sel = sel.Add(*r)
 		default:
 			r, err := labels.NewRequirement(k, selection.In, v)
 			if err != nil {
-				config.ec.ErrChan <- errors.Wrap(err, "could not create selection requirement")
+				j.ErrChan <- errors.Wrap(err, "could not create selection requirement")
 				return
 			}
 			sel = sel.Add(*r)
 		}
 	}
 
-	resp, err := config.ec.Namespaces(r.Form.Get("userid"), sel)
+	resp, err := j.Namespaces(r.Form.Get("userid"), sel)
 	if err != nil {
-		config.ec.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
+		j.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if err := elwinJSON(resp, w); err != nil {
-		config.ec.ErrChan <- err
+		j.ErrChan <- err
 		return
 	}
 }
@@ -441,12 +437,4 @@ func healthzHandler(healthChecks map[string]interface{}) http.HandlerFunc {
 			log.Printf("could not write to healthz connection: %s", err)
 		}
 	}
-}
-
-func readinessHandler(w http.ResponseWriter, _ *http.Request) {
-	if config.readiness.storage && config.readiness.httpServer && config.readiness.grpcServer && config.readiness.errorHandler {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	w.WriteHeader(http.StatusServiceUnavailable)
 }
