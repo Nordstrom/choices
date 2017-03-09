@@ -313,7 +313,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 		switch k {
 		case "userid":
 			continue
-		case "label", "teamid", "group-id":
+		case "team", "label", "teamid", "group-id":
 			r, err := labels.NewRequirement("team", selection.In, v)
 			if err != nil {
 				config.ec.ErrChan <- errors.Wrap(err, "could not create selection requirement")
