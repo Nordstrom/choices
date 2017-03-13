@@ -19,7 +19,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 
 	"golang.org/x/net/context"
 
@@ -28,31 +27,48 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
-var cfg = struct {
-	dbFile     string
-	listenAddr string
-}{
-	dbFile:     "test.db",
-	listenAddr: ":8080",
+func bind(s []string) error {
+	if len(s) == 0 {
+		return nil
+	}
+	if err := viper.BindEnv(s[0]); err != nil {
+		return err
+	}
+	return bind(s[1:])
 }
 
 func main() {
-	if db := os.Getenv("DB_FILE"); db != "" {
-		cfg.dbFile = db
-	}
-	if addr := os.Getenv("LISTEN_ADDRESS"); addr != "" {
-		cfg.listenAddr = addr
-	}
-
 	log.Println("Starting bolt-store...")
-	server, err := newServer(cfg.dbFile)
 
-	log.Printf("lisening for grpc on %q", cfg.listenAddr)
-	lis, err := net.Listen("tcp", cfg.listenAddr)
+	viper.SetDefault("db_file", "test.db")
+	viper.SetDefault("listen_address", ":8080")
+	viper.SetDefault("metrics_address", ":8081")
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("/etc/elwin/bolt-store")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("could not read config: %v", err)
+	}
+
+	viper.SetEnvPrefix("bolt_store")
+	if err := bind([]string{
+		"db_file",
+		"listen_address",
+		"metrics_address",
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	server, err := newServer(viper.GetString("db_file"))
+
+	log.Printf("lisening for grpc on %q", viper.GetString("listen_address"))
+	lis, err := net.Listen("tcp", viper.GetString("listen_address"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,8 +80,8 @@ func main() {
 	grpc_prometheus.Register(s)
 	go func() {
 		http.Handle("/metrics", prometheus.Handler())
-		log.Printf("listening for /metrics on %q", ":8081")
-		log.Fatal(http.ListenAndServe(":8081", nil))
+		log.Printf("listening for /metrics on %q", viper.GetString("metrics_address"))
+		log.Fatal(http.ListenAndServe(viper.GetString("metrics_address"), nil))
 	}()
 
 	log.Fatal(s.Serve(lis))

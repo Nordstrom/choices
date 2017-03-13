@@ -1,0 +1,11 @@
+storage_address = ":8080"
+storage_environment = "dev"
+
+json_address = ":8082"
+grpc_address = ":8083"
+update_interval = "10s"
+
+read_timeout = "5s"
+write_timeout = "5s"
+idle_timeout = "30s"
+update_fail_timeout = "5m"
