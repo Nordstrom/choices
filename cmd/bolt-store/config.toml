@@ -1,0 +1,3 @@
+db_file = "test.db"
+listen_address = ":8080"
+metrics_address = ":8081"
