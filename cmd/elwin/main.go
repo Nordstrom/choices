@@ -104,7 +104,12 @@ func main() {
 	viper.AddConfigPath("/etc/elwin")
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalf("could not read config: %v", err)
+		switch err.(type) {
+		case viper.ConfigFileNotFoundError:
+			log.Println("no config file found")
+		default:
+			log.Fatalf("could not read config: %v", err)
+		}
 	}
 
 	viper.SetEnvPrefix("elwin")
