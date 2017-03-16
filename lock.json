@@ -1,5 +1,5 @@
 {
-    "memo": "b1aba088e1ee141b0188ec54bb58ee65cf9319a104a095d3f57aaf1553ebbc38",
+    "memo": "74ac6e7c2ba682f41cd0f5b5d4ccb8d756e9168fac61d6b59e71e24ecd6c78ed",
     "projects": [
         {
             "name": "github.com/beorn7/perks",
@@ -24,6 +24,14 @@
             "packages": [
                 "elwin",
                 "storage"
+            ]
+        },
+        {
+            "name": "github.com/fsnotify/fsnotify",
+            "version": "v1.4.2",
+            "revision": "629574ca2a5df945712d3079857300b5e4da0236",
+            "packages": [
+                "."
             ]
         },
         {
@@ -72,11 +80,51 @@
             ]
         },
         {
+            "name": "github.com/hashicorp/hcl",
+            "branch": "master",
+            "revision": "630949a3c5fa3c613328e1b8256052cbc2327c9b",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/magiconair/properties",
+            "version": "v1.7.0",
+            "revision": "c265cfa48dda6474e208715ca93e987829f572f8",
+            "packages": [
+                "."
+            ]
+        },
+        {
             "name": "github.com/matttproud/golang_protobuf_extensions",
             "version": "v1.0.0",
             "revision": "3247c84500bff8d9fb6d579d800f20b3e091582c",
             "packages": [
                 "pbutil"
+            ]
+        },
+        {
+            "name": "github.com/mitchellh/mapstructure",
+            "branch": "master",
+            "revision": "53818660ed4955e899c0bcafa97299a388bd7c8e",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/pelletier/go-buffruneio",
+            "version": "v0.2.0",
+            "revision": "c37440a7cf42ac63b919c752ca73a85067e05992",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/pelletier/go-toml",
+            "version": "v0.5.0",
+            "revision": "13d49d4606eb801b8f01ae542b4afc4c6ee3d84a",
+            "packages": [
+                "."
             ]
         },
         {
@@ -121,6 +169,46 @@
             ]
         },
         {
+            "name": "github.com/spf13/afero",
+            "branch": "master",
+            "revision": "9be650865eab0c12963d8753212f4f9c66cdcf12",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/spf13/cast",
+            "version": "v1.0.0",
+            "revision": "ce135a4ebeee6cfe9a26c93ee0d37825f26113c7",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/spf13/jwalterweatherman",
+            "branch": "master",
+            "revision": "fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/spf13/pflag",
+            "branch": "master",
+            "revision": "9ff6c6923cfffbcd502984b8e0c80539a94968b7",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/spf13/viper",
+            "branch": "master",
+            "revision": "84f94806c67f59dd7ae87bc5351f7a9c94a4558d",
+            "packages": [
+                "."
+            ]
+        },
+        {
             "name": "golang.org/x/net",
             "branch": "master",
             "revision": "d379faa25cbdc04d653984913a2ceb43b0bc46d7",
@@ -137,6 +225,15 @@
             "revision": "e48874b42435b4347fc52bdee0424a52abc974d7",
             "packages": [
                 "unix"
+            ]
+        },
+        {
+            "name": "golang.org/x/text",
+            "branch": "master",
+            "revision": "f28f36722d5ef2f9655ad3de1f248e3e52ad5ebd",
+            "packages": [
+                "transform",
+                "unicode/norm"
             ]
         },
         {
@@ -157,6 +254,14 @@
             "packages": [
                 ".",
                 "bson"
+            ]
+        },
+        {
+            "name": "gopkg.in/yaml.v2",
+            "branch": "v2",
+            "revision": "a3f3340b5840cee44f372bddb5880fcbc419b46a",
+            "packages": [
+                "."
             ]
         },
         {
