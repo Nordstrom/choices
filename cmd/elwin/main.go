@@ -173,6 +173,7 @@ func main() {
 		log.Fatalf("could not listen on %s: %v", viper.GetString(cfgJSONAddr), err)
 	}
 	defer ljson.Close()
+	log.Printf("Listening for json on %s", viper.GetString(cfgJSONAddr))
 
 	mux := http.NewServeMux()
 	mux.Handle("/", &jsonServer{ec})
@@ -208,6 +209,7 @@ func main() {
 			return
 		}
 		defer lgrpc.Close()
+		log.Printf("Listening for grpc on %s", viper.GetString(cfgGRPCAddr))
 
 		grpcServer := grpc.NewServer()
 		elwin.RegisterElwinServer(grpcServer, &elwinServer{ec})
