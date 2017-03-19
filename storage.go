@@ -154,13 +154,17 @@ func FromParam(s *storage.Param) Param {
 	}
 	switch {
 	case len(s.Value.Weights) == 0:
-		par.Value = &Uniform{
+		par.Choices = &Uniform{
 			Choices: s.Value.Choices,
 		}
 	case len(s.Value.Weights) == len(s.Value.Choices):
-		par.Value = &Weighted{
-			Choices: s.Value.Choices,
-			Weights: s.Value.Weights,
+		choices := make([]weightedChoice, len(s.Value.Choices))
+		for i := range choices {
+			choices[i].name = s.Value.Choices[i]
+			choices[i].weight = s.Value.Weights[i]
+		}
+		par.Choices = &Weighted{
+			Choices: choices,
 		}
 	}
 	return par

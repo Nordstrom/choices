@@ -23,7 +23,7 @@ func TestNamespaceEval(t *testing.T) {
 		err  error
 	}{
 		"simple": {
-			ns:   Namespace{Name: "test", Segments: segmentsAll, Experiments: []Experiment{{Name: "simple", Segments: segmentsAll, Params: []Param{{Name: "p1", Value: &Uniform{Choices: []string{"a", "b"}}}}}}},
+			ns:   Namespace{Name: "test", Segments: segmentsAll, Experiments: []Experiment{{Name: "simple", Segments: segmentsAll, Params: []Param{{Name: "p1", Choices: &Uniform{Choices: []string{"a", "b"}}}}}}},
 			want: ExperimentResponse{Name: "simple", Namespace: "test", Params: []ParamValue{{Name: "p1", Value: "a"}}},
 			err:  nil,
 		},
@@ -49,7 +49,7 @@ func TestNamespaceEval(t *testing.T) {
 func BenchmarkNamespaceEval(b *testing.B) {
 	ns := NewNamespace("t1")
 	e := NewExperiment("aTest").SetSegments(segmentsAll)
-	e.Params = []Param{{Name: "a", Value: &Uniform{Choices: []string{"b", "c"}}}}
+	e.Params = []Param{{Name: "a", Choices: &Uniform{Choices: []string{"b", "c"}}}}
 	if err := ns.addExperiment(*e); err != nil {
 		b.Fatal(err)
 	}

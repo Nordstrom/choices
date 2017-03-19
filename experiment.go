@@ -116,8 +116,8 @@ func (e *Experiment) MarshalJSON() ([]byte, error) {
 // Param is a struct that represents a single parameter in an experiment. Param
 // is evaluated through the call to Namespaces.
 type Param struct {
-	Name  string
-	Value Value
+	Name    string
+	Choices choice
 }
 
 // ToParam is a helper function that converts a Param into a *storage.Param.
@@ -125,15 +125,21 @@ func (p *Param) ToParam() *storage.Param {
 	param := &storage.Param{
 		Name: p.Name,
 	}
-	switch val := p.Value.(type) {
+	switch val := p.Choices.(type) {
 	case *Uniform:
 		param.Value = &storage.Value{
 			Choices: val.Choices,
 		}
 	case *Weighted:
+		choices := make([]string, len(val.Choices))
+		weights := make([]float64, len(val.Choices))
+		for i, v := range val.Choices {
+			choices[i] = v.name
+			weights[i] = v.weight
+		}
 		param.Value = &storage.Value{
-			Choices: val.Choices,
-			Weights: val.Weights,
+			Choices: choices,
+			Weights: weights,
 		}
 	}
 	return param
@@ -142,11 +148,11 @@ func (p *Param) ToParam() *storage.Param {
 // MarshalJSON implements the json.Marshaler interface for Params.
 func (p *Param) MarshalJSON() ([]byte, error) {
 	var aux = struct {
-		Name   string `json:"name"`
-		Values Value  `json:"values"`
+		Name    string `json:"name"`
+		Choices choice `json:"choices"`
 	}{
-		Name:   p.Name,
-		Values: p.Value,
+		Name:    p.Name,
+		Choices: p.Choices,
 	}
 	return json.Marshal(aux)
 }
@@ -159,7 +165,7 @@ func (p *Param) eval(h hashConfig) (ParamValue, error) {
 	if err != nil {
 		return ParamValue{}, err
 	}
-	val, err := p.Value.Value(i)
+	val, err := p.Choices.Choice(i)
 	if err != nil {
 		return ParamValue{}, err
 	}

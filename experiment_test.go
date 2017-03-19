@@ -38,8 +38,8 @@ func TestExperiment(t *testing.T) {
 			exp: Experiment{
 				Name: "experiment",
 				Params: []Param{
-					{Name: "p1", Value: &Uniform{Choices: []string{"a", "b"}}},
-					{Name: "p2", Value: &Weighted{Choices: []string{"a", "b", "c"}, Weights: []float64{1, 10, 1}}},
+					{Name: "p1", Choices: &Uniform{Choices: []string{"a", "b"}}},
+					{Name: "p2", Choices: &Weighted{Choices: []weightedChoice{{"a", 1}, {"b", 10}, {"c", 1}}}},
 				},
 				Segments: seg,
 			},
@@ -118,12 +118,12 @@ func TestParamEval(t *testing.T) {
 		err  error
 	}{
 		{
-			p:    Param{Name: "test", Value: &Uniform{Choices: []string{"a", "b"}}},
+			p:    Param{Name: "test", Choices: &Uniform{Choices: []string{"a", "b"}}},
 			want: ParamValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
 		{
-			p:    Param{Name: "test", Value: &Weighted{Choices: []string{"a", "b"}, Weights: []float64{10, 90}}},
+			p:    Param{Name: "test", Choices: &Weighted{Choices: []weightedChoice{{"a", 10}, {"b", 90}}}},
 			want: ParamValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
@@ -146,7 +146,7 @@ func BenchmarkExperimentEval(b *testing.B) {
 	e := Experiment{
 		Name: "experiment",
 		Params: []Param{
-			{Name: "p", Value: &Uniform{Choices: []string{"a", "b"}}},
+			{Name: "p", Choices: &Uniform{Choices: []string{"a", "b"}}},
 		},
 	}
 	copy(e.Segments[:], segmentsAll[:])
