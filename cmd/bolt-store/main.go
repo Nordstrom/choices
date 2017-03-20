@@ -53,7 +53,12 @@ func main() {
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("/etc/elwin/bolt-store")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("could not read config: %v", err)
+		switch err.(type) {
+		case viper.ConfigFileNotFoundError:
+			log.Println("no config file found")
+		default:
+			log.Fatalf("could not read config: %v", err)
+		}
 	}
 
 	viper.SetEnvPrefix("bolt_store")
