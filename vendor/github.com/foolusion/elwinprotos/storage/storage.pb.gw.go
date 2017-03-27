@@ -84,16 +84,26 @@ func request_ElwinStorage_Set_0(ctx context.Context, marshaler runtime.Marshaler
 
 }
 
-var (
-	filter_ElwinStorage_Remove_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_ElwinStorage_Remove_0(ctx context.Context, marshaler runtime.Marshaler, client ElwinStorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq RemoveRequest
 	var metadata runtime.ServerMetadata
 
-	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_ElwinStorage_Remove_0); err != nil {
-		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["id"]
+	if !ok {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	}
+
+	protoReq.Id, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, err
 	}
 
 	msg, err := client.Remove(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -253,7 +263,7 @@ var (
 
 	pattern_ElwinStorage_Set_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "set"}, ""))
 
-	pattern_ElwinStorage_Remove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "remove", "id"}, ""))
+	pattern_ElwinStorage_Remove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "remove", "id"}, ""))
 )
 
 var (

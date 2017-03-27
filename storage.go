@@ -105,9 +105,10 @@ func (n *experimentStore) update() error {
 // FromExperiment converts a *storage.Experiment into an Experiment
 func FromExperiment(s *storage.Experiment) Experiment {
 	exp := Experiment{
-		Name:   s.Name,
-		Params: make([]Param, len(s.Params)),
-		Labels: s.Labels,
+		Name:      s.Name,
+		Namespace: s.Namespace,
+		Params:    make([]Param, len(s.Params)),
+		Labels:    s.Labels,
 	}
 
 	if len(s.Segments) == 16 {

@@ -1,5 +1,5 @@
 {
-    "memo": "5f3fad704fb7ca0a9a30ba7d6136d54e1e63fbd3f628e7e0919c4099988630e2",
+    "memo": "2a43aa93cbc0bcf0021a1844106369ea2b8d5e63e62d8a744452644327457d8e",
     "projects": [
         {
             "name": "github.com/beorn7/perks",
@@ -19,8 +19,8 @@
         },
         {
             "name": "github.com/foolusion/elwinprotos",
-            "version": "v0.0.2",
-            "revision": "2bbfc5ab4e861e42d08e9ae1c43c01054fb0e891",
+            "version": "v0.0.3",
+            "revision": "7da395d67aa1ec393e6095dc076061fd8b0a331c",
             "packages": [
                 "elwin",
                 "storage"
@@ -36,8 +36,8 @@
         },
         {
             "name": "github.com/gogo/protobuf",
-            "version": "v0.3",
-            "revision": "909568be09de550ed094403c2bf8a261b5bb730a",
+            "version": "v0.4",
+            "revision": "100ba4e885062801d56799d78530b73b178a78f3",
             "packages": [
                 "proto",
                 "sortkeys"
@@ -89,8 +89,8 @@
         },
         {
             "name": "github.com/magiconair/properties",
-            "version": "v1.7.0",
-            "revision": "c265cfa48dda6474e208715ca93e987829f572f8",
+            "version": "v1.7.2",
+            "revision": "f917359f079a3759162704eaa8caeec3d01d9f91",
             "packages": [
                 "."
             ]
@@ -195,7 +195,7 @@
         {
             "name": "github.com/spf13/pflag",
             "branch": "master",
-            "revision": "9ff6c6923cfffbcd502984b8e0c80539a94968b7",
+            "revision": "d16db1e50e33dff1b6cdf37596cef36742128670",
             "packages": [
                 "."
             ]
@@ -211,7 +211,7 @@
         {
             "name": "golang.org/x/net",
             "branch": "master",
-            "revision": "d379faa25cbdc04d653984913a2ceb43b0bc46d7",
+            "revision": "6c23252515492caf9b228a9d5cabcdbde29f7f82",
             "packages": [
                 "context",
                 "http2",
@@ -222,7 +222,7 @@
         {
             "name": "golang.org/x/sys",
             "branch": "master",
-            "revision": "e48874b42435b4347fc52bdee0424a52abc974d7",
+            "revision": "afadfcc7779c1f4db0f6f6438afcb108d9c9c7cd",
             "packages": [
                 "unix"
             ]
@@ -230,16 +230,17 @@
         {
             "name": "golang.org/x/text",
             "branch": "master",
-            "revision": "f28f36722d5ef2f9655ad3de1f248e3e52ad5ebd",
+            "revision": "fc7fa097411d30e6708badff276c4c164425590c",
             "packages": [
+                "secure/bidirule",
                 "transform",
                 "unicode/norm"
             ]
         },
         {
             "name": "google.golang.org/grpc",
-            "version": "v1.0.5",
-            "revision": "708a7f9f3283aa2d4f6132d287d78683babe55c8",
+            "version": "v1.2.0",
+            "revision": "cdee119ee21e61eef7093a41ba148fa83585e143",
             "packages": [
                 ".",
                 "codes",
@@ -267,7 +268,7 @@
         {
             "name": "k8s.io/apimachinery",
             "branch": "master",
-            "revision": "c810e4931f2cf80a6f0a007f8ba9c05ef0165cee",
+            "revision": "75b8dd260ef0469d96d578705a87cffd0e09dab8",
             "packages": [
                 "pkg/labels",
                 "pkg/selection"

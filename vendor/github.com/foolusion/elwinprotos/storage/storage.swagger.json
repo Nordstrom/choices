@@ -32,7 +32,8 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         ],
         "tags": [
@@ -52,20 +53,12 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "ElwinStorage"
         ]
       }
     },
-    "/api/v1/remove/id": {
+    "/api/v1/remove/{id}": {
       "delete": {
         "summary": "Remove removes the namespace from the given environment.",
         "operationId": "Remove",
@@ -77,6 +70,15 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "string"
+          }
+        ],
         "tags": [
           "ElwinStorage"
         ]
@@ -115,18 +117,22 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "params": {
@@ -140,7 +146,8 @@
           "format": "byte"
         },
         "detailName": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "Experiment structure"
@@ -158,7 +165,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "description": "GetRequest request message to get an experiment by id."
@@ -179,7 +187,8 @@
       "type": "object",
       "properties": {
         "query": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "description": "ListRequest retuns all the experiments from the given environment."
@@ -188,13 +197,15 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "value": {
           "$ref": "#/definitions/storageValue"
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "Param structure"
@@ -212,7 +223,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "description": "RemoveRequest request message to remove an existing experiment from\nan environment."
@@ -241,7 +253,8 @@
         "choices": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "weights": {
