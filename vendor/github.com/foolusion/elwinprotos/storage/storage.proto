@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package elwin.storage;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/foolusion/elwinprotos/storage";
+
+// The ElwinStorage service definition
+service ElwinStorage {
+  // List returns all the experiments that match the selector.
+  rpc List(ListRequest) returns (ListReply) {
+    option(google.api.http) = {
+      get: "/api/v1/list"
+    };
+  }
+
+  // Get returns the experiment matching the supplied name from the
+  // given environment.
+  rpc Get(GetRequest) returns (GetReply) {
+    option(google.api.http) = {
+      get: "/api/v1/get/{id}"
+    };
+  }
+
+  // Set replaces the experiment in the given environment with the
+  // experiment supplied.
+  rpc Set(SetRequest) returns (SetReply) {
+    option(google.api.http) = {
+      put: "/api/v1/set"
+      body: "*"
+    };
+  }
+
+  // Remove removes the namespace from the given environment.
+  rpc Remove(RemoveRequest) returns (RemoveReply) {
+    option(google.api.http) = {
+      delete: "/api/v1/remove/id"
+    };
+  }
+}
+
+// ListRequest retuns all the experiments from the given environment.
+message ListRequest {
+  string query = 1;
+}
+
+// The response message containing the Experiments
+message ListReply {
+  repeated Experiment experiments = 1;
+}
+
+// SetRequest request message to create a new experiment in an
+// environment. 
+message SetRequest {
+  Experiment experiment = 1;
+}
+
+// SetReply response containing the newly created Experiment.
+message SetReply {
+  Experiment experiment = 1;
+}
+
+// GetRequest request message to get an experiment by id.
+message GetRequest {
+  string id = 1;
+}
+
+// GetReply response containing then experiment requested.
+message GetReply {
+  Experiment experiment = 1;
+}
+
+// RemoveRequest request message to remove an existing experiment from
+// an environment.
+message RemoveRequest {
+  string id = 1;
+}
+
+// RemoveReply response containing the removed experiment.
+message RemoveReply {
+  Experiment experiment = 1;
+}
+
+// Experiment structure
+message Experiment {
+  string id = 1;
+  string name = 2;
+  string namespace = 3;
+  map<string, string> labels = 4;
+  repeated Param params = 5;
+  bytes segments = 6;
+  string detailName = 7;
+}
+
+// Param structure
+message Param {
+  string name = 1;
+  Value value = 2;
+  string id = 4;
+}
+
+// Value structure
+message Value {
+  repeated string choices = 1;
+  repeated double weights = 2;
+}

@@ -1,5 +1,5 @@
 {
-    "memo": "74ac6e7c2ba682f41cd0f5b5d4ccb8d756e9168fac61d6b59e71e24ecd6c78ed",
+    "memo": "5f3fad704fb7ca0a9a30ba7d6136d54e1e63fbd3f628e7e0919c4099988630e2",
     "projects": [
         {
             "name": "github.com/beorn7/perks",
@@ -19,8 +19,8 @@
         },
         {
             "name": "github.com/foolusion/elwinprotos",
-            "branch": "master",
-            "revision": "3de4e65990081311478fdf98db8649a402a8d8be",
+            "version": "v0.0.2",
+            "revision": "2bbfc5ab4e861e42d08e9ae1c43c01054fb0e891",
             "packages": [
                 "elwin",
                 "storage"

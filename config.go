@@ -27,7 +27,7 @@ type Config struct {
 	ErrChan           chan error
 	updateInterval    time.Duration
 	maxUpdateFailTime time.Duration
-	storage           *namespaceStore
+	storage           *experimentStore
 }
 
 // IsHealthy returns an error if the time since the last successful update is

@@ -15,26 +15,24 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/all": {
-      "post": {
-        "summary": "All returns all the namespaces for a given environment.",
-        "operationId": "All",
+    "/api/v1/get/{id}": {
+      "get": {
+        "summary": "Get returns the experiment matching the supplied name from the\ngiven environment.",
+        "operationId": "Get",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/AllReply"
+              "$ref": "#/definitions/storageGetReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "id",
+            "in": "path",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/AllRequest"
-            }
+            "type": "string"
           }
         ],
         "tags": [
@@ -42,26 +40,24 @@
         ]
       }
     },
-    "/api/v1/create": {
-      "post": {
-        "summary": "Create creates a namespace in the given environment.",
-        "operationId": "Create",
+    "/api/v1/list": {
+      "get": {
+        "summary": "List returns all the experiments that match the selector.",
+        "operationId": "List",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/CreateReply"
+              "$ref": "#/definitions/storageListReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/CreateRequest"
-            }
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -69,42 +65,32 @@
         ]
       }
     },
-    "/api/v1/delete": {
-      "post": {
-        "summary": "Delete deletes the namespace from the given environment.",
-        "operationId": "Delete",
+    "/api/v1/remove/id": {
+      "delete": {
+        "summary": "Remove removes the namespace from the given environment.",
+        "operationId": "Remove",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/DeleteReply"
+              "$ref": "#/definitions/storageRemoveReply"
             }
           }
         },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/DeleteRequest"
-            }
-          }
-        ],
         "tags": [
           "ElwinStorage"
         ]
       }
     },
-    "/api/v1/experiment-intake": {
-      "post": {
-        "summary": "ExperimentIntake takes a request from a web form and creates the\nexperiment in the data store.",
-        "operationId": "ExperimentIntake",
+    "/api/v1/set": {
+      "put": {
+        "summary": "Set replaces the experiment in the given environment with the\nexperiment supplied.",
+        "operationId": "Set",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/ExperimentIntakeReply"
+              "$ref": "#/definitions/storageSetReply"
             }
           }
         },
@@ -114,61 +100,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/ExperimentIntakeRequest"
-            }
-          }
-        ],
-        "tags": [
-          "ElwinStorage"
-        ]
-      }
-    },
-    "/api/v1/read": {
-      "post": {
-        "summary": "Read returns the namespace matching the supplied name from the given\nenvironment.",
-        "operationId": "Read",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/ReadReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ReadRequest"
-            }
-          }
-        ],
-        "tags": [
-          "ElwinStorage"
-        ]
-      }
-    },
-    "/api/v1/update": {
-      "post": {
-        "summary": "Update replaces the namespace in the given environment with the namespace\nsupplied.",
-        "operationId": "Update",
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "$ref": "#/definitions/UpdateReply"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateRequest"
+              "$ref": "#/definitions/storageSetRequest"
             }
           }
         ],
@@ -179,271 +111,137 @@
     }
   },
   "definitions": {
-    "AllReply": {
+    "storageExperiment": {
       "type": "object",
       "properties": {
-        "namespaces": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "params": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Namespace"
+            "$ref": "#/definitions/storageParam"
           }
-        }
-      },
-      "title": "The response message containing the Namespaces"
-    },
-    "AllRequest": {
-      "type": "object",
-      "properties": {
-        "environment": {
-          "$ref": "#/definitions/Environment"
-        }
-      },
-      "description": "AllRequest retuns all the experiments from the given environment."
-    },
-    "CreateReply": {
-      "type": "object",
-      "properties": {
-        "namespace": {
-          "$ref": "#/definitions/Namespace"
-        }
-      },
-      "description": "CreateReply response containing the newly created Namespace."
-    },
-    "CreateRequest": {
-      "type": "object",
-      "properties": {
-        "namespace": {
-          "$ref": "#/definitions/Namespace"
-        },
-        "environment": {
-          "$ref": "#/definitions/Environment"
-        }
-      },
-      "description": "CreateRequest request message to create a new namespace in an environment."
-    },
-    "DeleteReply": {
-      "type": "object",
-      "properties": {
-        "namespace": {
-          "$ref": "#/definitions/Namespace"
-        }
-      },
-      "description": "DeleteReply response containing the deleted namespace."
-    },
-    "DeleteRequest": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "environment": {
-          "$ref": "#/definitions/Environment"
-        }
-      },
-      "description": "DeleteRequest request message to delete an existing namespace from an\nenvironment."
-    },
-    "Environment": {
-      "type": "string",
-      "enum": [
-        "Staging",
-        "Production"
-      ],
-      "default": "Staging",
-      "title": "Environment structure"
-    },
-    "Experiment": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
         },
         "segments": {
           "type": "string",
           "format": "byte"
         },
-        "params": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Param"
-          }
-        },
-        "id": {
-          "type": "string",
-          "format": "string"
-        },
-        "labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "string"
-          }
-        },
         "detailName": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "Experiment structure"
     },
-    "ExperimentIntakeReply": {
-      "type": "object"
-    },
-    "ExperimentIntakeRequest": {
+    "storageGetReply": {
       "type": "object",
       "properties": {
-        "metadata": {
-          "$ref": "#/definitions/ExperimentMetadata"
-        },
-        "namespace": {
-          "$ref": "#/definitions/Namespace"
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
         }
       },
-      "title": "ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers"
+      "description": "GetReply response containing then experiment requested."
     },
-    "ExperimentMetadata": {
+    "storageGetRequest": {
       "type": "object",
       "properties": {
-        "userID": {
-          "type": "string",
-          "format": "string"
-        },
-        "programManagerID": {
-          "type": "string",
-          "format": "string"
-        },
-        "productManagerID": {
-          "type": "string",
-          "format": "string"
-        },
-        "hypothesis": {
-          "type": "string",
-          "format": "string"
-        },
-        "kpi": {
-          "type": "string",
-          "format": "string"
-        },
-        "timeBound": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "plannedStartTime": {
-          "type": "string",
-          "format": "string"
-        },
-        "plannedEndTime": {
-          "type": "string",
-          "format": "string"
-        },
-        "actualStartTime": {
-          "type": "string",
-          "format": "string"
-        },
-        "actualEndTime": {
-          "type": "string",
-          "format": "string"
-        },
-        "actionPlanNegative": {
-          "type": "string",
-          "format": "string"
-        },
-        "actionPlanNeutral": {
-          "type": "string",
-          "format": "string"
-        },
-        "experimentType": {
-          "type": "string",
-          "format": "string"
+        "id": {
+          "type": "string"
         }
       },
-      "title": "ExperimentMetadata all the junk that elwin doesn't care about"
+      "description": "GetRequest request message to get an experiment by id."
     },
-    "Namespace": {
+    "storageListReply": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
         "experiments": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Experiment"
+            "$ref": "#/definitions/storageExperiment"
           }
         }
       },
-      "title": "Namespace structure"
+      "title": "The response message containing the Experiments"
     },
-    "Param": {
+    "storageListRequest": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        }
+      },
+      "description": "ListRequest retuns all the experiments from the given environment."
+    },
+    "storageParam": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "value": {
-          "$ref": "#/definitions/Value"
+          "$ref": "#/definitions/storageValue"
         },
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "Param structure"
     },
-    "ReadReply": {
+    "storageRemoveReply": {
       "type": "object",
       "properties": {
-        "namespace": {
-          "$ref": "#/definitions/Namespace"
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
         }
       },
-      "description": "ReadReply response containing the namespace requested."
+      "description": "RemoveReply response containing the removed experiment."
     },
-    "ReadRequest": {
+    "storageRemoveRequest": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "format": "string"
-        },
-        "environment": {
-          "$ref": "#/definitions/Environment"
+        "id": {
+          "type": "string"
         }
       },
-      "description": "ReadRequest request message to get a namespace by name."
+      "description": "RemoveRequest request message to remove an existing experiment from\nan environment."
     },
-    "UpdateReply": {
+    "storageSetReply": {
       "type": "object",
       "properties": {
-        "namespace": {
-          "$ref": "#/definitions/Namespace"
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
         }
       },
-      "description": "UpdateReply response containing the updated namespace."
+      "description": "SetReply response containing the newly created Experiment."
     },
-    "UpdateRequest": {
+    "storageSetRequest": {
       "type": "object",
       "properties": {
-        "namespace": {
-          "$ref": "#/definitions/Namespace"
-        },
-        "environment": {
-          "$ref": "#/definitions/Environment"
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
         }
       },
-      "description": "UpdateRequest request message to update an existing namespace in an\nenvironment."
+      "description": "SetRequest request message to create a new experiment in an\nenvironment."
     },
-    "Value": {
+    "storageValue": {
       "type": "object",
       "properties": {
         "choices": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "weights": {

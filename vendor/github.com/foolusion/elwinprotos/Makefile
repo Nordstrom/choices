@@ -1,23 +1,34 @@
-all: build/elwin build/storage
+all: build/elwin build/storage build/intake
 
 build/elwin: elwin/elwin.pb.go elwin/elwin.pb.gw.go elwin/elwin.swagger.json
 
 build/storage: storage/storage.pb.go storage/storage.pb.gw.go storage/storage.swagger.json
 
-elwin/elwin.pb.go: protos/elwin.proto
-	protoc -I./protos -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --gogoslick_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:elwin protos/elwin.proto
+build/intake: intake/intake.pb.go intake/intake.pb.gw.go intake/intake.swagger.json
 
-elwin/elwin.pb.gw.go: protos/elwin.proto
-	protoc -I./protos -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --grpc-gateway_out=logtostderr=true:elwin protos/elwin.proto
+elwin/elwin.pb.go: elwin/elwin.proto
+	protoc -I./elwin -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --gogoslick_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:${GOPATH}/src elwin/elwin.proto
 
-elwin/elwin.swagger.json: protos/elwin.proto
-	protoc -I./protos -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:elwin protos/elwin.proto
+elwin/elwin.pb.gw.go: elwin/elwin.proto
+	protoc -I./elwin -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --grpc-gateway_out=logtostderr=true:elwin elwin/elwin.proto
 
-storage/storage.pb.go: protos/storage.proto
-	protoc -I./protos -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --gogoslick_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:storage protos/storage.proto
+elwin/elwin.swagger.json: elwin/elwin.proto
+	protoc -I./elwin -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:elwin elwin/elwin.proto
 
-storage/storage.pb.gw.go: protos/storage.proto
-	protoc -I./protos -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --grpc-gateway_out=logtostderr=true:storage protos/storage.proto
+storage/storage.pb.go: storage/storage.proto
+	protoc -I./storage -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --gogoslick_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:${GOPATH}/src storage/storage.proto
 
-storage/storage.swagger.json: protos/storage.proto
-	protoc -I./protos -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:storage protos/storage.proto
+storage/storage.pb.gw.go: storage/storage.proto
+	protoc -I./storage -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --grpc-gateway_out=logtostderr=true:storage storage/storage.proto
+
+storage/storage.swagger.json: storage/storage.proto
+	protoc -I./storage -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:storage storage/storage.proto
+
+intake/intake.pb.go: intake/intake.proto
+	protoc -I./intake -I./storage -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --gogoslick_out=Mgoogle/api/annotations.proto=github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api,plugins=grpc:${GOPATH}/src intake/intake.proto
+
+intake/intake.pb.gw.go: intake/intake.proto
+	protoc -I./intake -I./storage -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --grpc-gateway_out=logtostderr=true:intake intake/intake.proto
+
+intake/intake.swagger.json: intake/intake.proto
+	protoc -I./intake -I./storage -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:intake intake/intake.proto

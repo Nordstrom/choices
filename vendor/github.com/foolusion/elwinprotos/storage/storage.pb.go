@@ -9,20 +9,14 @@
 		storage.proto
 
 	It has these top-level messages:
-		ExperimentIntakeRequest
-		ExperimentIntakeReply
-		ExperimentMetadata
-		AllRequest
-		AllReply
-		CreateRequest
-		CreateReply
-		ReadRequest
-		ReadReply
-		UpdateRequest
-		UpdateReply
-		DeleteRequest
-		DeleteReply
-		Namespace
+		ListRequest
+		ListReply
+		SetRequest
+		SetReply
+		GetRequest
+		GetReply
+		RemoveRequest
+		RemoveReply
 		Experiment
 		Param
 		Value
@@ -33,8 +27,6 @@ import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"
 import math "math"
 import _ "github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/api"
-
-import strconv "strconv"
 
 import bytes "bytes"
 
@@ -60,399 +52,157 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-// Environment structure
-type Environment int32
-
-const (
-	Staging    Environment = 0
-	Production Environment = 1
-)
-
-var Environment_name = map[int32]string{
-	0: "Staging",
-	1: "Production",
-}
-var Environment_value = map[string]int32{
-	"Staging":    0,
-	"Production": 1,
+// ListRequest retuns all the experiments from the given environment.
+type ListRequest struct {
+	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 }
 
-func (Environment) EnumDescriptor() ([]byte, []int) { return fileDescriptorStorage, []int{0} }
+func (m *ListRequest) Reset()                    { *m = ListRequest{} }
+func (*ListRequest) ProtoMessage()               {}
+func (*ListRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{0} }
 
-// ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers
-type ExperimentIntakeRequest struct {
-	Metadata  *ExperimentMetadata `protobuf:"bytes,1,opt,name=metadata" json:"metadata,omitempty"`
-	Namespace *Namespace          `protobuf:"bytes,2,opt,name=namespace" json:"namespace,omitempty"`
-}
-
-func (m *ExperimentIntakeRequest) Reset()                    { *m = ExperimentIntakeRequest{} }
-func (*ExperimentIntakeRequest) ProtoMessage()               {}
-func (*ExperimentIntakeRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{0} }
-
-func (m *ExperimentIntakeRequest) GetMetadata() *ExperimentMetadata {
+func (m *ListRequest) GetQuery() string {
 	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
-func (m *ExperimentIntakeRequest) GetNamespace() *Namespace {
-	if m != nil {
-		return m.Namespace
-	}
-	return nil
-}
-
-type ExperimentIntakeReply struct {
-}
-
-func (m *ExperimentIntakeReply) Reset()                    { *m = ExperimentIntakeReply{} }
-func (*ExperimentIntakeReply) ProtoMessage()               {}
-func (*ExperimentIntakeReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{1} }
-
-// ExperimentMetadata all the junk that elwin doesn't care about
-type ExperimentMetadata struct {
-	UserID             string `protobuf:"bytes,1,opt,name=userID,proto3" json:"userID,omitempty"`
-	ProgramManagerID   string `protobuf:"bytes,2,opt,name=programManagerID,proto3" json:"programManagerID,omitempty"`
-	ProductManagerID   string `protobuf:"bytes,3,opt,name=productManagerID,proto3" json:"productManagerID,omitempty"`
-	Hypothesis         string `protobuf:"bytes,4,opt,name=hypothesis,proto3" json:"hypothesis,omitempty"`
-	Kpi                string `protobuf:"bytes,5,opt,name=kpi,proto3" json:"kpi,omitempty"`
-	TimeBound          bool   `protobuf:"varint,6,opt,name=timeBound,proto3" json:"timeBound,omitempty"`
-	PlannedStartTime   string `protobuf:"bytes,7,opt,name=plannedStartTime,proto3" json:"plannedStartTime,omitempty"`
-	PlannedEndTime     string `protobuf:"bytes,8,opt,name=plannedEndTime,proto3" json:"plannedEndTime,omitempty"`
-	ActualStartTime    string `protobuf:"bytes,9,opt,name=actualStartTime,proto3" json:"actualStartTime,omitempty"`
-	ActualEndTime      string `protobuf:"bytes,10,opt,name=actualEndTime,proto3" json:"actualEndTime,omitempty"`
-	ActionPlanNegative string `protobuf:"bytes,11,opt,name=actionPlanNegative,proto3" json:"actionPlanNegative,omitempty"`
-	ActionPlanNeutral  string `protobuf:"bytes,12,opt,name=actionPlanNeutral,proto3" json:"actionPlanNeutral,omitempty"`
-	ExperimentType     string `protobuf:"bytes,13,opt,name=experimentType,proto3" json:"experimentType,omitempty"`
-}
-
-func (m *ExperimentMetadata) Reset()                    { *m = ExperimentMetadata{} }
-func (*ExperimentMetadata) ProtoMessage()               {}
-func (*ExperimentMetadata) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{2} }
-
-func (m *ExperimentMetadata) GetUserID() string {
-	if m != nil {
-		return m.UserID
+		return m.Query
 	}
 	return ""
 }
 
-func (m *ExperimentMetadata) GetProgramManagerID() string {
-	if m != nil {
-		return m.ProgramManagerID
-	}
-	return ""
+// The response message containing the Experiments
+type ListReply struct {
+	Experiments []*Experiment `protobuf:"bytes,1,rep,name=experiments" json:"experiments,omitempty"`
 }
 
-func (m *ExperimentMetadata) GetProductManagerID() string {
-	if m != nil {
-		return m.ProductManagerID
-	}
-	return ""
-}
+func (m *ListReply) Reset()                    { *m = ListReply{} }
+func (*ListReply) ProtoMessage()               {}
+func (*ListReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{1} }
 
-func (m *ExperimentMetadata) GetHypothesis() string {
-	if m != nil {
-		return m.Hypothesis
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetKpi() string {
-	if m != nil {
-		return m.Kpi
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetTimeBound() bool {
-	if m != nil {
-		return m.TimeBound
-	}
-	return false
-}
-
-func (m *ExperimentMetadata) GetPlannedStartTime() string {
-	if m != nil {
-		return m.PlannedStartTime
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetPlannedEndTime() string {
-	if m != nil {
-		return m.PlannedEndTime
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetActualStartTime() string {
-	if m != nil {
-		return m.ActualStartTime
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetActualEndTime() string {
-	if m != nil {
-		return m.ActualEndTime
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetActionPlanNegative() string {
-	if m != nil {
-		return m.ActionPlanNegative
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetActionPlanNeutral() string {
-	if m != nil {
-		return m.ActionPlanNeutral
-	}
-	return ""
-}
-
-func (m *ExperimentMetadata) GetExperimentType() string {
-	if m != nil {
-		return m.ExperimentType
-	}
-	return ""
-}
-
-// AllRequest retuns all the experiments from the given environment.
-type AllRequest struct {
-	Environment Environment `protobuf:"varint,1,opt,name=environment,proto3,enum=Environment" json:"environment,omitempty"`
-}
-
-func (m *AllRequest) Reset()                    { *m = AllRequest{} }
-func (*AllRequest) ProtoMessage()               {}
-func (*AllRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{3} }
-
-func (m *AllRequest) GetEnvironment() Environment {
-	if m != nil {
-		return m.Environment
-	}
-	return Staging
-}
-
-// The response message containing the Namespaces
-type AllReply struct {
-	Namespaces []*Namespace `protobuf:"bytes,1,rep,name=namespaces" json:"namespaces,omitempty"`
-}
-
-func (m *AllReply) Reset()                    { *m = AllReply{} }
-func (*AllReply) ProtoMessage()               {}
-func (*AllReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{4} }
-
-func (m *AllReply) GetNamespaces() []*Namespace {
-	if m != nil {
-		return m.Namespaces
-	}
-	return nil
-}
-
-// CreateRequest request message to create a new namespace in an environment.
-type CreateRequest struct {
-	Namespace   *Namespace  `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
-	Environment Environment `protobuf:"varint,2,opt,name=environment,proto3,enum=Environment" json:"environment,omitempty"`
-}
-
-func (m *CreateRequest) Reset()                    { *m = CreateRequest{} }
-func (*CreateRequest) ProtoMessage()               {}
-func (*CreateRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{5} }
-
-func (m *CreateRequest) GetNamespace() *Namespace {
-	if m != nil {
-		return m.Namespace
-	}
-	return nil
-}
-
-func (m *CreateRequest) GetEnvironment() Environment {
-	if m != nil {
-		return m.Environment
-	}
-	return Staging
-}
-
-// CreateReply response containing the newly created Namespace.
-type CreateReply struct {
-	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
-}
-
-func (m *CreateReply) Reset()                    { *m = CreateReply{} }
-func (*CreateReply) ProtoMessage()               {}
-func (*CreateReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{6} }
-
-func (m *CreateReply) GetNamespace() *Namespace {
-	if m != nil {
-		return m.Namespace
-	}
-	return nil
-}
-
-// ReadRequest request message to get a namespace by name.
-type ReadRequest struct {
-	Name        string      `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Environment Environment `protobuf:"varint,2,opt,name=environment,proto3,enum=Environment" json:"environment,omitempty"`
-}
-
-func (m *ReadRequest) Reset()                    { *m = ReadRequest{} }
-func (*ReadRequest) ProtoMessage()               {}
-func (*ReadRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{7} }
-
-func (m *ReadRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *ReadRequest) GetEnvironment() Environment {
-	if m != nil {
-		return m.Environment
-	}
-	return Staging
-}
-
-// ReadReply response containing the namespace requested.
-type ReadReply struct {
-	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
-}
-
-func (m *ReadReply) Reset()                    { *m = ReadReply{} }
-func (*ReadReply) ProtoMessage()               {}
-func (*ReadReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{8} }
-
-func (m *ReadReply) GetNamespace() *Namespace {
-	if m != nil {
-		return m.Namespace
-	}
-	return nil
-}
-
-// UpdateRequest request message to update an existing namespace in an
-// environment.
-type UpdateRequest struct {
-	Namespace   *Namespace  `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
-	Environment Environment `protobuf:"varint,2,opt,name=environment,proto3,enum=Environment" json:"environment,omitempty"`
-}
-
-func (m *UpdateRequest) Reset()                    { *m = UpdateRequest{} }
-func (*UpdateRequest) ProtoMessage()               {}
-func (*UpdateRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{9} }
-
-func (m *UpdateRequest) GetNamespace() *Namespace {
-	if m != nil {
-		return m.Namespace
-	}
-	return nil
-}
-
-func (m *UpdateRequest) GetEnvironment() Environment {
-	if m != nil {
-		return m.Environment
-	}
-	return Staging
-}
-
-// UpdateReply response containing the updated namespace.
-type UpdateReply struct {
-	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
-}
-
-func (m *UpdateReply) Reset()                    { *m = UpdateReply{} }
-func (*UpdateReply) ProtoMessage()               {}
-func (*UpdateReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{10} }
-
-func (m *UpdateReply) GetNamespace() *Namespace {
-	if m != nil {
-		return m.Namespace
-	}
-	return nil
-}
-
-// DeleteRequest request message to delete an existing namespace from an
-// environment.
-type DeleteRequest struct {
-	Name        string      `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Environment Environment `protobuf:"varint,2,opt,name=environment,proto3,enum=Environment" json:"environment,omitempty"`
-}
-
-func (m *DeleteRequest) Reset()                    { *m = DeleteRequest{} }
-func (*DeleteRequest) ProtoMessage()               {}
-func (*DeleteRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{11} }
-
-func (m *DeleteRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *DeleteRequest) GetEnvironment() Environment {
-	if m != nil {
-		return m.Environment
-	}
-	return Staging
-}
-
-// DeleteReply response containing the deleted namespace.
-type DeleteReply struct {
-	Namespace *Namespace `protobuf:"bytes,1,opt,name=namespace" json:"namespace,omitempty"`
-}
-
-func (m *DeleteReply) Reset()                    { *m = DeleteReply{} }
-func (*DeleteReply) ProtoMessage()               {}
-func (*DeleteReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{12} }
-
-func (m *DeleteReply) GetNamespace() *Namespace {
-	if m != nil {
-		return m.Namespace
-	}
-	return nil
-}
-
-// Namespace structure
-type Namespace struct {
-	Name        string        `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Experiments []*Experiment `protobuf:"bytes,3,rep,name=experiments" json:"experiments,omitempty"`
-}
-
-func (m *Namespace) Reset()                    { *m = Namespace{} }
-func (*Namespace) ProtoMessage()               {}
-func (*Namespace) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{13} }
-
-func (m *Namespace) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *Namespace) GetExperiments() []*Experiment {
+func (m *ListReply) GetExperiments() []*Experiment {
 	if m != nil {
 		return m.Experiments
 	}
 	return nil
 }
 
+// SetRequest request message to create a new experiment in an
+// environment.
+type SetRequest struct {
+	Experiment *Experiment `protobuf:"bytes,1,opt,name=experiment" json:"experiment,omitempty"`
+}
+
+func (m *SetRequest) Reset()                    { *m = SetRequest{} }
+func (*SetRequest) ProtoMessage()               {}
+func (*SetRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{2} }
+
+func (m *SetRequest) GetExperiment() *Experiment {
+	if m != nil {
+		return m.Experiment
+	}
+	return nil
+}
+
+// SetReply response containing the newly created Experiment.
+type SetReply struct {
+	Experiment *Experiment `protobuf:"bytes,1,opt,name=experiment" json:"experiment,omitempty"`
+}
+
+func (m *SetReply) Reset()                    { *m = SetReply{} }
+func (*SetReply) ProtoMessage()               {}
+func (*SetReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{3} }
+
+func (m *SetReply) GetExperiment() *Experiment {
+	if m != nil {
+		return m.Experiment
+	}
+	return nil
+}
+
+// GetRequest request message to get an experiment by id.
+type GetRequest struct {
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *GetRequest) Reset()                    { *m = GetRequest{} }
+func (*GetRequest) ProtoMessage()               {}
+func (*GetRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{4} }
+
+func (m *GetRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+// GetReply response containing then experiment requested.
+type GetReply struct {
+	Experiment *Experiment `protobuf:"bytes,1,opt,name=experiment" json:"experiment,omitempty"`
+}
+
+func (m *GetReply) Reset()                    { *m = GetReply{} }
+func (*GetReply) ProtoMessage()               {}
+func (*GetReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{5} }
+
+func (m *GetReply) GetExperiment() *Experiment {
+	if m != nil {
+		return m.Experiment
+	}
+	return nil
+}
+
+// RemoveRequest request message to remove an existing experiment from
+// an environment.
+type RemoveRequest struct {
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *RemoveRequest) Reset()                    { *m = RemoveRequest{} }
+func (*RemoveRequest) ProtoMessage()               {}
+func (*RemoveRequest) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{6} }
+
+func (m *RemoveRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+// RemoveReply response containing the removed experiment.
+type RemoveReply struct {
+	Experiment *Experiment `protobuf:"bytes,1,opt,name=experiment" json:"experiment,omitempty"`
+}
+
+func (m *RemoveReply) Reset()                    { *m = RemoveReply{} }
+func (*RemoveReply) ProtoMessage()               {}
+func (*RemoveReply) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{7} }
+
+func (m *RemoveReply) GetExperiment() *Experiment {
+	if m != nil {
+		return m.Experiment
+	}
+	return nil
+}
+
 // Experiment structure
 type Experiment struct {
-	Name       string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Segments   []byte            `protobuf:"bytes,2,opt,name=segments,proto3" json:"segments,omitempty"`
-	Params     []*Param          `protobuf:"bytes,3,rep,name=params" json:"params,omitempty"`
-	Id         string            `protobuf:"bytes,4,opt,name=id,proto3" json:"id,omitempty"`
-	Labels     map[string]string `protobuf:"bytes,5,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	DetailName string            `protobuf:"bytes,6,opt,name=detailName,proto3" json:"detailName,omitempty"`
+	Id         string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name       string            `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Namespace  string            `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Labels     map[string]string `protobuf:"bytes,4,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Params     []*Param          `protobuf:"bytes,5,rep,name=params" json:"params,omitempty"`
+	Segments   []byte            `protobuf:"bytes,6,opt,name=segments,proto3" json:"segments,omitempty"`
+	DetailName string            `protobuf:"bytes,7,opt,name=detailName,proto3" json:"detailName,omitempty"`
 }
 
 func (m *Experiment) Reset()                    { *m = Experiment{} }
 func (*Experiment) ProtoMessage()               {}
-func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{14} }
+func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{8} }
+
+func (m *Experiment) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
 
 func (m *Experiment) GetName() string {
 	if m != nil {
@@ -461,9 +211,16 @@ func (m *Experiment) GetName() string {
 	return ""
 }
 
-func (m *Experiment) GetSegments() []byte {
+func (m *Experiment) GetNamespace() string {
 	if m != nil {
-		return m.Segments
+		return m.Namespace
+	}
+	return ""
+}
+
+func (m *Experiment) GetLabels() map[string]string {
+	if m != nil {
+		return m.Labels
 	}
 	return nil
 }
@@ -475,16 +232,9 @@ func (m *Experiment) GetParams() []*Param {
 	return nil
 }
 
-func (m *Experiment) GetId() string {
+func (m *Experiment) GetSegments() []byte {
 	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *Experiment) GetLabels() map[string]string {
-	if m != nil {
-		return m.Labels
+		return m.Segments
 	}
 	return nil
 }
@@ -505,7 +255,7 @@ type Param struct {
 
 func (m *Param) Reset()                    { *m = Param{} }
 func (*Param) ProtoMessage()               {}
-func (*Param) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{15} }
+func (*Param) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{9} }
 
 func (m *Param) GetName() string {
 	if m != nil {
@@ -536,7 +286,7 @@ type Value struct {
 
 func (m *Value) Reset()                    { *m = Value{} }
 func (*Value) ProtoMessage()               {}
-func (*Value) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{16} }
+func (*Value) Descriptor() ([]byte, []int) { return fileDescriptorStorage, []int{10} }
 
 func (m *Value) GetChoices() []string {
 	if m != nil {
@@ -553,33 +303,19 @@ func (m *Value) GetWeights() []float64 {
 }
 
 func init() {
-	proto.RegisterType((*ExperimentIntakeRequest)(nil), "ExperimentIntakeRequest")
-	proto.RegisterType((*ExperimentIntakeReply)(nil), "ExperimentIntakeReply")
-	proto.RegisterType((*ExperimentMetadata)(nil), "ExperimentMetadata")
-	proto.RegisterType((*AllRequest)(nil), "AllRequest")
-	proto.RegisterType((*AllReply)(nil), "AllReply")
-	proto.RegisterType((*CreateRequest)(nil), "CreateRequest")
-	proto.RegisterType((*CreateReply)(nil), "CreateReply")
-	proto.RegisterType((*ReadRequest)(nil), "ReadRequest")
-	proto.RegisterType((*ReadReply)(nil), "ReadReply")
-	proto.RegisterType((*UpdateRequest)(nil), "UpdateRequest")
-	proto.RegisterType((*UpdateReply)(nil), "UpdateReply")
-	proto.RegisterType((*DeleteRequest)(nil), "DeleteRequest")
-	proto.RegisterType((*DeleteReply)(nil), "DeleteReply")
-	proto.RegisterType((*Namespace)(nil), "Namespace")
-	proto.RegisterType((*Experiment)(nil), "Experiment")
-	proto.RegisterType((*Param)(nil), "Param")
-	proto.RegisterType((*Value)(nil), "Value")
-	proto.RegisterEnum("Environment", Environment_name, Environment_value)
+	proto.RegisterType((*ListRequest)(nil), "elwin.storage.ListRequest")
+	proto.RegisterType((*ListReply)(nil), "elwin.storage.ListReply")
+	proto.RegisterType((*SetRequest)(nil), "elwin.storage.SetRequest")
+	proto.RegisterType((*SetReply)(nil), "elwin.storage.SetReply")
+	proto.RegisterType((*GetRequest)(nil), "elwin.storage.GetRequest")
+	proto.RegisterType((*GetReply)(nil), "elwin.storage.GetReply")
+	proto.RegisterType((*RemoveRequest)(nil), "elwin.storage.RemoveRequest")
+	proto.RegisterType((*RemoveReply)(nil), "elwin.storage.RemoveReply")
+	proto.RegisterType((*Experiment)(nil), "elwin.storage.Experiment")
+	proto.RegisterType((*Param)(nil), "elwin.storage.Param")
+	proto.RegisterType((*Value)(nil), "elwin.storage.Value")
 }
-func (x Environment) String() string {
-	s, ok := Environment_name[int32(x)]
-	if ok {
-		return s
-	}
-	return strconv.Itoa(int(x))
-}
-func (this *ExperimentIntakeRequest) Equal(that interface{}) bool {
+func (this *ListRequest) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
 			return true
@@ -587,9 +323,9 @@ func (this *ExperimentIntakeRequest) Equal(that interface{}) bool {
 		return false
 	}
 
-	that1, ok := that.(*ExperimentIntakeRequest)
+	that1, ok := that.(*ListRequest)
 	if !ok {
-		that2, ok := that.(ExperimentIntakeRequest)
+		that2, ok := that.(ListRequest)
 		if ok {
 			that1 = &that2
 		} else {
@@ -604,15 +340,12 @@ func (this *ExperimentIntakeRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !this.Metadata.Equal(that1.Metadata) {
-		return false
-	}
-	if !this.Namespace.Equal(that1.Namespace) {
+	if this.Query != that1.Query {
 		return false
 	}
 	return true
 }
-func (this *ExperimentIntakeReply) Equal(that interface{}) bool {
+func (this *ListReply) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
 			return true
@@ -620,9 +353,9 @@ func (this *ExperimentIntakeReply) Equal(that interface{}) bool {
 		return false
 	}
 
-	that1, ok := that.(*ExperimentIntakeReply)
+	that1, ok := that.(*ListReply)
 	if !ok {
-		that2, ok := that.(ExperimentIntakeReply)
+		that2, ok := that.(ListReply)
 		if ok {
 			that1 = &that2
 		} else {
@@ -635,419 +368,6 @@ func (this *ExperimentIntakeReply) Equal(that interface{}) bool {
 		}
 		return false
 	} else if this == nil {
-		return false
-	}
-	return true
-}
-func (this *ExperimentMetadata) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*ExperimentMetadata)
-	if !ok {
-		that2, ok := that.(ExperimentMetadata)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.UserID != that1.UserID {
-		return false
-	}
-	if this.ProgramManagerID != that1.ProgramManagerID {
-		return false
-	}
-	if this.ProductManagerID != that1.ProductManagerID {
-		return false
-	}
-	if this.Hypothesis != that1.Hypothesis {
-		return false
-	}
-	if this.Kpi != that1.Kpi {
-		return false
-	}
-	if this.TimeBound != that1.TimeBound {
-		return false
-	}
-	if this.PlannedStartTime != that1.PlannedStartTime {
-		return false
-	}
-	if this.PlannedEndTime != that1.PlannedEndTime {
-		return false
-	}
-	if this.ActualStartTime != that1.ActualStartTime {
-		return false
-	}
-	if this.ActualEndTime != that1.ActualEndTime {
-		return false
-	}
-	if this.ActionPlanNegative != that1.ActionPlanNegative {
-		return false
-	}
-	if this.ActionPlanNeutral != that1.ActionPlanNeutral {
-		return false
-	}
-	if this.ExperimentType != that1.ExperimentType {
-		return false
-	}
-	return true
-}
-func (this *AllRequest) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*AllRequest)
-	if !ok {
-		that2, ok := that.(AllRequest)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.Environment != that1.Environment {
-		return false
-	}
-	return true
-}
-func (this *AllReply) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*AllReply)
-	if !ok {
-		that2, ok := that.(AllReply)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if len(this.Namespaces) != len(that1.Namespaces) {
-		return false
-	}
-	for i := range this.Namespaces {
-		if !this.Namespaces[i].Equal(that1.Namespaces[i]) {
-			return false
-		}
-	}
-	return true
-}
-func (this *CreateRequest) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*CreateRequest)
-	if !ok {
-		that2, ok := that.(CreateRequest)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if !this.Namespace.Equal(that1.Namespace) {
-		return false
-	}
-	if this.Environment != that1.Environment {
-		return false
-	}
-	return true
-}
-func (this *CreateReply) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*CreateReply)
-	if !ok {
-		that2, ok := that.(CreateReply)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if !this.Namespace.Equal(that1.Namespace) {
-		return false
-	}
-	return true
-}
-func (this *ReadRequest) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*ReadRequest)
-	if !ok {
-		that2, ok := that.(ReadRequest)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.Name != that1.Name {
-		return false
-	}
-	if this.Environment != that1.Environment {
-		return false
-	}
-	return true
-}
-func (this *ReadReply) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*ReadReply)
-	if !ok {
-		that2, ok := that.(ReadReply)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if !this.Namespace.Equal(that1.Namespace) {
-		return false
-	}
-	return true
-}
-func (this *UpdateRequest) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*UpdateRequest)
-	if !ok {
-		that2, ok := that.(UpdateRequest)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if !this.Namespace.Equal(that1.Namespace) {
-		return false
-	}
-	if this.Environment != that1.Environment {
-		return false
-	}
-	return true
-}
-func (this *UpdateReply) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*UpdateReply)
-	if !ok {
-		that2, ok := that.(UpdateReply)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if !this.Namespace.Equal(that1.Namespace) {
-		return false
-	}
-	return true
-}
-func (this *DeleteRequest) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*DeleteRequest)
-	if !ok {
-		that2, ok := that.(DeleteRequest)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.Name != that1.Name {
-		return false
-	}
-	if this.Environment != that1.Environment {
-		return false
-	}
-	return true
-}
-func (this *DeleteReply) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*DeleteReply)
-	if !ok {
-		that2, ok := that.(DeleteReply)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if !this.Namespace.Equal(that1.Namespace) {
-		return false
-	}
-	return true
-}
-func (this *Namespace) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	}
-
-	that1, ok := that.(*Namespace)
-	if !ok {
-		that2, ok := that.(Namespace)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if this.Name != that1.Name {
 		return false
 	}
 	if len(this.Experiments) != len(that1.Experiments) {
@@ -1057,6 +377,186 @@ func (this *Namespace) Equal(that interface{}) bool {
 		if !this.Experiments[i].Equal(that1.Experiments[i]) {
 			return false
 		}
+	}
+	return true
+}
+func (this *SetRequest) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*SetRequest)
+	if !ok {
+		that2, ok := that.(SetRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Experiment.Equal(that1.Experiment) {
+		return false
+	}
+	return true
+}
+func (this *SetReply) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*SetReply)
+	if !ok {
+		that2, ok := that.(SetReply)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Experiment.Equal(that1.Experiment) {
+		return false
+	}
+	return true
+}
+func (this *GetRequest) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*GetRequest)
+	if !ok {
+		that2, ok := that.(GetRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	return true
+}
+func (this *GetReply) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*GetReply)
+	if !ok {
+		that2, ok := that.(GetReply)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Experiment.Equal(that1.Experiment) {
+		return false
+	}
+	return true
+}
+func (this *RemoveRequest) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*RemoveRequest)
+	if !ok {
+		that2, ok := that.(RemoveRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	return true
+}
+func (this *RemoveReply) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*RemoveReply)
+	if !ok {
+		that2, ok := that.(RemoveReply)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if !this.Experiment.Equal(that1.Experiment) {
+		return false
 	}
 	return true
 }
@@ -1085,21 +585,13 @@ func (this *Experiment) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Id != that1.Id {
+		return false
+	}
 	if this.Name != that1.Name {
 		return false
 	}
-	if !bytes.Equal(this.Segments, that1.Segments) {
-		return false
-	}
-	if len(this.Params) != len(that1.Params) {
-		return false
-	}
-	for i := range this.Params {
-		if !this.Params[i].Equal(that1.Params[i]) {
-			return false
-		}
-	}
-	if this.Id != that1.Id {
+	if this.Namespace != that1.Namespace {
 		return false
 	}
 	if len(this.Labels) != len(that1.Labels) {
@@ -1109,6 +601,17 @@ func (this *Experiment) Equal(that interface{}) bool {
 		if this.Labels[i] != that1.Labels[i] {
 			return false
 		}
+	}
+	if len(this.Params) != len(that1.Params) {
+		return false
+	}
+	for i := range this.Params {
+		if !this.Params[i].Equal(that1.Params[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.Segments, that1.Segments) {
+		return false
 	}
 	if this.DetailName != that1.DetailName {
 		return false
@@ -1194,179 +697,92 @@ func (this *Value) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *ExperimentIntakeRequest) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&storage.ExperimentIntakeRequest{")
-	if this.Metadata != nil {
-		s = append(s, "Metadata: "+fmt.Sprintf("%#v", this.Metadata)+",\n")
-	}
-	if this.Namespace != nil {
-		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *ExperimentIntakeReply) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 4)
-	s = append(s, "&storage.ExperimentIntakeReply{")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *ExperimentMetadata) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 17)
-	s = append(s, "&storage.ExperimentMetadata{")
-	s = append(s, "UserID: "+fmt.Sprintf("%#v", this.UserID)+",\n")
-	s = append(s, "ProgramManagerID: "+fmt.Sprintf("%#v", this.ProgramManagerID)+",\n")
-	s = append(s, "ProductManagerID: "+fmt.Sprintf("%#v", this.ProductManagerID)+",\n")
-	s = append(s, "Hypothesis: "+fmt.Sprintf("%#v", this.Hypothesis)+",\n")
-	s = append(s, "Kpi: "+fmt.Sprintf("%#v", this.Kpi)+",\n")
-	s = append(s, "TimeBound: "+fmt.Sprintf("%#v", this.TimeBound)+",\n")
-	s = append(s, "PlannedStartTime: "+fmt.Sprintf("%#v", this.PlannedStartTime)+",\n")
-	s = append(s, "PlannedEndTime: "+fmt.Sprintf("%#v", this.PlannedEndTime)+",\n")
-	s = append(s, "ActualStartTime: "+fmt.Sprintf("%#v", this.ActualStartTime)+",\n")
-	s = append(s, "ActualEndTime: "+fmt.Sprintf("%#v", this.ActualEndTime)+",\n")
-	s = append(s, "ActionPlanNegative: "+fmt.Sprintf("%#v", this.ActionPlanNegative)+",\n")
-	s = append(s, "ActionPlanNeutral: "+fmt.Sprintf("%#v", this.ActionPlanNeutral)+",\n")
-	s = append(s, "ExperimentType: "+fmt.Sprintf("%#v", this.ExperimentType)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *AllRequest) GoString() string {
+func (this *ListRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&storage.AllRequest{")
-	s = append(s, "Environment: "+fmt.Sprintf("%#v", this.Environment)+",\n")
+	s = append(s, "&storage.ListRequest{")
+	s = append(s, "Query: "+fmt.Sprintf("%#v", this.Query)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
-func (this *AllReply) GoString() string {
+func (this *ListReply) GoString() string {
 	if this == nil {
 		return "nil"
 	}
 	s := make([]string, 0, 5)
-	s = append(s, "&storage.AllReply{")
-	if this.Namespaces != nil {
-		s = append(s, "Namespaces: "+fmt.Sprintf("%#v", this.Namespaces)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *CreateRequest) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&storage.CreateRequest{")
-	if this.Namespace != nil {
-		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
-	}
-	s = append(s, "Environment: "+fmt.Sprintf("%#v", this.Environment)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *CreateReply) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&storage.CreateReply{")
-	if this.Namespace != nil {
-		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *ReadRequest) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&storage.ReadRequest{")
-	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
-	s = append(s, "Environment: "+fmt.Sprintf("%#v", this.Environment)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *ReadReply) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&storage.ReadReply{")
-	if this.Namespace != nil {
-		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *UpdateRequest) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&storage.UpdateRequest{")
-	if this.Namespace != nil {
-		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
-	}
-	s = append(s, "Environment: "+fmt.Sprintf("%#v", this.Environment)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *UpdateReply) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&storage.UpdateReply{")
-	if this.Namespace != nil {
-		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *DeleteRequest) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&storage.DeleteRequest{")
-	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
-	s = append(s, "Environment: "+fmt.Sprintf("%#v", this.Environment)+",\n")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *DeleteReply) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 5)
-	s = append(s, "&storage.DeleteReply{")
-	if this.Namespace != nil {
-		s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
-	}
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *Namespace) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 6)
-	s = append(s, "&storage.Namespace{")
-	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "&storage.ListReply{")
 	if this.Experiments != nil {
 		s = append(s, "Experiments: "+fmt.Sprintf("%#v", this.Experiments)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *SetRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&storage.SetRequest{")
+	if this.Experiment != nil {
+		s = append(s, "Experiment: "+fmt.Sprintf("%#v", this.Experiment)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *SetReply) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&storage.SetReply{")
+	if this.Experiment != nil {
+		s = append(s, "Experiment: "+fmt.Sprintf("%#v", this.Experiment)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *GetRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&storage.GetRequest{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *GetReply) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&storage.GetReply{")
+	if this.Experiment != nil {
+		s = append(s, "Experiment: "+fmt.Sprintf("%#v", this.Experiment)+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *RemoveRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&storage.RemoveRequest{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *RemoveReply) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&storage.RemoveReply{")
+	if this.Experiment != nil {
+		s = append(s, "Experiment: "+fmt.Sprintf("%#v", this.Experiment)+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -1375,14 +791,11 @@ func (this *Experiment) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 10)
+	s := make([]string, 0, 11)
 	s = append(s, "&storage.Experiment{")
-	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
-	s = append(s, "Segments: "+fmt.Sprintf("%#v", this.Segments)+",\n")
-	if this.Params != nil {
-		s = append(s, "Params: "+fmt.Sprintf("%#v", this.Params)+",\n")
-	}
 	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
 	keysForLabels := make([]string, 0, len(this.Labels))
 	for k, _ := range this.Labels {
 		keysForLabels = append(keysForLabels, k)
@@ -1396,6 +809,10 @@ func (this *Experiment) GoString() string {
 	if this.Labels != nil {
 		s = append(s, "Labels: "+mapStringForLabels+",\n")
 	}
+	if this.Params != nil {
+		s = append(s, "Params: "+fmt.Sprintf("%#v", this.Params)+",\n")
+	}
+	s = append(s, "Segments: "+fmt.Sprintf("%#v", this.Segments)+",\n")
 	s = append(s, "DetailName: "+fmt.Sprintf("%#v", this.DetailName)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -1445,21 +862,16 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for ElwinStorage service
 
 type ElwinStorageClient interface {
-	// All returns all the namespaces for a given environment.
-	All(ctx context.Context, in *AllRequest, opts ...grpc.CallOption) (*AllReply, error)
-	// Create creates a namespace in the given environment.
-	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error)
-	// Read returns the namespace matching the supplied name from the given
-	// environment.
-	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadReply, error)
-	// Update replaces the namespace in the given environment with the namespace
-	// supplied.
-	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateReply, error)
-	// Delete deletes the namespace from the given environment.
-	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error)
-	// ExperimentIntake takes a request from a web form and creates the
-	// experiment in the data store.
-	ExperimentIntake(ctx context.Context, in *ExperimentIntakeRequest, opts ...grpc.CallOption) (*ExperimentIntakeReply, error)
+	// List returns all the experiments that match the selector.
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error)
+	// Get returns the experiment matching the supplied name from the
+	// given environment.
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetReply, error)
+	// Set replaces the experiment in the given environment with the
+	// experiment supplied.
+	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetReply, error)
+	// Remove removes the namespace from the given environment.
+	Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveReply, error)
 }
 
 type elwinStorageClient struct {
@@ -1470,54 +882,36 @@ func NewElwinStorageClient(cc *grpc.ClientConn) ElwinStorageClient {
 	return &elwinStorageClient{cc}
 }
 
-func (c *elwinStorageClient) All(ctx context.Context, in *AllRequest, opts ...grpc.CallOption) (*AllReply, error) {
-	out := new(AllReply)
-	err := grpc.Invoke(ctx, "/ElwinStorage/All", in, out, c.cc, opts...)
+func (c *elwinStorageClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListReply, error) {
+	out := new(ListReply)
+	err := grpc.Invoke(ctx, "/elwin.storage.ElwinStorage/List", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *elwinStorageClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateReply, error) {
-	out := new(CreateReply)
-	err := grpc.Invoke(ctx, "/ElwinStorage/Create", in, out, c.cc, opts...)
+func (c *elwinStorageClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetReply, error) {
+	out := new(GetReply)
+	err := grpc.Invoke(ctx, "/elwin.storage.ElwinStorage/Get", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *elwinStorageClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadReply, error) {
-	out := new(ReadReply)
-	err := grpc.Invoke(ctx, "/ElwinStorage/Read", in, out, c.cc, opts...)
+func (c *elwinStorageClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetReply, error) {
+	out := new(SetReply)
+	err := grpc.Invoke(ctx, "/elwin.storage.ElwinStorage/Set", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *elwinStorageClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateReply, error) {
-	out := new(UpdateReply)
-	err := grpc.Invoke(ctx, "/ElwinStorage/Update", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *elwinStorageClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteReply, error) {
-	out := new(DeleteReply)
-	err := grpc.Invoke(ctx, "/ElwinStorage/Delete", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *elwinStorageClient) ExperimentIntake(ctx context.Context, in *ExperimentIntakeRequest, opts ...grpc.CallOption) (*ExperimentIntakeReply, error) {
-	out := new(ExperimentIntakeReply)
-	err := grpc.Invoke(ctx, "/ElwinStorage/ExperimentIntake", in, out, c.cc, opts...)
+func (c *elwinStorageClient) Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveReply, error) {
+	out := new(RemoveReply)
+	err := grpc.Invoke(ctx, "/elwin.storage.ElwinStorage/Remove", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1527,169 +921,120 @@ func (c *elwinStorageClient) ExperimentIntake(ctx context.Context, in *Experimen
 // Server API for ElwinStorage service
 
 type ElwinStorageServer interface {
-	// All returns all the namespaces for a given environment.
-	All(context.Context, *AllRequest) (*AllReply, error)
-	// Create creates a namespace in the given environment.
-	Create(context.Context, *CreateRequest) (*CreateReply, error)
-	// Read returns the namespace matching the supplied name from the given
-	// environment.
-	Read(context.Context, *ReadRequest) (*ReadReply, error)
-	// Update replaces the namespace in the given environment with the namespace
-	// supplied.
-	Update(context.Context, *UpdateRequest) (*UpdateReply, error)
-	// Delete deletes the namespace from the given environment.
-	Delete(context.Context, *DeleteRequest) (*DeleteReply, error)
-	// ExperimentIntake takes a request from a web form and creates the
-	// experiment in the data store.
-	ExperimentIntake(context.Context, *ExperimentIntakeRequest) (*ExperimentIntakeReply, error)
+	// List returns all the experiments that match the selector.
+	List(context.Context, *ListRequest) (*ListReply, error)
+	// Get returns the experiment matching the supplied name from the
+	// given environment.
+	Get(context.Context, *GetRequest) (*GetReply, error)
+	// Set replaces the experiment in the given environment with the
+	// experiment supplied.
+	Set(context.Context, *SetRequest) (*SetReply, error)
+	// Remove removes the namespace from the given environment.
+	Remove(context.Context, *RemoveRequest) (*RemoveReply, error)
 }
 
 func RegisterElwinStorageServer(s *grpc.Server, srv ElwinStorageServer) {
 	s.RegisterService(&_ElwinStorage_serviceDesc, srv)
 }
 
-func _ElwinStorage_All_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AllRequest)
+func _ElwinStorage_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).All(ctx, in)
+		return srv.(ElwinStorageServer).List(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/All",
+		FullMethod: "/elwin.storage.ElwinStorage/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).All(ctx, req.(*AllRequest))
+		return srv.(ElwinStorageServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ElwinStorage_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateRequest)
+func _ElwinStorage_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).Create(ctx, in)
+		return srv.(ElwinStorageServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/Create",
+		FullMethod: "/elwin.storage.ElwinStorage/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).Create(ctx, req.(*CreateRequest))
+		return srv.(ElwinStorageServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ElwinStorage_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadRequest)
+func _ElwinStorage_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).Read(ctx, in)
+		return srv.(ElwinStorageServer).Set(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/Read",
+		FullMethod: "/elwin.storage.ElwinStorage/Set",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).Read(ctx, req.(*ReadRequest))
+		return srv.(ElwinStorageServer).Set(ctx, req.(*SetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ElwinStorage_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateRequest)
+func _ElwinStorage_Remove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ElwinStorageServer).Update(ctx, in)
+		return srv.(ElwinStorageServer).Remove(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ElwinStorage/Update",
+		FullMethod: "/elwin.storage.ElwinStorage/Remove",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).Update(ctx, req.(*UpdateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ElwinStorage_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ElwinStorageServer).Delete(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ElwinStorage/Delete",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).Delete(ctx, req.(*DeleteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ElwinStorage_ExperimentIntake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExperimentIntakeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ElwinStorageServer).ExperimentIntake(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ElwinStorage/ExperimentIntake",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ElwinStorageServer).ExperimentIntake(ctx, req.(*ExperimentIntakeRequest))
+		return srv.(ElwinStorageServer).Remove(ctx, req.(*RemoveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 var _ElwinStorage_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "ElwinStorage",
+	ServiceName: "elwin.storage.ElwinStorage",
 	HandlerType: (*ElwinStorageServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "All",
-			Handler:    _ElwinStorage_All_Handler,
+			MethodName: "List",
+			Handler:    _ElwinStorage_List_Handler,
 		},
 		{
-			MethodName: "Create",
-			Handler:    _ElwinStorage_Create_Handler,
+			MethodName: "Get",
+			Handler:    _ElwinStorage_Get_Handler,
 		},
 		{
-			MethodName: "Read",
-			Handler:    _ElwinStorage_Read_Handler,
+			MethodName: "Set",
+			Handler:    _ElwinStorage_Set_Handler,
 		},
 		{
-			MethodName: "Update",
-			Handler:    _ElwinStorage_Update_Handler,
-		},
-		{
-			MethodName: "Delete",
-			Handler:    _ElwinStorage_Delete_Handler,
-		},
-		{
-			MethodName: "ExperimentIntake",
-			Handler:    _ElwinStorage_ExperimentIntake_Handler,
+			MethodName: "Remove",
+			Handler:    _ElwinStorage_Remove_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "storage.proto",
 }
 
-func (m *ExperimentIntakeRequest) Marshal() (dAtA []byte, err error) {
+func (m *ListRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1699,35 +1044,21 @@ func (m *ExperimentIntakeRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ExperimentIntakeRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *ListRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.Metadata != nil {
+	if len(m.Query) > 0 {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Metadata.Size()))
-		n1, err := m.Metadata.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
-	}
-	if m.Namespace != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n2, err := m.Namespace.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n2
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Query)))
+		i += copy(dAtA[i:], m.Query)
 	}
 	return i, nil
 }
 
-func (m *ExperimentIntakeReply) Marshal() (dAtA []byte, err error) {
+func (m *ListReply) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1737,154 +1068,13 @@ func (m *ExperimentIntakeReply) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ExperimentIntakeReply) MarshalTo(dAtA []byte) (int, error) {
+func (m *ListReply) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	return i, nil
-}
-
-func (m *ExperimentMetadata) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ExperimentMetadata) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.UserID) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.UserID)))
-		i += copy(dAtA[i:], m.UserID)
-	}
-	if len(m.ProgramManagerID) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.ProgramManagerID)))
-		i += copy(dAtA[i:], m.ProgramManagerID)
-	}
-	if len(m.ProductManagerID) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.ProductManagerID)))
-		i += copy(dAtA[i:], m.ProductManagerID)
-	}
-	if len(m.Hypothesis) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.Hypothesis)))
-		i += copy(dAtA[i:], m.Hypothesis)
-	}
-	if len(m.Kpi) > 0 {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.Kpi)))
-		i += copy(dAtA[i:], m.Kpi)
-	}
-	if m.TimeBound {
-		dAtA[i] = 0x30
-		i++
-		if m.TimeBound {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if len(m.PlannedStartTime) > 0 {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.PlannedStartTime)))
-		i += copy(dAtA[i:], m.PlannedStartTime)
-	}
-	if len(m.PlannedEndTime) > 0 {
-		dAtA[i] = 0x42
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.PlannedEndTime)))
-		i += copy(dAtA[i:], m.PlannedEndTime)
-	}
-	if len(m.ActualStartTime) > 0 {
-		dAtA[i] = 0x4a
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActualStartTime)))
-		i += copy(dAtA[i:], m.ActualStartTime)
-	}
-	if len(m.ActualEndTime) > 0 {
-		dAtA[i] = 0x52
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActualEndTime)))
-		i += copy(dAtA[i:], m.ActualEndTime)
-	}
-	if len(m.ActionPlanNegative) > 0 {
-		dAtA[i] = 0x5a
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActionPlanNegative)))
-		i += copy(dAtA[i:], m.ActionPlanNegative)
-	}
-	if len(m.ActionPlanNeutral) > 0 {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.ActionPlanNeutral)))
-		i += copy(dAtA[i:], m.ActionPlanNeutral)
-	}
-	if len(m.ExperimentType) > 0 {
-		dAtA[i] = 0x6a
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.ExperimentType)))
-		i += copy(dAtA[i:], m.ExperimentType)
-	}
-	return i, nil
-}
-
-func (m *AllRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AllRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Environment != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Environment))
-	}
-	return i, nil
-}
-
-func (m *AllReply) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *AllReply) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Namespaces) > 0 {
-		for _, msg := range m.Namespaces {
+	if len(m.Experiments) > 0 {
+		for _, msg := range m.Experiments {
 			dAtA[i] = 0xa
 			i++
 			i = encodeVarintStorage(dAtA, i, uint64(msg.Size()))
@@ -1898,7 +1088,7 @@ func (m *AllReply) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *CreateRequest) Marshal() (dAtA []byte, err error) {
+func (m *SetRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1908,30 +1098,105 @@ func (m *CreateRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CreateRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *SetRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.Namespace != nil {
+	if m.Experiment != nil {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n3, err := m.Namespace.MarshalTo(dAtA[i:])
+		i = encodeVarintStorage(dAtA, i, uint64(m.Experiment.Size()))
+		n1, err := m.Experiment.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n1
+	}
+	return i, nil
+}
+
+func (m *SetReply) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SetReply) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Experiment != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(m.Experiment.Size()))
+		n2, err := m.Experiment.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n2
+	}
+	return i, nil
+}
+
+func (m *GetRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetRequest) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Id) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Id)))
+		i += copy(dAtA[i:], m.Id)
+	}
+	return i, nil
+}
+
+func (m *GetReply) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetReply) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Experiment != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(m.Experiment.Size()))
+		n3, err := m.Experiment.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n3
 	}
-	if m.Environment != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Environment))
-	}
 	return i, nil
 }
 
-func (m *CreateReply) Marshal() (dAtA []byte, err error) {
+func (m *RemoveRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalTo(dAtA)
@@ -1941,231 +1206,44 @@ func (m *CreateReply) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CreateReply) MarshalTo(dAtA []byte) (int, error) {
+func (m *RemoveRequest) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.Namespace != nil {
+	if len(m.Id) > 0 {
 		dAtA[i] = 0xa
 		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n4, err := m.Namespace.MarshalTo(dAtA[i:])
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Id)))
+		i += copy(dAtA[i:], m.Id)
+	}
+	return i, nil
+}
+
+func (m *RemoveReply) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RemoveReply) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Experiment != nil {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(m.Experiment.Size()))
+		n4, err := m.Experiment.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n4
-	}
-	return i, nil
-}
-
-func (m *ReadRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ReadRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
-	if m.Environment != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Environment))
-	}
-	return i, nil
-}
-
-func (m *ReadReply) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ReadReply) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n5, err := m.Namespace.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n5
-	}
-	return i, nil
-}
-
-func (m *UpdateRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *UpdateRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n6, err := m.Namespace.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n6
-	}
-	if m.Environment != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Environment))
-	}
-	return i, nil
-}
-
-func (m *UpdateReply) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *UpdateReply) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n7, err := m.Namespace.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n7
-	}
-	return i, nil
-}
-
-func (m *DeleteRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *DeleteRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
-	if m.Environment != 0 {
-		dAtA[i] = 0x10
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Environment))
-	}
-	return i, nil
-}
-
-func (m *DeleteReply) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *DeleteReply) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(m.Namespace.Size()))
-		n8, err := m.Namespace.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n8
-	}
-	return i, nil
-}
-
-func (m *Namespace) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Namespace) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
-	if len(m.Experiments) > 0 {
-		for _, msg := range m.Experiments {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintStorage(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
 	}
 	return i, nil
 }
@@ -2185,39 +1263,27 @@ func (m *Experiment) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
-	if len(m.Segments) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintStorage(dAtA, i, uint64(len(m.Segments)))
-		i += copy(dAtA[i:], m.Segments)
-	}
-	if len(m.Params) > 0 {
-		for _, msg := range m.Params {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintStorage(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
 	if len(m.Id) > 0 {
-		dAtA[i] = 0x22
+		dAtA[i] = 0xa
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(len(m.Id)))
 		i += copy(dAtA[i:], m.Id)
 	}
+	if len(m.Name) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
+	}
+	if len(m.Namespace) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
+	}
 	if len(m.Labels) > 0 {
 		for k, _ := range m.Labels {
-			dAtA[i] = 0x2a
+			dAtA[i] = 0x22
 			i++
 			v := m.Labels[k]
 			mapSize := 1 + len(k) + sovStorage(uint64(len(k))) + 1 + len(v) + sovStorage(uint64(len(v)))
@@ -2232,8 +1298,26 @@ func (m *Experiment) MarshalTo(dAtA []byte) (int, error) {
 			i += copy(dAtA[i:], v)
 		}
 	}
-	if len(m.DetailName) > 0 {
+	if len(m.Params) > 0 {
+		for _, msg := range m.Params {
+			dAtA[i] = 0x2a
+			i++
+			i = encodeVarintStorage(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if len(m.Segments) > 0 {
 		dAtA[i] = 0x32
+		i++
+		i = encodeVarintStorage(dAtA, i, uint64(len(m.Segments)))
+		i += copy(dAtA[i:], m.Segments)
+	}
+	if len(m.DetailName) > 0 {
+		dAtA[i] = 0x3a
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(len(m.DetailName)))
 		i += copy(dAtA[i:], m.DetailName)
@@ -2266,11 +1350,11 @@ func (m *Param) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(m.Value.Size()))
-		n9, err := m.Value.MarshalTo(dAtA[i:])
+		n5, err := m.Value.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n9
+		i += n5
 	}
 	if len(m.Id) > 0 {
 		dAtA[i] = 0x22
@@ -2316,22 +1400,22 @@ func (m *Value) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintStorage(dAtA, i, uint64(len(m.Weights)*8))
 		for _, num := range m.Weights {
-			f10 := math.Float64bits(float64(num))
-			dAtA[i] = uint8(f10)
+			f6 := math.Float64bits(float64(num))
+			dAtA[i] = uint8(f6)
 			i++
-			dAtA[i] = uint8(f10 >> 8)
+			dAtA[i] = uint8(f6 >> 8)
 			i++
-			dAtA[i] = uint8(f10 >> 16)
+			dAtA[i] = uint8(f6 >> 16)
 			i++
-			dAtA[i] = uint8(f10 >> 24)
+			dAtA[i] = uint8(f6 >> 24)
 			i++
-			dAtA[i] = uint8(f10 >> 32)
+			dAtA[i] = uint8(f6 >> 32)
 			i++
-			dAtA[i] = uint8(f10 >> 40)
+			dAtA[i] = uint8(f6 >> 40)
 			i++
-			dAtA[i] = uint8(f10 >> 48)
+			dAtA[i] = uint8(f6 >> 48)
 			i++
-			dAtA[i] = uint8(f10 >> 56)
+			dAtA[i] = uint8(f6 >> 56)
 			i++
 		}
 	}
@@ -2365,203 +1449,19 @@ func encodeVarintStorage(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
-func (m *ExperimentIntakeRequest) Size() (n int) {
+func (m *ListRequest) Size() (n int) {
 	var l int
 	_ = l
-	if m.Metadata != nil {
-		l = m.Metadata.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	if m.Namespace != nil {
-		l = m.Namespace.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	return n
-}
-
-func (m *ExperimentIntakeReply) Size() (n int) {
-	var l int
-	_ = l
-	return n
-}
-
-func (m *ExperimentMetadata) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.UserID)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.ProgramManagerID)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.ProductManagerID)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.Hypothesis)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.Kpi)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	if m.TimeBound {
-		n += 2
-	}
-	l = len(m.PlannedStartTime)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.PlannedEndTime)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.ActualStartTime)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.ActualEndTime)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.ActionPlanNegative)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.ActionPlanNeutral)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	l = len(m.ExperimentType)
+	l = len(m.Query)
 	if l > 0 {
 		n += 1 + l + sovStorage(uint64(l))
 	}
 	return n
 }
 
-func (m *AllRequest) Size() (n int) {
+func (m *ListReply) Size() (n int) {
 	var l int
 	_ = l
-	if m.Environment != 0 {
-		n += 1 + sovStorage(uint64(m.Environment))
-	}
-	return n
-}
-
-func (m *AllReply) Size() (n int) {
-	var l int
-	_ = l
-	if len(m.Namespaces) > 0 {
-		for _, e := range m.Namespaces {
-			l = e.Size()
-			n += 1 + l + sovStorage(uint64(l))
-		}
-	}
-	return n
-}
-
-func (m *CreateRequest) Size() (n int) {
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		l = m.Namespace.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	if m.Environment != 0 {
-		n += 1 + sovStorage(uint64(m.Environment))
-	}
-	return n
-}
-
-func (m *CreateReply) Size() (n int) {
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		l = m.Namespace.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	return n
-}
-
-func (m *ReadRequest) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	if m.Environment != 0 {
-		n += 1 + sovStorage(uint64(m.Environment))
-	}
-	return n
-}
-
-func (m *ReadReply) Size() (n int) {
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		l = m.Namespace.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	return n
-}
-
-func (m *UpdateRequest) Size() (n int) {
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		l = m.Namespace.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	if m.Environment != 0 {
-		n += 1 + sovStorage(uint64(m.Environment))
-	}
-	return n
-}
-
-func (m *UpdateReply) Size() (n int) {
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		l = m.Namespace.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	return n
-}
-
-func (m *DeleteRequest) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	if m.Environment != 0 {
-		n += 1 + sovStorage(uint64(m.Environment))
-	}
-	return n
-}
-
-func (m *DeleteReply) Size() (n int) {
-	var l int
-	_ = l
-	if m.Namespace != nil {
-		l = m.Namespace.Size()
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	return n
-}
-
-func (m *Namespace) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
 	if len(m.Experiments) > 0 {
 		for _, e := range m.Experiments {
 			l = e.Size()
@@ -2571,24 +1471,78 @@ func (m *Namespace) Size() (n int) {
 	return n
 }
 
+func (m *SetRequest) Size() (n int) {
+	var l int
+	_ = l
+	if m.Experiment != nil {
+		l = m.Experiment.Size()
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
+func (m *SetReply) Size() (n int) {
+	var l int
+	_ = l
+	if m.Experiment != nil {
+		l = m.Experiment.Size()
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
+func (m *GetRequest) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
+func (m *GetReply) Size() (n int) {
+	var l int
+	_ = l
+	if m.Experiment != nil {
+		l = m.Experiment.Size()
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
+func (m *RemoveRequest) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
+func (m *RemoveReply) Size() (n int) {
+	var l int
+	_ = l
+	if m.Experiment != nil {
+		l = m.Experiment.Size()
+		n += 1 + l + sovStorage(uint64(l))
+	}
+	return n
+}
+
 func (m *Experiment) Size() (n int) {
 	var l int
 	_ = l
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
+	}
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovStorage(uint64(l))
 	}
-	l = len(m.Segments)
-	if l > 0 {
-		n += 1 + l + sovStorage(uint64(l))
-	}
-	if len(m.Params) > 0 {
-		for _, e := range m.Params {
-			l = e.Size()
-			n += 1 + l + sovStorage(uint64(l))
-		}
-	}
-	l = len(m.Id)
+	l = len(m.Namespace)
 	if l > 0 {
 		n += 1 + l + sovStorage(uint64(l))
 	}
@@ -2599,6 +1553,16 @@ func (m *Experiment) Size() (n int) {
 			mapEntrySize := 1 + len(k) + sovStorage(uint64(len(k))) + 1 + len(v) + sovStorage(uint64(len(v)))
 			n += mapEntrySize + 1 + sovStorage(uint64(mapEntrySize))
 		}
+	}
+	if len(m.Params) > 0 {
+		for _, e := range m.Params {
+			l = e.Size()
+			n += 1 + l + sovStorage(uint64(l))
+		}
+	}
+	l = len(m.Segments)
+	if l > 0 {
+		n += 1 + l + sovStorage(uint64(l))
 	}
 	l = len(m.DetailName)
 	if l > 0 {
@@ -2653,159 +1617,82 @@ func sovStorage(x uint64) (n int) {
 func sozStorage(x uint64) (n int) {
 	return sovStorage(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (this *ExperimentIntakeRequest) String() string {
+func (this *ListRequest) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&ExperimentIntakeRequest{`,
-		`Metadata:` + strings.Replace(fmt.Sprintf("%v", this.Metadata), "ExperimentMetadata", "ExperimentMetadata", 1) + `,`,
-		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
+	s := strings.Join([]string{`&ListRequest{`,
+		`Query:` + fmt.Sprintf("%v", this.Query) + `,`,
 		`}`,
 	}, "")
 	return s
 }
-func (this *ExperimentIntakeReply) String() string {
+func (this *ListReply) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&ExperimentIntakeReply{`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ExperimentMetadata) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ExperimentMetadata{`,
-		`UserID:` + fmt.Sprintf("%v", this.UserID) + `,`,
-		`ProgramManagerID:` + fmt.Sprintf("%v", this.ProgramManagerID) + `,`,
-		`ProductManagerID:` + fmt.Sprintf("%v", this.ProductManagerID) + `,`,
-		`Hypothesis:` + fmt.Sprintf("%v", this.Hypothesis) + `,`,
-		`Kpi:` + fmt.Sprintf("%v", this.Kpi) + `,`,
-		`TimeBound:` + fmt.Sprintf("%v", this.TimeBound) + `,`,
-		`PlannedStartTime:` + fmt.Sprintf("%v", this.PlannedStartTime) + `,`,
-		`PlannedEndTime:` + fmt.Sprintf("%v", this.PlannedEndTime) + `,`,
-		`ActualStartTime:` + fmt.Sprintf("%v", this.ActualStartTime) + `,`,
-		`ActualEndTime:` + fmt.Sprintf("%v", this.ActualEndTime) + `,`,
-		`ActionPlanNegative:` + fmt.Sprintf("%v", this.ActionPlanNegative) + `,`,
-		`ActionPlanNeutral:` + fmt.Sprintf("%v", this.ActionPlanNeutral) + `,`,
-		`ExperimentType:` + fmt.Sprintf("%v", this.ExperimentType) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *AllRequest) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&AllRequest{`,
-		`Environment:` + fmt.Sprintf("%v", this.Environment) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *AllReply) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&AllReply{`,
-		`Namespaces:` + strings.Replace(fmt.Sprintf("%v", this.Namespaces), "Namespace", "Namespace", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *CreateRequest) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&CreateRequest{`,
-		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
-		`Environment:` + fmt.Sprintf("%v", this.Environment) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *CreateReply) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&CreateReply{`,
-		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ReadRequest) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ReadRequest{`,
-		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
-		`Environment:` + fmt.Sprintf("%v", this.Environment) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ReadReply) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ReadReply{`,
-		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *UpdateRequest) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&UpdateRequest{`,
-		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
-		`Environment:` + fmt.Sprintf("%v", this.Environment) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *UpdateReply) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&UpdateReply{`,
-		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *DeleteRequest) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&DeleteRequest{`,
-		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
-		`Environment:` + fmt.Sprintf("%v", this.Environment) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *DeleteReply) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&DeleteReply{`,
-		`Namespace:` + strings.Replace(fmt.Sprintf("%v", this.Namespace), "Namespace", "Namespace", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *Namespace) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&Namespace{`,
-		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+	s := strings.Join([]string{`&ListReply{`,
 		`Experiments:` + strings.Replace(fmt.Sprintf("%v", this.Experiments), "Experiment", "Experiment", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *SetRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&SetRequest{`,
+		`Experiment:` + strings.Replace(fmt.Sprintf("%v", this.Experiment), "Experiment", "Experiment", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *SetReply) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&SetReply{`,
+		`Experiment:` + strings.Replace(fmt.Sprintf("%v", this.Experiment), "Experiment", "Experiment", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *GetRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&GetRequest{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *GetReply) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&GetReply{`,
+		`Experiment:` + strings.Replace(fmt.Sprintf("%v", this.Experiment), "Experiment", "Experiment", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *RemoveRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&RemoveRequest{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *RemoveReply) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&RemoveReply{`,
+		`Experiment:` + strings.Replace(fmt.Sprintf("%v", this.Experiment), "Experiment", "Experiment", 1) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2825,11 +1712,12 @@ func (this *Experiment) String() string {
 	}
 	mapStringForLabels += "}"
 	s := strings.Join([]string{`&Experiment{`,
-		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
-		`Segments:` + fmt.Sprintf("%v", this.Segments) + `,`,
-		`Params:` + strings.Replace(fmt.Sprintf("%v", this.Params), "Param", "Param", 1) + `,`,
 		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Namespace:` + fmt.Sprintf("%v", this.Namespace) + `,`,
 		`Labels:` + mapStringForLabels + `,`,
+		`Params:` + strings.Replace(fmt.Sprintf("%v", this.Params), "Param", "Param", 1) + `,`,
+		`Segments:` + fmt.Sprintf("%v", this.Segments) + `,`,
 		`DetailName:` + fmt.Sprintf("%v", this.DetailName) + `,`,
 		`}`,
 	}, "")
@@ -2866,7 +1754,7 @@ func valueToStringStorage(v interface{}) string {
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("*%v", pv)
 }
-func (m *ExperimentIntakeRequest) Unmarshal(dAtA []byte) error {
+func (m *ListRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2889,17 +1777,17 @@ func (m *ExperimentIntakeRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExperimentIntakeRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ListRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExperimentIntakeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ListRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Query", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowStorage
@@ -2909,57 +1797,20 @@ func (m *ExperimentIntakeRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
+				stringLen |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthStorage
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Metadata == nil {
-				m.Metadata = &ExperimentMetadata{}
-			}
-			if err := m.Metadata.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Namespace == nil {
-				m.Namespace = &Namespace{}
-			}
-			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Query = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -2982,7 +1833,7 @@ func (m *ExperimentIntakeRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ExperimentIntakeReply) Unmarshal(dAtA []byte) error {
+func (m *ListReply) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3005,1392 +1856,13 @@ func (m *ExperimentIntakeReply) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExperimentIntakeReply: wiretype end group for non-group")
+			return fmt.Errorf("proto: ListReply: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExperimentIntakeReply: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ExperimentMetadata) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ExperimentMetadata: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExperimentMetadata: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ListReply: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UserID", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.UserID = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProgramManagerID", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ProgramManagerID = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProductManagerID", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ProductManagerID = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hypothesis", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Hypothesis = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Kpi", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Kpi = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TimeBound", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.TimeBound = bool(v != 0)
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PlannedStartTime", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PlannedStartTime = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PlannedEndTime", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PlannedEndTime = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 9:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActualStartTime", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ActualStartTime = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 10:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActualEndTime", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ActualEndTime = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 11:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActionPlanNegative", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ActionPlanNegative = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 12:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActionPlanNeutral", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ActionPlanNeutral = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 13:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ExperimentType", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ExperimentType = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *AllRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AllRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AllRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Environment", wireType)
-			}
-			m.Environment = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Environment |= (Environment(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *AllReply) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: AllReply: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AllReply: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespaces", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Namespaces = append(m.Namespaces, &Namespace{})
-			if err := m.Namespaces[len(m.Namespaces)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *CreateRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: CreateRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CreateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Namespace == nil {
-				m.Namespace = &Namespace{}
-			}
-			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Environment", wireType)
-			}
-			m.Environment = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Environment |= (Environment(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *CreateReply) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: CreateReply: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CreateReply: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Namespace == nil {
-				m.Namespace = &Namespace{}
-			}
-			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ReadRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ReadRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ReadRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Environment", wireType)
-			}
-			m.Environment = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Environment |= (Environment(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *ReadReply) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ReadReply: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ReadReply: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Namespace == nil {
-				m.Namespace = &Namespace{}
-			}
-			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *UpdateRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: UpdateRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: UpdateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Namespace == nil {
-				m.Namespace = &Namespace{}
-			}
-			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Environment", wireType)
-			}
-			m.Environment = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Environment |= (Environment(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *UpdateReply) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: UpdateReply: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: UpdateReply: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Namespace == nil {
-				m.Namespace = &Namespace{}
-			}
-			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *DeleteRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: DeleteRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DeleteRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Environment", wireType)
-			}
-			m.Environment = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Environment |= (Environment(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *DeleteReply) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: DeleteReply: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DeleteReply: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Namespace == nil {
-				m.Namespace = &Namespace{}
-			}
-			if err := m.Namespace.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipStorage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthStorage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Namespace) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowStorage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Namespace: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Namespace: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Experiments", wireType)
 			}
@@ -4418,6 +1890,496 @@ func (m *Namespace) Unmarshal(dAtA []byte) error {
 			}
 			m.Experiments = append(m.Experiments, &Experiment{})
 			if err := m.Experiments[len(m.Experiments)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SetRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SetRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SetRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Experiment", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Experiment == nil {
+				m.Experiment = &Experiment{}
+			}
+			if err := m.Experiment.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SetReply) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SetReply: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SetReply: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Experiment", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Experiment == nil {
+				m.Experiment = &Experiment{}
+			}
+			if err := m.Experiment.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GetRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GetRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetReply) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GetReply: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GetReply: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Experiment", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Experiment == nil {
+				m.Experiment = &Experiment{}
+			}
+			if err := m.Experiment.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *RemoveRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RemoveRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RemoveRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipStorage(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthStorage
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *RemoveReply) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowStorage
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RemoveReply: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RemoveReply: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Experiment", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Experiment == nil {
+				m.Experiment = &Experiment{}
+			}
+			if err := m.Experiment.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -4473,97 +2435,6 @@ func (m *Experiment) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Segments", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Segments = append(m.Segments[:0], dAtA[iNdEx:postIndex]...)
-			if m.Segments == nil {
-				m.Segments = []byte{}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowStorage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthStorage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Params = append(m.Params, &Param{})
-			if err := m.Params[len(m.Params)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
 			var stringLen uint64
@@ -4591,7 +2462,65 @@ func (m *Experiment) Unmarshal(dAtA []byte) error {
 			}
 			m.Id = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Namespace = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Labels", wireType)
 			}
@@ -4707,7 +2636,69 @@ func (m *Experiment) Unmarshal(dAtA []byte) error {
 				m.Labels[mapkey] = mapvalue
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Params = append(m.Params, &Param{})
+			if err := m.Params[len(m.Params)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Segments", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowStorage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthStorage
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Segments = append(m.Segments[:0], dAtA[iNdEx:postIndex]...)
+			if m.Segments == nil {
+				m.Segments = []byte{}
+			}
+			iNdEx = postIndex
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DetailName", wireType)
 			}
@@ -5145,65 +3136,46 @@ var (
 func init() { proto.RegisterFile("storage.proto", fileDescriptorStorage) }
 
 var fileDescriptorStorage = []byte{
-	// 949 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x56, 0x4d, 0x8f, 0xdb, 0x44,
-	0x18, 0xce, 0x24, 0x9b, 0x6c, 0xf2, 0xda, 0x09, 0xe9, 0x14, 0x76, 0x5d, 0x6b, 0x65, 0xad, 0xac,
-	0x0a, 0x45, 0x51, 0x3b, 0x11, 0x8b, 0x4a, 0xe9, 0xc2, 0x65, 0x4b, 0x73, 0x58, 0x89, 0xae, 0x16,
-	0x6f, 0xe1, 0x3e, 0x8d, 0x47, 0xde, 0xa1, 0x93, 0xb1, 0xb1, 0x27, 0x5b, 0x72, 0x43, 0xfc, 0x02,
-	0x24, 0xfe, 0x04, 0x7f, 0x80, 0xff, 0xc0, 0xb1, 0x12, 0x17, 0x8e, 0x6c, 0xe0, 0xc0, 0xb1, 0x47,
-	0x4e, 0x08, 0x79, 0x6c, 0xc7, 0xce, 0x07, 0x1f, 0x2b, 0x21, 0x6e, 0x9e, 0xe7, 0x79, 0xde, 0x2f,
-	0xfb, 0x7d, 0x5f, 0x0f, 0x74, 0x13, 0x15, 0xc6, 0x34, 0x60, 0x24, 0x8a, 0x43, 0x15, 0xda, 0x07,
-	0x41, 0x18, 0x06, 0x82, 0x8d, 0x68, 0xc4, 0x47, 0x54, 0xca, 0x50, 0x51, 0xc5, 0x43, 0x99, 0x64,
-	0xac, 0xab, 0x60, 0x7f, 0xfc, 0x65, 0xc4, 0x62, 0x3e, 0x65, 0x52, 0x9d, 0x4a, 0x45, 0x5f, 0x30,
-	0x8f, 0x7d, 0x31, 0x63, 0x89, 0xc2, 0x23, 0x68, 0x4f, 0x99, 0xa2, 0x3e, 0x55, 0xd4, 0x42, 0x87,
-	0x68, 0x60, 0x1c, 0xdd, 0x26, 0xa5, 0xf6, 0x69, 0x4e, 0x79, 0x4b, 0x11, 0x1e, 0x40, 0x47, 0xd2,
-	0x29, 0x4b, 0x22, 0x3a, 0x61, 0x56, 0x5d, 0x5b, 0x00, 0x39, 0x2b, 0x10, 0xaf, 0x24, 0xdd, 0x7d,
-	0x78, 0x6b, 0x33, 0x6a, 0x24, 0xe6, 0xee, 0x1f, 0x0d, 0xc0, 0x9b, 0x31, 0xf0, 0x1e, 0xb4, 0x66,
-	0x09, 0x8b, 0x4f, 0x9f, 0xe8, 0x44, 0x3a, 0x5e, 0x7e, 0xc2, 0x43, 0xe8, 0x47, 0x71, 0x18, 0xc4,
-	0x74, 0xfa, 0x94, 0x4a, 0x1a, 0x68, 0x45, 0x5d, 0x2b, 0x36, 0xf0, 0x5c, 0xeb, 0xcf, 0x26, 0xaa,
-	0xd4, 0x36, 0x96, 0xda, 0x15, 0x1c, 0x3b, 0x00, 0x97, 0xf3, 0x28, 0x54, 0x97, 0x2c, 0xe1, 0x89,
-	0xb5, 0xa3, 0x55, 0x15, 0x04, 0xf7, 0xa1, 0xf1, 0x22, 0xe2, 0x56, 0x53, 0x13, 0xe9, 0x23, 0x3e,
-	0x80, 0x8e, 0xe2, 0x53, 0xf6, 0x38, 0x9c, 0x49, 0xdf, 0x6a, 0x1d, 0xa2, 0x41, 0xdb, 0x2b, 0x01,
-	0x1d, 0x5b, 0x50, 0x29, 0x99, 0x7f, 0xa1, 0x68, 0xac, 0x9e, 0xf1, 0x29, 0xb3, 0x76, 0xf3, 0xd8,
-	0x6b, 0x38, 0x7e, 0x1b, 0x7a, 0x39, 0x36, 0x96, 0xbe, 0x56, 0xb6, 0xb5, 0x72, 0x0d, 0xc5, 0x03,
-	0x78, 0x83, 0x4e, 0xd4, 0x8c, 0x8a, 0xd2, 0x65, 0x47, 0x0b, 0xd7, 0x61, 0x7c, 0x17, 0xba, 0x19,
-	0x54, 0x38, 0x04, 0xad, 0x5b, 0x05, 0x31, 0x01, 0x4c, 0x27, 0x69, 0x6b, 0x9c, 0x0b, 0x2a, 0xcf,
-	0x58, 0x40, 0x15, 0xbf, 0x62, 0x96, 0xa1, 0xa5, 0x5b, 0x18, 0x7c, 0x0f, 0x6e, 0x55, 0xd1, 0x99,
-	0x8a, 0xa9, 0xb0, 0x4c, 0x2d, 0xdf, 0x24, 0xd2, 0xaa, 0xd8, 0xf2, 0xbb, 0x3e, 0x9b, 0x47, 0xcc,
-	0xea, 0x66, 0x55, 0xad, 0xa2, 0xee, 0x87, 0x00, 0x27, 0x42, 0x14, 0x2d, 0x48, 0xc0, 0x60, 0xf2,
-	0x8a, 0xc7, 0xa1, 0x4c, 0x05, 0xfa, 0xe3, 0xf7, 0x8e, 0x4c, 0x32, 0x2e, 0x31, 0xaf, 0x2a, 0x70,
-	0xdf, 0x83, 0xb6, 0xb6, 0x8e, 0xc4, 0x1c, 0x0f, 0x01, 0x96, 0x0d, 0x97, 0x58, 0xe8, 0xb0, 0xb1,
-	0xd6, 0x8e, 0x15, 0xd6, 0xe5, 0xd0, 0xfd, 0x28, 0x66, 0x54, 0x2d, 0x7b, 0x7f, 0xa5, 0x95, 0xd1,
-	0xdf, 0xb4, 0xf2, 0x7a, 0x8a, 0xf5, 0x7f, 0x4a, 0xf1, 0x21, 0x18, 0x45, 0xa8, 0x34, 0xcb, 0x7f,
-	0x1d, 0xc8, 0xfd, 0x04, 0x0c, 0x8f, 0x51, 0xbf, 0xc8, 0x10, 0xc3, 0x4e, 0xca, 0xe5, 0x03, 0xa1,
-	0x9f, 0x6f, 0x9c, 0xcb, 0x03, 0xe8, 0x64, 0x2e, 0x6f, 0x96, 0x09, 0x87, 0xee, 0xa7, 0x91, 0xff,
-	0x7f, 0xbd, 0xad, 0x22, 0xd4, 0xcd, 0x72, 0xbc, 0x80, 0xee, 0x13, 0x26, 0x58, 0x99, 0xe3, 0x7f,
-	0xf1, 0xbe, 0x1e, 0x82, 0x51, 0x38, 0xbd, 0x59, 0x36, 0x67, 0xd0, 0x59, 0xe2, 0x5b, 0x33, 0xb9,
-	0x0f, 0x46, 0x39, 0x08, 0x89, 0xd5, 0xd0, 0xdd, 0x6a, 0x54, 0xd6, 0xad, 0x57, 0xe5, 0xdd, 0xdf,
-	0x11, 0x40, 0xc9, 0x6d, 0xf5, 0x68, 0x43, 0x3b, 0x61, 0x41, 0xe6, 0x2e, 0x2d, 0xcc, 0xf4, 0x96,
-	0x67, 0xec, 0x40, 0x2b, 0xa2, 0x31, 0x9d, 0x16, 0x81, 0x5a, 0xe4, 0x3c, 0x3d, 0x7a, 0x39, 0x8a,
-	0x7b, 0x50, 0xe7, 0x7e, 0xbe, 0xf6, 0xea, 0xdc, 0xc7, 0x23, 0x68, 0x09, 0xfa, 0x9c, 0x89, 0xc4,
-	0x6a, 0x6a, 0xfd, 0x7e, 0x25, 0x31, 0xf2, 0xb1, 0x66, 0xc6, 0x52, 0xc5, 0x73, 0x2f, 0x97, 0xa5,
-	0xfb, 0xd3, 0x67, 0x8a, 0x72, 0x91, 0x56, 0xad, 0xd7, 0x61, 0xc7, 0xab, 0x20, 0xf6, 0x23, 0x30,
-	0x2a, 0x66, 0x7a, 0x9d, 0xb2, 0x79, 0x9e, 0x7e, 0xfa, 0x88, 0xdf, 0x84, 0xe6, 0x15, 0x15, 0x33,
-	0x96, 0x6f, 0xf3, 0xec, 0x70, 0x5c, 0x7f, 0x1f, 0xb9, 0xa7, 0xd0, 0xd4, 0xc9, 0x6e, 0x2d, 0xfa,
-	0xa0, 0x6a, 0x96, 0xd6, 0xf5, 0x59, 0x7a, 0xca, 0xcd, 0xd7, 0xcb, 0x72, 0x3f, 0x80, 0xa6, 0xe6,
-	0xb1, 0x05, 0xbb, 0x93, 0xcb, 0x90, 0x17, 0x7b, 0xa2, 0xe3, 0x15, 0xc7, 0x94, 0x79, 0xc9, 0x78,
-	0x70, 0xa9, 0x5f, 0x62, 0x63, 0x80, 0xbc, 0xe2, 0x38, 0x1c, 0x82, 0x51, 0xe9, 0x13, 0x6c, 0xc0,
-	0xee, 0x85, 0xa2, 0x01, 0x97, 0x41, 0xbf, 0x86, 0x7b, 0x00, 0xe7, 0xd9, 0x2f, 0x85, 0x87, 0xb2,
-	0x8f, 0x8e, 0xbe, 0x6f, 0x80, 0x39, 0x16, 0x2f, 0xb9, 0xbc, 0xc8, 0xfe, 0xcc, 0xf8, 0x01, 0x34,
-	0x4e, 0x84, 0xc0, 0x06, 0x29, 0x77, 0x9d, 0xdd, 0x21, 0xc5, 0xea, 0x72, 0xf7, 0xbe, 0xfe, 0xf1,
-	0xd7, 0x6f, 0xeb, 0x7d, 0xd7, 0xd0, 0x3f, 0xed, 0xab, 0x77, 0x46, 0x54, 0x88, 0x63, 0x34, 0xc4,
-	0x27, 0xd0, 0xca, 0x76, 0x07, 0xee, 0x91, 0x95, 0x7d, 0x65, 0x9b, 0xa4, 0xb2, 0x54, 0xdc, 0x3b,
-	0xda, 0xfe, 0xb6, 0xdb, 0x2b, 0xec, 0x27, 0x9a, 0x4c, 0x5d, 0x3c, 0x82, 0x9d, 0x74, 0xe4, 0xb1,
-	0x49, 0x2a, 0xcb, 0xc4, 0x06, 0xb2, 0xdc, 0x03, 0xee, 0xbe, 0x36, 0xbe, 0xe5, 0x9a, 0x85, 0x71,
-	0xcc, 0xa8, 0x9f, 0x47, 0xcf, 0x66, 0x11, 0xf7, 0xc8, 0xca, 0xfc, 0xdb, 0x26, 0xa9, 0x0c, 0xe9,
-	0x66, 0xf4, 0x99, 0x26, 0x73, 0x17, 0xd9, 0x00, 0xe1, 0x1e, 0x59, 0x19, 0x4f, 0xdb, 0x24, 0x95,
-	0xc9, 0xda, 0x74, 0xe1, 0x6b, 0x32, 0x75, 0xf1, 0x39, 0xf4, 0xd7, 0xaf, 0x0e, 0xd8, 0x22, 0x7f,
-	0x71, 0x87, 0xb1, 0xf7, 0xc8, 0xf6, 0x7b, 0xc6, 0x5d, 0x1d, 0xc0, 0x71, 0xef, 0x14, 0x01, 0xca,
-	0xe9, 0xba, 0xcf, 0xb5, 0xee, 0x18, 0x0d, 0x1f, 0xdf, 0x7b, 0x75, 0xed, 0xd4, 0x7e, 0xba, 0x76,
-	0x6a, 0xaf, 0xaf, 0x1d, 0xf4, 0xd5, 0xc2, 0x41, 0xdf, 0x2d, 0x1c, 0xf4, 0xc3, 0xc2, 0x41, 0xaf,
-	0x16, 0x0e, 0xfa, 0x79, 0xe1, 0xa0, 0xdf, 0x16, 0x4e, 0xed, 0xf5, 0xc2, 0x41, 0xdf, 0xfc, 0xe2,
-	0xd4, 0x9e, 0xb7, 0xf4, 0x8d, 0xea, 0xdd, 0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x11, 0x6c, 0xdc,
-	0x4a, 0x80, 0x09, 0x00, 0x00,
+	// 641 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0x4f, 0x6b, 0xd4, 0x40,
+	0x14, 0xdf, 0xc9, 0xfe, 0x69, 0xf7, 0x6d, 0x5b, 0xea, 0x58, 0x34, 0x0d, 0x4b, 0x5c, 0x22, 0xc2,
+	0x52, 0x24, 0xc1, 0x7a, 0xb1, 0x2d, 0x5e, 0x84, 0x65, 0x7b, 0x28, 0xa2, 0x59, 0xa8, 0x20, 0x78,
+	0x48, 0x77, 0xc7, 0x74, 0x30, 0x9b, 0x49, 0x33, 0xb3, 0xad, 0x8b, 0x08, 0xe2, 0x27, 0x10, 0xfc,
+	0x12, 0x9e, 0xfd, 0x14, 0x1e, 0x0b, 0x5e, 0x3c, 0xda, 0xe8, 0x41, 0x6f, 0xfd, 0x08, 0x32, 0x93,
+	0x64, 0x37, 0x5d, 0xbb, 0x5e, 0xea, 0x29, 0x79, 0xf3, 0xfb, 0xbd, 0xdf, 0xef, 0xbd, 0xc9, 0x7b,
+	0x81, 0x65, 0x2e, 0x58, 0xec, 0xf9, 0xc4, 0x8e, 0x62, 0x26, 0x18, 0x5e, 0x26, 0xc1, 0x09, 0x0d,
+	0xed, 0xec, 0xd0, 0x68, 0xfa, 0x8c, 0xf9, 0x01, 0x71, 0xbc, 0x88, 0x3a, 0x5e, 0x18, 0x32, 0xe1,
+	0x09, 0xca, 0x42, 0x9e, 0x92, 0xad, 0xdb, 0xd0, 0xd8, 0xa3, 0x5c, 0xb8, 0xe4, 0x68, 0x44, 0xb8,
+	0xc0, 0x6b, 0x50, 0x3d, 0x1a, 0x91, 0x78, 0xac, 0xa3, 0x16, 0x6a, 0xd7, 0xdd, 0x34, 0xb0, 0x76,
+	0xa1, 0x9e, 0x92, 0xa2, 0x60, 0x8c, 0x77, 0xa0, 0x41, 0x5e, 0x47, 0x24, 0xa6, 0x43, 0x12, 0x0a,
+	0xae, 0xa3, 0x56, 0xb9, 0xdd, 0xd8, 0x5c, 0xb7, 0x2f, 0x98, 0xda, 0x9d, 0x09, 0xc3, 0x2d, 0xb2,
+	0xad, 0x2e, 0x40, 0x8f, 0x4c, 0xdc, 0xb6, 0x00, 0xa6, 0xa0, 0xb2, 0xfc, 0xa7, 0x52, 0x81, 0x6c,
+	0x75, 0x60, 0x51, 0x09, 0xc9, 0x8a, 0xae, 0x20, 0xd3, 0x04, 0xe8, 0x4e, 0xeb, 0x59, 0x01, 0x8d,
+	0x0e, 0xb2, 0xd6, 0x35, 0x3a, 0x90, 0x26, 0xdd, 0xff, 0x60, 0x72, 0x0b, 0x96, 0x5d, 0x32, 0x64,
+	0xc7, 0x64, 0x9e, 0xcf, 0x2e, 0x34, 0x72, 0xc2, 0x15, 0xad, 0x3e, 0x6b, 0x00, 0x53, 0x68, 0xd6,
+	0x08, 0x63, 0xa8, 0x84, 0xde, 0x90, 0xe8, 0x9a, 0x3a, 0x51, 0xef, 0xb8, 0x09, 0x75, 0xf9, 0xe4,
+	0x91, 0xd7, 0x27, 0x7a, 0x59, 0x01, 0xd3, 0x03, 0xfc, 0x10, 0x6a, 0x81, 0x77, 0x40, 0x02, 0xae,
+	0x57, 0xd4, 0x87, 0xbe, 0x33, 0xb7, 0x0e, 0x7b, 0x4f, 0xf1, 0x3a, 0xa1, 0x88, 0xc7, 0x6e, 0x96,
+	0x84, 0xef, 0x42, 0x2d, 0xf2, 0x62, 0x6f, 0xc8, 0xf5, 0xaa, 0x4a, 0x5f, 0x9b, 0x49, 0x7f, 0x22,
+	0x41, 0x37, 0xe3, 0x60, 0x03, 0x16, 0x39, 0xf1, 0xd3, 0xb9, 0xaa, 0xb5, 0x50, 0x7b, 0xc9, 0x9d,
+	0xc4, 0xd8, 0x04, 0x18, 0x10, 0xe1, 0xd1, 0xe0, 0xb1, 0x6c, 0x60, 0x41, 0xd5, 0x59, 0x38, 0x31,
+	0xb6, 0xa0, 0x51, 0x28, 0x00, 0xaf, 0x42, 0xf9, 0x15, 0xc9, 0xc7, 0x58, 0xbe, 0xca, 0xd1, 0x3e,
+	0xf6, 0x82, 0x51, 0xde, 0x7c, 0x1a, 0x6c, 0x6b, 0x0f, 0x90, 0xf5, 0x0c, 0xaa, 0xaa, 0x8e, 0xc9,
+	0xf5, 0xa0, 0xc2, 0xf5, 0x6c, 0x14, 0xd3, 0xfe, 0x6e, 0x60, 0x5f, 0x62, 0x99, 0x58, 0x76, 0xdd,
+	0x95, 0xc9, 0x77, 0xdd, 0x81, 0xaa, 0xc2, 0xb1, 0x0e, 0x0b, 0xfd, 0x43, 0x46, 0xfb, 0x24, 0xdd,
+	0x97, 0xba, 0x9b, 0x87, 0x12, 0x39, 0x21, 0xd4, 0x3f, 0x14, 0x5c, 0xd7, 0x5a, 0xe5, 0x36, 0x72,
+	0xf3, 0x70, 0xf3, 0xb7, 0x06, 0x4b, 0x1d, 0xe9, 0xd5, 0x4b, 0xad, 0xb0, 0x0b, 0x15, 0xb9, 0x85,
+	0xd8, 0x98, 0x29, 0xa1, 0xb0, 0xbf, 0x86, 0x7e, 0x29, 0x16, 0x05, 0x63, 0x6b, 0xed, 0xfd, 0xd7,
+	0x9f, 0x1f, 0xb5, 0x15, 0xbc, 0xa4, 0x7e, 0x04, 0xc7, 0xf7, 0x9c, 0x40, 0x6a, 0xf5, 0xa0, 0xdc,
+	0x25, 0x02, 0xcf, 0x4e, 0xd7, 0x74, 0x27, 0x8c, 0x9b, 0x97, 0x41, 0x52, 0x50, 0x57, 0x82, 0x18,
+	0xaf, 0xe6, 0x82, 0x3e, 0x11, 0xce, 0x1b, 0x3a, 0x78, 0x8b, 0x9f, 0x42, 0xb9, 0x77, 0x89, 0x68,
+	0x6f, 0xbe, 0x68, 0xbe, 0xca, 0xd6, 0x0d, 0x25, 0xba, 0x6a, 0x34, 0x72, 0x51, 0x4e, 0xc4, 0x36,
+	0xda, 0xc0, 0x2f, 0xa0, 0x96, 0x6e, 0x08, 0x6e, 0xce, 0xa4, 0x5e, 0xd8, 0x2c, 0xc3, 0x98, 0x83,
+	0x4a, 0xed, 0x75, 0xa5, 0x7d, 0x7d, 0xe3, 0x5a, 0xae, 0x1d, 0x2b, 0xd0, 0xa1, 0x83, 0x47, 0xfb,
+	0xa7, 0x67, 0x66, 0xe9, 0xdb, 0x99, 0x59, 0x3a, 0x3f, 0x33, 0xd1, 0xbb, 0xc4, 0x44, 0x9f, 0x12,
+	0x13, 0x7d, 0x49, 0x4c, 0x74, 0x9a, 0x98, 0xe8, 0x7b, 0x62, 0xa2, 0x5f, 0x89, 0x59, 0x3a, 0x4f,
+	0x4c, 0xf4, 0xe1, 0x87, 0x59, 0x7a, 0xde, 0xf6, 0xa9, 0x38, 0x1c, 0x1d, 0xd8, 0x7d, 0x36, 0x74,
+	0x5e, 0x32, 0x16, 0x8c, 0x38, 0x65, 0xa1, 0xa3, 0x8c, 0xd5, 0x4f, 0x95, 0x3b, 0x99, 0xfd, 0x41,
+	0x4d, 0xc5, 0xf7, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0xe8, 0x96, 0x44, 0x1f, 0xa2, 0x05, 0x00,
+	0x00,
 }

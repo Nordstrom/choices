@@ -31,7 +31,7 @@ func TestExperiment(t *testing.T) {
 	copy(seg[:], segmentsAll[:])
 	tests := []struct {
 		exp  Experiment
-		want []ParamValue
+		want ExperimentResponse
 		err  error
 	}{
 		{
@@ -43,7 +43,7 @@ func TestExperiment(t *testing.T) {
 				},
 				Segments: seg,
 			},
-			want: []ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}},
+			want: ExperimentResponse{Name: "experiment", Namespace: "", Params: []ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}}},
 			err:  nil,
 		},
 	}
@@ -51,13 +51,14 @@ func TestExperiment(t *testing.T) {
 	for _, test := range tests {
 		got, err := test.exp.eval(h)
 		if err != test.err {
-			t.Errorf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
-			t.FailNow()
+			t.Fatalf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 		}
-		for i, v := range got {
-			if v != test.want[i] {
-				t.Errorf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
-				t.FailNow()
+		if test.want.Name != got.Name || test.want.Namespace != got.Namespace {
+			t.Fatalf("%v.eval() = %v, want %v", test.exp, test.want, got)
+		}
+		for i, v := range got.Params {
+			if v != test.want.Params[i] {
+				t.Fatalf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 			}
 		}
 	}
@@ -90,17 +91,14 @@ func TestExperimentSampleSegments(t *testing.T) {
 		},
 	}
 
-	ns := NewNamespace("test")
-
 	for k, test := range tests {
-		ns.Segments = test.nsSeg
 		e := NewExperiment("e")
-		e = e.SampleSegments(ns, test.num)
-		if e.Segments != test.expWant {
-			t.Errorf("%s: experient segments: %v, want %v", k, e.Segments, test.expWant)
+		got := e.SampleSegments(test.nsSeg, test.num)
+		if got != test.expWant {
+			t.Errorf("%s: experient segments: %v, want %v", k, got, test.expWant)
 		}
-		if ns.Segments != test.nsWant {
-			t.Errorf("%s: namespace segments: %v, want %v", k, ns.Segments, test.nsWant)
+		if test.nsSeg != test.nsWant {
+			t.Errorf("%s: namespace segments: %v, want %v", k, test.nsSeg, test.nsWant)
 		}
 	}
 }
@@ -133,11 +131,9 @@ func TestParamEval(t *testing.T) {
 		got, err := test.p.eval(h)
 		if err != test.err {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
-			t.FailNow()
 		}
 		if got != test.want {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
-			t.FailNow()
 		}
 	}
 }

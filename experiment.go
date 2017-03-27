@@ -16,27 +16,29 @@ package choices
 
 import (
 	"encoding/json"
+	"errors"
 
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/foolusion/elwinprotos/storage"
 )
 
-// ParamValue is a key value pair returned from an evalated experiment
-// parameter.
-type ParamValue struct {
-	Name  string
-	Value string
-}
+var (
+	// ErrSegmentNotInExperiment occurs when a user is hashed into a
+	// segment that has not been claimed by an experiment.
+	ErrSegmentNotInExperiment = errors.New("Segment is not assigned to an experiment")
+)
 
 // Experiment is a structure that represents a single experiment in elwin. It
 // can contain multiple parameters. Experiments are evaluated through the call
 // to Namespaces.
 type Experiment struct {
-	Name     string
-	Labels   labels.Set
-	Params   []Param
-	Segments segments
+	id        string
+	Name      string
+	Namespace string
+	Labels    labels.Set
+	Params    []Param
+	Segments  segments
 }
 
 // NewExperiment creates an experiment with the supplied name and no segments
@@ -57,25 +59,26 @@ func (e *Experiment) SetSegments(seg segments) *Experiment {
 // SampleSegments takes a namespace and an amount of segments you want in your
 // experiment and returns a random sample of the unclaimed segments from the
 // namespace.
-func (e *Experiment) SampleSegments(ns *Namespace, num int) *Experiment {
-	seg := ns.Segments.sample(num)
-	nsSeg, err := ns.Segments.Claim(seg)
+func (e *Experiment) SampleSegments(ns segments, num int) segments {
+	seg := ns.sample(num)
+	nsSeg, err := ns.Claim(seg)
 	if err != nil {
 		panic(err)
 	}
-	copy(ns.Segments[:], nsSeg[:])
-	e.Segments = seg
-	return e
+	copy(ns[:], nsSeg[:])
+	return seg
 }
 
 // ToExperiment is a helper function that converts an Experiment into a
 // *storage.Experiment.
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
-		Name:     e.Name,
-		Labels:   e.Labels,
-		Params:   make([]*storage.Param, len(e.Params)),
-		Segments: make([]byte, 16),
+		Id:        e.id,
+		Name:      e.Name,
+		Namespace: e.Namespace,
+		Labels:    e.Labels,
+		Params:    make([]*storage.Param, len(e.Params)),
+		Segments:  make([]byte, 16),
 	}
 	copy(exp.Segments[:], e.Segments[:])
 	for i, p := range e.Params {
@@ -86,17 +89,31 @@ func (e *Experiment) ToExperiment() *storage.Experiment {
 
 // eval evaluates the experiment based on the given hashConfig. It returns a
 // []ParamValue of the evaluated params or an error.
-func (e *Experiment) eval(h hashConfig) ([]ParamValue, error) {
+func (e *Experiment) eval(h hashConfig) (ExperimentResponse, error) {
+	h.salt[1] = e.Namespace
+	i, err := hash(h)
+	if err != nil {
+		return ExperimentResponse{}, err
+	}
+	segment := uniform(i, 0, float64(len(e.Segments)*8))
+	if !e.Segments.isClaimed(uint64(segment)) {
+		return ExperimentResponse{}, ErrSegmentNotInExperiment
+	}
+
 	p := make([]ParamValue, len(e.Params))
 	h.salt[2] = e.Name
 	for i, param := range e.Params {
 		par, err := param.eval(h)
 		if err != nil {
-			return nil, err
+			return ExperimentResponse{}, err
 		}
 		p[i] = par
 	}
-	return p, nil
+	return ExperimentResponse{
+		Name:      e.Name,
+		Namespace: e.Namespace,
+		Params:    p,
+	}, nil
 }
 
 // MarshalJSON implements the json.Marshaler interface for Experiments.
@@ -170,4 +187,39 @@ func (p *Param) eval(h hashConfig) (ParamValue, error) {
 		return ParamValue{}, err
 	}
 	return ParamValue{Name: p.Name, Value: val}, nil
+}
+
+// ExperimentResponse holds the data for an evaluated expeiment.
+type ExperimentResponse struct {
+	Name      string
+	Namespace string
+	Params    []ParamValue
+}
+
+// ParamValue is a key value pair returned from an evalated experiment
+// parameter.
+type ParamValue struct {
+	Name  string
+	Value string
+}
+
+// Namespaces determines the assignments for the a given user's id based on the
+// current set of namespaces and experiments. It returns a []ExperimentResponse
+// if it is successful or an error if something went wrong.
+func (ec *Config) Namespaces(userID string, selector labels.Selector) ([]ExperimentResponse, error) {
+	h := hashConfig{}
+	h.setUserID(userID)
+
+	var response []ExperimentResponse
+	for _, exp := range teamNamespaces(ec.storage, selector) {
+		eResp, err := exp.eval(h)
+		if err == ErrSegmentNotInExperiment {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		response = append(response, eResp)
+	}
+	return response, nil
 }

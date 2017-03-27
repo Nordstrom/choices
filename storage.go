@@ -51,33 +51,33 @@ func WithStorageConfig(addr string, env int, updateInterval time.Duration) Confi
 		if env == StorageEnvironmentBad {
 			return ErrBadStorageEnvironment
 		}
-		c.storage = newNamespaceStore(cc, env)
+		c.storage = newExperimentStore(cc, env)
 		return nil
 	}
 }
 
-// namespaceStore is the in memory copy of the storage. el is the
+// experimentStore is the in memory copy of the storage. el is the
 // storage.ElwinStorageClient used to get the data out of storage.
-type namespaceStore struct {
+type experimentStore struct {
 	mu            sync.RWMutex
 	el            storage.ElwinStorageClient
 	env           int
-	cache         []Namespace
+	cache         []Experiment
 	failedUpdates int
 }
 
-// newNamespaceStore creates a new in memory store for the data and client to
+// newExperimentStore creates a new in memory store for the data and client to
 // use to update the in memory store.
-func newNamespaceStore(cc *grpc.ClientConn, env int) *namespaceStore {
-	return &namespaceStore{
+func newExperimentStore(cc *grpc.ClientConn, env int) *experimentStore {
+	return &experimentStore{
 		el:  storage.NewElwinStorageClient(cc),
 		env: env,
 	}
 }
 
-// read returns the current list of Namespace that are in memory.
-func (n *namespaceStore) read() []Namespace {
-	out := make([]Namespace, len(n.cache))
+// read returns the current list of Experiment that are in memory.
+func (n *experimentStore) read() []Experiment {
+	out := make([]Experiment, len(n.cache))
 	n.mu.RLock()
 	copy(out, n.cache)
 	n.mu.RUnlock()
@@ -86,49 +86,20 @@ func (n *namespaceStore) read() []Namespace {
 
 // update requests the data from storage server and updates the in memory copy
 // with the lastest data. It returns wether or not the update was successful.
-func (n *namespaceStore) update() error {
-	var req *storage.AllRequest
-	switch n.env {
-	case StorageEnvironmentDev:
-		req = &storage.AllRequest{
-			Environment: storage.Staging,
-		}
-	case StorageEnvironmentProd:
-		req = &storage.AllRequest{
-			Environment: storage.Production,
-		}
-	default:
-		return ErrBadStorageEnvironment
-	}
-	ar, err := n.el.All(context.TODO(), req)
+func (n *experimentStore) update() error {
+	ar, err := n.el.List(context.TODO(), &storage.ListRequest{})
 	if err != nil {
 		return errors.Wrap(err, "error requesting All from storage")
 	}
 
-	cache := make([]Namespace, len(ar.GetNamespaces()))
-	for i, ns := range ar.GetNamespaces() {
-		var err error
-		cache[i], err = FromNamespace(ns)
-		if err != nil {
-			return errors.Wrap(err, "could not parse Namespace")
-		}
+	cache := make([]Experiment, len(ar.Experiments))
+	for i, exp := range ar.Experiments {
+		cache[i] = FromExperiment(exp)
 	}
 	n.mu.Lock()
 	n.cache = cache
 	n.mu.Unlock()
 	return nil
-}
-
-// FromNamespace converts a *storage.Namespace into a Namespace.
-func FromNamespace(s *storage.Namespace) (Namespace, error) {
-	ns := NewNamespace(s.Name)
-	for _, e := range s.Experiments {
-		err := ns.addExperiment(FromExperiment(e))
-		if err != nil {
-			return Namespace{}, errors.Wrap(err, "could not remove add experiment")
-		}
-	}
-	return *ns, nil
 }
 
 // FromExperiment converts a *storage.Experiment into an Experiment
@@ -138,7 +109,12 @@ func FromExperiment(s *storage.Experiment) Experiment {
 		Params: make([]Param, len(s.Params)),
 		Labels: s.Labels,
 	}
-	copy(exp.Segments[:], s.Segments[:16])
+
+	if len(s.Segments) == 16 {
+		copy(exp.Segments[:], s.Segments[:16])
+	} else {
+		exp.Segments = segments{}
+	}
 
 	for i, p := range s.Params {
 		exp.Params[i] = FromParam(p)
@@ -171,16 +147,13 @@ func FromParam(s *storage.Param) Param {
 }
 
 // teamNamespaces filters the namespaces from storage based on teamID.
-func teamNamespaces(s *namespaceStore, selector labels.Selector) []Namespace {
-	allNamespaces := s.read()
-	teamNamespaces := make([]Namespace, 0, len(allNamespaces))
-	for _, n := range allNamespaces {
-		for _, e := range n.Experiments {
-			if selector.Matches(e.Labels) {
-				teamNamespaces = append(teamNamespaces, n)
-				break
-			}
+func teamNamespaces(s *experimentStore, selector labels.Selector) []Experiment {
+	experiments := s.read()
+	filtered := make([]Experiment, 0, len(experiments))
+	for _, e := range experiments {
+		if selector.Matches(e.Labels) {
+			filtered = append(filtered, e)
 		}
 	}
-	return teamNamespaces
+	return filtered
 }

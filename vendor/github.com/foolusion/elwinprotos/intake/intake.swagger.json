@@ -1,0 +1,177 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "intake.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/experiment-intake": {
+      "post": {
+        "summary": "ExperimentIntake takes a request from a web form and creates the\nexperiment in the data store.",
+        "operationId": "ExperimentIntake",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/intakeExperimentIntakeReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/intakeExperimentIntakeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ExperimentIntake"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "intakeExperimentIntakeReply": {
+      "type": "object"
+    },
+    "intakeExperimentIntakeRequest": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/intakeExperimentMetadata"
+        },
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
+        }
+      },
+      "title": "ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers"
+    },
+    "intakeExperimentMetadata": {
+      "type": "object",
+      "properties": {
+        "userID": {
+          "type": "string"
+        },
+        "programManagerID": {
+          "type": "string"
+        },
+        "productManagerID": {
+          "type": "string"
+        },
+        "hypothesis": {
+          "type": "string"
+        },
+        "kpi": {
+          "type": "string"
+        },
+        "timeBound": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "plannedStartTime": {
+          "type": "string"
+        },
+        "plannedEndTime": {
+          "type": "string"
+        },
+        "actualStartTime": {
+          "type": "string"
+        },
+        "actualEndTime": {
+          "type": "string"
+        },
+        "actionPlanNegative": {
+          "type": "string"
+        },
+        "actionPlanNeutral": {
+          "type": "string"
+        },
+        "experimentType": {
+          "type": "string"
+        }
+      },
+      "title": "ExperimentMetadata all the junk that elwin doesn't care about"
+    },
+    "storageExperiment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/storageParam"
+          }
+        },
+        "segments": {
+          "type": "string",
+          "format": "byte"
+        },
+        "detailName": {
+          "type": "string"
+        }
+      },
+      "title": "Experiment structure"
+    },
+    "storageParam": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/storageValue"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "title": "Param structure"
+    },
+    "storageValue": {
+      "type": "object",
+      "properties": {
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "weights": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "title": "Value structure"
+    }
+  }
+}

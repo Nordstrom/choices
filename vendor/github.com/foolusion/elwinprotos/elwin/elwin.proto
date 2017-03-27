@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package elwin.api;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/foolusion/elwinprotos/elwin";
+
+service Elwin {
+	rpc Get(GetRequest) returns (GetReply) {
+		option(google.api.http) = {
+			get: "/elwin/v1/experiments"
+		};
+	}
+}
+
+message GetRequest {
+	string userID = 1;
+	string query = 2;
+}
+
+message GetReply {
+	repeated Experiment experiments = 1;
+}
+
+message Experiment {
+	string name = 1;
+	string namespace = 2;
+	repeated Param params = 3;
+}
+
+message Param {
+	string name = 1;
+	string value = 2;
+}

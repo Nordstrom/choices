@@ -15,25 +15,29 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/get-namespaces": {
-      "post": {
-        "operationId": "GetNamespaces",
+    "/elwin/v1/experiments": {
+      "get": {
+        "operationId": "Get",
         "responses": {
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/elwinExperiments"
+              "$ref": "#/definitions/apiGetReply"
             }
           }
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/elwinIdentifier"
-            }
+            "name": "userID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -43,55 +47,53 @@
     }
   },
   "definitions": {
-    "elwinExperiment": {
+    "apiExperiment": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "namespace": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "params": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/elwinParam"
+            "$ref": "#/definitions/apiParam"
           }
         }
       }
     },
-    "elwinExperiments": {
+    "apiGetReply": {
       "type": "object",
       "properties": {
         "experiments": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/elwinExperiment"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiExperiment"
           }
         }
       }
     },
-    "elwinIdentifier": {
+    "apiGetRequest": {
       "type": "object",
       "properties": {
-        "teamID": {
-          "type": "string",
-          "format": "string"
-        },
         "userID": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
         }
       }
     },
-    "elwinParam": {
+    "apiParam": {
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "value": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       }
     }
