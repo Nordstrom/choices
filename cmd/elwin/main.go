@@ -244,35 +244,35 @@ type elwinServer struct {
 	*choices.Config
 }
 
-func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
-	log.Printf("GetNamespaces: %v", id)
-	if id == nil {
+func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.GetReply, error) {
+	log.Printf("GetNamespaces: %v", req)
+	if req == nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier received")
 	}
-	// TODO: we really need to pass in the requirements in the request. This requires an update to elwin.proto
-	selector := labels.NewSelector()
-	r, err := labels.NewRequirement("team", selection.In, []string{id.TeamID})
+	// TODO: we really need to pass in the requirements in the request.
+	// This requires an update to elwin.proto
+	selector, err := labels.Parse(req.Query)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not create requirement")
+		return nil, errors.Wrap(err, "could not parse query")
 	}
-	selector = selector.Add(*r)
-	resp, err := e.Namespaces(id.UserID, selector)
+	resp, err := e.Namespaces(req.UserID, selector)
 	if err != nil {
-		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", id.TeamID, id.UserID, err)
+		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", req.Query, req.UserID, err)
 	}
 
-	exp := &elwin.Experiments{
-		Experiments: make(map[string]*elwin.Experiment, len(resp)),
+	exp := &elwin.GetReply{
+		Experiments: make([]*elwin.Experiment, len(resp)),
 	}
 
-	for _, v := range resp {
-		exp.Experiments[v.Name] = &elwin.Experiment{
+	for i, v := range resp {
+		exp.Experiments[i] = &elwin.Experiment{
+			Name:      v.Name,
 			Namespace: v.Namespace,
 			Params:    make([]*elwin.Param, len(v.Params)),
 		}
 
-		for i, p := range v.Params {
-			exp.Experiments[v.Name].Params[i] = &elwin.Param{
+		for j, p := range v.Params {
+			exp.Experiments[i].Params[j] = &elwin.Param{
 				Name:  p.Name,
 				Value: p.Value,
 			}
