@@ -22,6 +22,8 @@ import (
 	"net"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"golang.org/x/net/context"
 
 	"github.com/boltdb/bolt"
@@ -139,6 +141,11 @@ func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.Lis
 		return nil, fmt.Errorf("request is nil")
 	}
 
+	selector, err := labels.Parse(r.Query)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not parse query")
+	}
+
 	ar := &storage.ListReply{}
 	if err := s.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(s.bucket).Cursor()
@@ -147,7 +154,9 @@ func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.Lis
 			if err := proto.Unmarshal(v, &exp); err != nil {
 				return err
 			}
-			ar.Experiments = append(ar.Experiments, &exp)
+			if selector.Matches(labels.Set(exp.Labels)) {
+				ar.Experiments = append(ar.Experiments, &exp)
+			}
 		}
 		return nil
 	}); err != nil {
