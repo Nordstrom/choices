@@ -27,7 +27,7 @@ func TestExperiment(t *testing.T) {
 		globalSalt = backup
 	}()
 	globalSalt = ""
-	var seg segments
+	seg := make(segments, 16)
 	copy(seg[:], segmentsAll[:])
 	tests := []struct {
 		exp  Experiment
@@ -72,19 +72,19 @@ func TestExperimentSampleSegments(t *testing.T) {
 		expWant segments
 	}{
 		"all": {
-			nsSeg:   segments{},
+			nsSeg:   make(segments, 16),
 			num:     128,
 			nsWant:  segmentsAll,
 			expWant: segmentsAll,
 		},
 		"half": {
-			nsSeg:   segments{255, 255, 255, 255, 255, 255, 255, 255},
+			nsSeg:   segments{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
 			num:     64,
 			nsWant:  segmentsAll,
 			expWant: segments{0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
 		},
 		"too much": {
-			nsSeg:   segments{},
+			nsSeg:   make(segments, 16),
 			num:     9000,
 			nsWant:  segmentsAll,
 			expWant: segmentsAll,
@@ -94,11 +94,15 @@ func TestExperimentSampleSegments(t *testing.T) {
 	for k, test := range tests {
 		e := NewExperiment("e")
 		got := e.SampleSegments(test.nsSeg, test.num)
-		if got != test.expWant {
-			t.Errorf("%s: experient segments: %v, want %v", k, got, test.expWant)
+		for i := range got {
+			if got[i] != test.expWant[i] {
+				t.Fatalf("%s: experiment segments: %v, want %v", k, got, test.expWant)
+			}
 		}
-		if test.nsSeg != test.nsWant {
-			t.Errorf("%s: namespace segments: %v, want %v", k, test.nsSeg, test.nsWant)
+		for i := range test.nsSeg {
+			if test.nsSeg[i] != test.nsWant[i] {
+				t.Errorf("%s: namespace segments: %v, want %v", k, test.nsSeg, test.nsWant)
+			}
 		}
 	}
 }
@@ -168,8 +172,10 @@ func TestSetSegments(t *testing.T) {
 	}
 	for tname, test := range tests {
 		e.SetSegments(test.seg)
-		if e.Segments != test.want {
-			t.Fatalf("%s: e.SetSegments(%v) = %v, want %v", tname, test.seg, e.Segments, test.want)
+		for i := range e.Segments {
+			if e.Segments[i] != test.want[i] {
+				t.Fatalf("%s: e.SetSegments(%v) = %v, want %v", tname, test.seg, e.Segments, test.want)
+			}
 		}
 	}
 }

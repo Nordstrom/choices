@@ -109,12 +109,7 @@ func FromExperiment(s *storage.Experiment) Experiment {
 		Namespace: s.Namespace,
 		Params:    make([]Param, len(s.Params)),
 		Labels:    s.Labels,
-	}
-
-	if len(s.Segments) == 16 {
-		copy(exp.Segments[:], s.Segments[:16])
-	} else {
-		exp.Segments = segments{}
+		Segments:  segments(s.Segments), // TODO: what do we do if this is nil?
 	}
 
 	for i, p := range s.Params {

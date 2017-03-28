@@ -25,8 +25,8 @@ func TestSegmentContains(t *testing.T) {
 		n    uint64
 		want bool
 	}{
-		"empty contains 0":   {seg: segments{}, n: 0, want: false},
-		"empty contains 1":   {seg: segments{}, n: 1, want: false},
+		"empty contains 0":   {seg: make(segments, 16), n: 0, want: false},
+		"empty contains 1":   {seg: make(segments, 16), n: 1, want: false},
 		"[1] contains 0":     {seg: segments{1}, n: 0, want: true},
 		"[1] contanis 7":     {seg: segments{1 << 7}, n: 7, want: true},
 		"[7,12] contains 12": {seg: segments{0, 1<<7 | 1<<4}, n: 12, want: true},
@@ -78,15 +78,17 @@ func TestSegmentsSet(t *testing.T) {
 		value bit
 		want  segments
 	}{
-		"set one":      {seg: segments{}, index: 0, value: one, want: segments{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
-		"set thirteen": {seg: segments{}, index: 13, value: one, want: segments{0, 1 << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		"set one":      {seg: make(segments, 16), index: 0, value: one, want: segments{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		"set thirteen": {seg: make(segments, 16), index: 13, value: one, want: segments{0, 1 << 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
 		"unset 15":     {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, index: 15, value: zero, want: segments{255, 127, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
 	}
 
 	for k, test := range tests {
 		test.seg = test.seg.set(test.index, test.value)
-		if test.seg != test.want {
-			t.Errorf("%s: test.set(%v, %v) = %v, want %v", k, test.index, test.value, test.seg, test.want)
+		for i := range test.seg {
+			if test.seg[i] != test.want[i] {
+				t.Errorf("%s: test.set(%v, %v) = %v, want %v", k, test.index, test.value, test.seg, test.want)
+			}
 		}
 	}
 }
@@ -99,18 +101,21 @@ func TestSegmentsSample(t *testing.T) {
 	}{
 		"sample none": {seg: segments{}, num: 0, want: segments{}},
 		"sample one":  {seg: segments{}, num: 1, want: segments{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		"sample all":  {seg: segments{}, num: 128, want: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
 	}
 
 	for k, test := range tests {
 		rand.Seed(0)
 		got := test.seg.sample(test.num)
-		if got != test.want {
-			t.Errorf("%s: test.sample() = %v, want %v", k, got, test.want)
+		for i := range got {
+			if got[i] != test.want[i] {
+				t.Errorf("%s: test.sample() = %v, want %v", k, got, test.want)
+			}
 		}
 	}
 }
 
-func TestSegmentsRemove(t *testing.T) {
+func TestSegmentsClaim(t *testing.T) {
 	tests := map[string]struct {
 		seg  segments
 		out  segments
@@ -126,11 +131,13 @@ func TestSegmentsRemove(t *testing.T) {
 
 	for k, test := range tests {
 		seg, err := test.seg.Claim(test.out)
-		if seg != test.want {
-			t.Errorf("%s: test.Claim(%v) = %v, want %v", k, test.out, seg, test.want)
-		}
-		if err != test.err {
-			t.Errorf("%s: %v.Remove(%v) = %v, want %v", k, test.seg, test.out, err, test.err)
+		for i := range seg {
+			if seg[i] != test.want[i] {
+				t.Errorf("%s: test.Claim(%v) = %v, want %v", k, test.out, seg, test.want)
+			}
+			if err != test.err {
+				t.Errorf("%s: %v.Remove(%v) = %v, want %v", k, test.seg, test.out, err, test.err)
+			}
 		}
 	}
 }

@@ -65,7 +65,9 @@ func (e *Experiment) SampleSegments(ns segments, num int) segments {
 	if err != nil {
 		panic(err)
 	}
-	copy(ns[:], nsSeg[:])
+	if i := copy(ns[:], nsSeg[:]); i != 16 {
+		panic("didn't do full copy")
+	}
 	return seg
 }
 
@@ -78,7 +80,7 @@ func (e *Experiment) ToExperiment() *storage.Experiment {
 		Namespace: e.Namespace,
 		Labels:    e.Labels,
 		Params:    make([]*storage.Param, len(e.Params)),
-		Segments:  make([]byte, 16),
+		Segments:  make([]byte, len(e.Segments)),
 	}
 	copy(exp.Segments[:], e.Segments[:])
 	for i, p := range e.Params {

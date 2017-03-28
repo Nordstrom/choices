@@ -21,7 +21,7 @@ import (
 	"math/rand"
 )
 
-type segments [16]byte
+type segments []byte
 
 // segmentsAll is a value where every segment is available
 var segmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
@@ -30,11 +30,18 @@ var (
 	// ErrSegmentUnavailable is thrown when you request an a segment set to
 	// 0, an unavailable segment.
 	ErrSegmentUnavailable = errors.New("segment unavailable")
+	// ErrDifferentLengthSegments is thrown when you make a request with
+	// segments that have different lengths.
+	ErrDifferentLengthSegments = errors.New("segments have different lengths")
 )
 
-// Claim removes the segments in del from s and throws an error if the
+// Claim claims the segments in out from s and throws an error if a
+// segment has already been claimed
 func (s segments) Claim(out segments) (segments, error) {
-	var seg segments
+	if len(s) != len(out) {
+		return nil, ErrDifferentLengthSegments
+	}
+	seg := make(segments, len(out))
 	for i := range seg {
 		if s[i]&out[i] > 0 {
 			return s, ErrSegmentUnavailable
@@ -53,7 +60,7 @@ func (s segments) isClaimed(seg uint64) bool {
 
 // available returns a list of segments that are available.
 func (s segments) available() []int {
-	out := make([]int, 0, 128)
+	out := make([]int, 0, len(s)*8)
 	for i := range s {
 		for shift := uint8(0); shift < 8; shift++ {
 			if s[i]&(1<<shift) != 1<<shift {
@@ -89,7 +96,7 @@ func (s segments) set(index int, val bit) segments {
 func (s segments) sample(n int) segments {
 	avail := s.available()
 	p := rand.Perm(len(avail))
-	var out segments
+	out := make(segments, len(s))
 	if n > len(avail) {
 		n = len(avail)
 	}

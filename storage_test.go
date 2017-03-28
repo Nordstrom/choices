@@ -51,8 +51,10 @@ func TestFromExperiment(t *testing.T) {
 		if out.Name != test.want.Name {
 			t.Errorf("%s name: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
 		}
-		if out.Segments != test.want.Segments {
-			t.Errorf("%s segments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
+		for i := range out.Segments {
+			if out.Segments[i] != test.want.Segments[i] {
+				t.Errorf("%s segments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
+			}
 		}
 		if len(out.Params) != len(test.want.Params) {
 			t.Errorf("%s experiments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
