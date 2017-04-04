@@ -1,5 +1,5 @@
 {
-    "memo": "2a43aa93cbc0bcf0021a1844106369ea2b8d5e63e62d8a744452644327457d8e",
+    "memo": "d7307987021a0454ced0042fcec4452987d68e2a00e8eb6f85cb7b77ec01c828",
     "projects": [
         {
             "name": "github.com/beorn7/perks",
@@ -54,7 +54,7 @@
         {
             "name": "github.com/golang/protobuf",
             "branch": "master",
-            "revision": "c9c7427a2a70d2eb3bafa0ab2dc163e45f143317",
+            "revision": "2bba0603135d7d7f5cb73b2125beeda19c09f4ef",
             "packages": [
                 "jsonpb",
                 "proto",
@@ -140,7 +140,8 @@
             "version": "v0.8.0",
             "revision": "c5b7fccd204277076155f10851dad72b76a49317",
             "packages": [
-                "prometheus"
+                "prometheus",
+                "prometheus/promhttp"
             ]
         },
         {
@@ -211,7 +212,7 @@
         {
             "name": "golang.org/x/net",
             "branch": "master",
-            "revision": "6c23252515492caf9b228a9d5cabcdbde29f7f82",
+            "revision": "ffcf1bedda3b04ebb15a168a59800a73d6dc0f4d",
             "packages": [
                 "context",
                 "http2",
@@ -222,7 +223,7 @@
         {
             "name": "golang.org/x/sys",
             "branch": "master",
-            "revision": "afadfcc7779c1f4db0f6f6438afcb108d9c9c7cd",
+            "revision": "493114f68206f85e7e333beccfabc11e98cba8dd",
             "packages": [
                 "unix"
             ]
@@ -230,7 +231,7 @@
         {
             "name": "golang.org/x/text",
             "branch": "master",
-            "revision": "fc7fa097411d30e6708badff276c4c164425590c",
+            "revision": "f4b4367115ec2de254587813edaa901bc1c723a8",
             "packages": [
                 "secure/bidirule",
                 "transform",
@@ -268,7 +269,7 @@
         {
             "name": "k8s.io/apimachinery",
             "branch": "master",
-            "revision": "75b8dd260ef0469d96d578705a87cffd0e09dab8",
+            "revision": "20e10d54608f05c3059443a6c0afb9979641e88d",
             "packages": [
                 "pkg/labels",
                 "pkg/selection"
