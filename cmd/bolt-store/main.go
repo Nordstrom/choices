@@ -17,35 +17,36 @@ package main
 import (
 	"crypto/rand"
 	"encoding/binary"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
-
-	"k8s.io/apimachinery/pkg/labels"
-
-	"golang.org/x/net/context"
 
 	"github.com/boltdb/bolt"
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/gogo/protobuf/proto"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
-func bind(s []string) error {
+func bind(s ...string) error {
 	if len(s) == 0 {
 		return nil
 	}
 	if err := viper.BindEnv(s[0]); err != nil {
 		return err
 	}
-	return bind(s[1:])
+	return bind(s[1:]...)
 }
+
+var (
+	ErrNilRequest = errors.New("request is nil")
+)
 
 func main() {
 	log.Println("Starting bolt-store...")
@@ -68,11 +69,11 @@ func main() {
 	}
 
 	viper.SetEnvPrefix("bolt_store")
-	if err := bind([]string{
+	if err := bind(
 		"db_file",
 		"listen_address",
 		"metrics_address",
-	}); err != nil {
+	); err != nil {
 		log.Fatal(err)
 	}
 
@@ -90,18 +91,13 @@ func main() {
 	storage.RegisterElwinStorageServer(s, server)
 	grpc_prometheus.Register(s)
 	go func() {
-		http.Handle("/metrics", prometheus.Handler())
+		http.Handle("/metrics", promhttp.Handler())
 		log.Printf("listening for /metrics on %q", viper.GetString("metrics_address"))
 		log.Fatal(http.ListenAndServe(viper.GetString("metrics_address"), nil))
 	}()
 
 	log.Fatal(s.Serve(lis))
 }
-
-var (
-	environmentStaging    = []byte("dev")
-	environmentProduction = []byte("prod")
-)
 
 type server struct {
 	db     *bolt.DB
@@ -135,10 +131,10 @@ func (s *server) Close() error {
 	return s.db.Close()
 }
 
-// List returns all the expriments that match a query.
+// List returns all the experiments that match a query.
 func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.ListReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
+		return nil, ErrNilRequest
 	}
 
 	selector, err := labels.Parse(r.Query)
@@ -168,12 +164,12 @@ func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.Lis
 // Set creates an experiment in the given environment.
 func (s *server) Set(ctx context.Context, r *storage.SetRequest) (*storage.SetReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
+		return nil, ErrNilRequest
 	}
 
 	exp := r.Experiment
 	if exp == nil {
-		return nil, fmt.Errorf("experiment is nil")
+		return nil, errors.New("experiment is nil")
 	}
 
 	if exp.Id == "" {
@@ -220,11 +216,11 @@ func randName(n int) (string, error) {
 // environment.
 func (s *server) Get(ctx context.Context, r *storage.GetRequest) (*storage.GetReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
+		return nil, ErrNilRequest
 	}
 
 	if r.Id == "" {
-		return nil, fmt.Errorf("name is empty")
+		return nil, errors.New("id is empty")
 	}
 
 	exp := storage.Experiment{}
@@ -246,11 +242,11 @@ func (s *server) Get(ctx context.Context, r *storage.GetRequest) (*storage.GetRe
 // Remove deletes the experiment from the given environment.
 func (s *server) Remove(ctx context.Context, r *storage.RemoveRequest) (*storage.RemoveReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
+		return nil, ErrNilRequest
 	}
 
 	if r.Id == "" {
-		return nil, fmt.Errorf("name is empty")
+		return nil, errors.New("id is empty")
 	}
 
 	exp := storage.Experiment{}
