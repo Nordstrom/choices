@@ -27,18 +27,17 @@ import (
 	"syscall"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
-
-	"golang.org/x/net/context"
-
 	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/elwin"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
 var (
@@ -179,7 +178,7 @@ func main() {
 	mux.Handle("/", &jsonServer{ec})
 	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
-	mux.Handle("/metrics", prometheus.Handler())
+	mux.Handle("/metrics", promhttp.Handler())
 	if viper.IsSet(cfgProf) {
 		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	}
@@ -255,7 +254,7 @@ func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.Ge
 	if err != nil {
 		return nil, errors.Wrap(err, "could not parse query")
 	}
-	resp, err := e.Namespaces(req.UserID, selector)
+	resp, err := e.Experiments(req.UserID, selector)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", req.Query, req.UserID, err)
 	}
@@ -333,9 +332,9 @@ func (j *jsonServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp, err := j.Namespaces(r.Form.Get("userid"), sel)
+	resp, err := j.Experiments(r.Form.Get("userid"), sel)
 	if err != nil {
-		j.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
+		j.ErrChan <- fmt.Errorf("rootHandler: couldn't get Experiments: %v", err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
