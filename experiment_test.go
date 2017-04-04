@@ -144,12 +144,14 @@ func TestParamEval(t *testing.T) {
 
 func BenchmarkExperimentEval(b *testing.B) {
 	e := Experiment{
-		Name: "experiment",
+		Name:      "experiment",
+		Namespace: "foo",
+		Segments:  segmentsAll,
 		Params: []Param{
 			{Name: "p", Choices: &Uniform{Choices: []string{"a", "b"}}},
 		},
+		Labels: map[string]string{"test": "true"},
 	}
-	copy(e.Segments[:], segmentsAll[:])
 	h := hashConfig{
 		salt: [3]string{"namespace", "", ""},
 	}
