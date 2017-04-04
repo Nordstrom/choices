@@ -3,4 +3,4 @@ go:
 - 1.8.x
 go_import_path: github.com/Nordstrom/choices
 install: true
-script: go test $(go list ./... | grep -v /vendor/)
+script: go test -v $(go list ./... | grep -v /vendor/)
