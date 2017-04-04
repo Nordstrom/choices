@@ -18,9 +18,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/foolusion/elwinprotos/storage"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 var (
@@ -29,9 +28,8 @@ var (
 	ErrSegmentNotInExperiment = errors.New("Segment is not assigned to an experiment")
 )
 
-// Experiment is a structure that represents a single experiment in elwin. It
-// can contain multiple parameters. Experiments are evaluated through the call
-// to Namespaces.
+// Experiment is a structure that represents a single experiment in
+// elwin. It can contain multiple parameters.
 type Experiment struct {
 	id        string
 	Name      string
@@ -41,9 +39,10 @@ type Experiment struct {
 	Segments  segments
 }
 
-// NewExperiment creates an experiment with the supplied name and no segments
-// cliamed. In order for any traffic to be assigned to this experiment you will
-// need to call Experiment.SetSegments or Experiment.SampleSegments.
+// NewExperiment creates an experiment with the supplied name and no
+// segments claimed. In order for any traffic to be assigned to this
+// experiment you will need to call Experiment.SetSegments or
+// Experiment.SampleSegments.
 func NewExperiment(name string) *Experiment {
 	return &Experiment{
 		Name: name,
@@ -56,9 +55,9 @@ func (e *Experiment) SetSegments(seg segments) *Experiment {
 	return e
 }
 
-// SampleSegments takes a namespace and an amount of segments you want in your
-// experiment and returns a random sample of the unclaimed segments from the
-// namespace.
+// SampleSegments takes a namespace and an amount of segments you want
+// in your experiment and returns a random sample of the unclaimed
+// segments from the namespace.
 func (e *Experiment) SampleSegments(ns segments, num int) segments {
 	seg := ns.sample(num)
 	nsSeg, err := ns.Claim(seg)
@@ -71,8 +70,8 @@ func (e *Experiment) SampleSegments(ns segments, num int) segments {
 	return seg
 }
 
-// ToExperiment is a helper function that converts an Experiment into a
-// *storage.Experiment.
+// ToExperiment is a helper function that converts an Experiment into
+// a *storage.Experiment.
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
 		Id:        e.id,
@@ -89,8 +88,8 @@ func (e *Experiment) ToExperiment() *storage.Experiment {
 	return exp
 }
 
-// eval evaluates the experiment based on the given hashConfig. It returns a
-// []ParamValue of the evaluated params or an error.
+// eval evaluates the experiment based on the given hashConfig. It
+// returns a []ParamValue of the evaluated params or an error.
 func (e *Experiment) eval(h hashConfig) (ExperimentResponse, error) {
 	h.salt[1] = e.Namespace
 	i, err := hash(h)
@@ -118,7 +117,8 @@ func (e *Experiment) eval(h hashConfig) (ExperimentResponse, error) {
 	}, nil
 }
 
-// MarshalJSON implements the json.Marshaler interface for Experiments.
+// MarshalJSON implements the json.Marshaler interface for
+// Experiments.
 func (e *Experiment) MarshalJSON() ([]byte, error) {
 	var aux = struct {
 		Name     string   `json:"name"`
@@ -132,14 +132,15 @@ func (e *Experiment) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aux)
 }
 
-// Param is a struct that represents a single parameter in an experiment. Param
-// is evaluated through the call to Namespaces.
+// Param is a struct that represents a single parameter in an
+// experiment. Param is evaluated through the call to Experiments.
 type Param struct {
 	Name    string
 	Choices choice
 }
 
-// ToParam is a helper function that converts a Param into a *storage.Param.
+// ToParam is a helper function that converts a Param into a
+// *storage.Param.
 func (p *Param) ToParam() *storage.Param {
 	param := &storage.Param{
 		Name: p.Name,
@@ -176,8 +177,8 @@ func (p *Param) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aux)
 }
 
-// eval evaluates the Param based on the given hashConfid. It returns a
-// ParamValue containing the value the user is assigned.
+// eval evaluates the Param based on the given hashConfig. It returns
+// a ParamValue containing the value the user is assigned.
 func (p *Param) eval(h hashConfig) (ParamValue, error) {
 	h.setParam(p.Name)
 	i, err := hash(h)
@@ -205,10 +206,11 @@ type ParamValue struct {
 	Value string
 }
 
-// Namespaces determines the assignments for the a given user's id based on the
-// current set of namespaces and experiments. It returns a []ExperimentResponse
-// if it is successful or an error if something went wrong.
-func (ec *Config) Namespaces(userID string, selector labels.Selector) ([]ExperimentResponse, error) {
+// Experiments determines the assignments for the a given user's id
+// based on the current set of namespaces and experiments. It returns
+// a []ExperimentResponse if it is successful or an error if something
+// went wrong.
+func (ec *Config) Experiments(userID string, selector labels.Selector) ([]ExperimentResponse, error) {
 	h := hashConfig{}
 	h.setUserID(userID)
 

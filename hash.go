@@ -31,13 +31,14 @@ var (
 var (
 	calledSet bool
 
-	// ErrGlobalSaltAlreadySet is the error returned when a SetGlobalSalt
-	// has been called more than once.
+	// ErrGlobalSaltAlreadySet is the error returned when a
+	// SetGlobalSalt has been called more than once.
 	ErrGlobalSaltAlreadySet = errors.New("global salt already set")
 )
 
-// SetGlobalSalt this sets the global salt used for hashing users. It should
-// only ever be called once. It returns an error if it is called more than once.
+// SetGlobalSalt this sets the global salt used for hashing users. It
+// should only ever be called once. It returns an error if it is
+// called more than once.
 func SetGlobalSalt(s string) error {
 	if calledSet {
 		return ErrGlobalSaltAlreadySet
@@ -48,8 +49,8 @@ func SetGlobalSalt(s string) error {
 	return nil
 }
 
-// WithGlobalSalt is a configuration option for Config that sets the globalSalt
-// to something other than the default.
+// WithGlobalSalt is a configuration option for Config that sets the
+// globalSalt to something other than the default.
 func WithGlobalSalt(s string) ConfigOpt {
 	return func(c *Config) error {
 		globalSalt = s
@@ -64,8 +65,8 @@ type hashConfig struct {
 	userID string
 }
 
-// HashExperience takes the supplied arguments and returns the hashed uint64
-// that can be used for determining a segment.
+// HashExperience takes the supplied arguments and returns the hashed
+// uint64 that can be used for determining a segment.
 func HashExperience(namespace, experiment, param, userID string) (uint64, error) {
 	h := hashConfig{userID: userID}
 	h.setNs(namespace)
@@ -94,13 +95,15 @@ func (h *hashConfig) setUserID(u string) {
 	h.userID = u
 }
 
-// errWriter is a convenience struct to eliminate lots of if err != nil.
+// errWriter is a convenience struct to eliminate lots of if err !=
+// nil.
 type errWriter struct {
 	buf bytes.Buffer
 	err error
 }
 
-// writeString writes the given string to the buf or nothing if err != nil
+// writeString writes the given string to the buf or nothing if err !=
+// nil
 func (e *errWriter) writeString(s string) {
 	if e.err == nil {
 		_, e.err = e.buf.WriteString(s)
@@ -114,8 +117,8 @@ func (e *errWriter) writeByte(b byte) {
 	}
 }
 
-// Bytes returns a []byte that represents the entire salt+userID the format is
-// as follows.
+// Bytes returns a []byte that represents the entire salt+userID the
+// format is as follows.
 //     "globalSalt.namespace.experiment.param@userID"
 func (h *hashConfig) Bytes() ([]byte, error) {
 	ew := errWriter{}
@@ -138,7 +141,8 @@ func (h *hashConfig) Bytes() ([]byte, error) {
 	return ew.buf.Bytes(), nil
 }
 
-// hash hashes the hashConfig returning a uint64 hashed value or an error.
+// hash hashes the hashConfig returning a uint64 hashed value or an
+// error.
 func hash(h hashConfig) (uint64, error) {
 	b, err := h.Bytes()
 	if err != nil {
@@ -149,8 +153,8 @@ func hash(h hashConfig) (uint64, error) {
 	return i, nil
 }
 
-// uniform returns a uniformly random value between the min and max values
-// supplied.
+// uniform returns a uniformly random value between the min and max
+// values supplied.
 func uniform(hash uint64, min, max float64) float64 {
 	return min + (max-min)*(float64(hash)/longScale)
 }

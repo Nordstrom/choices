@@ -30,10 +30,10 @@ type Config struct {
 	storage           *experimentStore
 }
 
-// IsHealthy returns an error if the time since the last successful update is
-// longer than the max allowed time to fail. The interval for updates can be
-// set by WithUpdateInterval. The time until failure can be set with
-// WithMaxUpdateFailTime.
+// IsHealthy returns an error if the time since the last successful
+// update is longer than the max allowed time to fail. The interval
+// for updates can be set by WithUpdateInterval. The time until
+// failure can be set with WithMaxUpdateFailTime.
 func (c *Config) IsHealthy() error {
 	if time.Duration(c.storage.failedUpdates)*c.updateInterval > c.maxUpdateFailTime {
 		return errors.Errorf("failed to update after %v", c.maxUpdateFailTime)
@@ -41,16 +41,16 @@ func (c *Config) IsHealthy() error {
 	return nil
 }
 
-// ConfigOpt is a type that modifies Config. It is used when calling NewChoices
-// to configure choices.
+// ConfigOpt is a type that modifies Config. It is used when calling
+// NewChoices to configure choices.
 type ConfigOpt func(*Config) error
 
 const (
 	defaultUpdateInterval time.Duration = 5 * time.Minute
 )
 
-// ErrUpdateStorage is an error type that is returned when storage fails to
-// update.
+// ErrUpdateStorage is an error type that is returned when storage
+// fails to update.
 type ErrUpdateStorage struct {
 	error
 }
@@ -60,10 +60,11 @@ func (e ErrUpdateStorage) Error() string {
 	return fmt.Sprintf("could not update storage: %v", e.error)
 }
 
-// NewChoices sets the storage engine. It starts a ticker that will call
-// s.Update() until the context is cancelled. To change the tick interval call
-// SetUpdateInterval(d time.Duration). Must cancel the context before calling
-// NewChoices again otherwise you will leak go routines.
+// NewChoices sets the storage engine. It starts a ticker that will
+// call s.Update() until the context is cancelled. To change the tick
+// interval call SetUpdateInterval(d time.Duration). Must cancel the
+// context before calling NewChoices again otherwise you will leak go
+// routines.
 func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	e := &Config{
 		updateInterval: defaultUpdateInterval,
@@ -100,9 +101,9 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	return e, nil
 }
 
-// WithUpdateInterval changes the update interval for Storage. Must call
-// SetStorage after this or cancel context of the current Storage and call
-// SetStorage again.
+// WithUpdateInterval changes the update interval for Storage. Must
+// call SetStorage after this or cancel context of the current Storage
+// and call SetStorage again.
 func WithUpdateInterval(dur time.Duration) ConfigOpt {
 	return func(ec *Config) error {
 		ec.updateInterval = dur
@@ -110,7 +111,8 @@ func WithUpdateInterval(dur time.Duration) ConfigOpt {
 	}
 }
 
-// WithMaxUpdateFailTime changes the max duration allowed for failing updates.
+// WithMaxUpdateFailTime changes the max duration allowed for failing
+// updates.
 func WithMaxUpdateFailTime(dur time.Duration) ConfigOpt {
 	return func(ec *Config) error {
 		ec.maxUpdateFailTime = dur
