@@ -151,14 +151,14 @@ func (p *Param) ToParam() *storage.Param {
 			Choices: val.Choices,
 		}
 	case *Weighted:
-		choices := make([]string, len(val.Choices))
+		c := make([]string, len(val.Choices))
 		weights := make([]float64, len(val.Choices))
 		for i, v := range val.Choices {
-			choices[i] = v.name
+			c[i] = v.name
 			weights[i] = v.weight
 		}
 		param.Value = &storage.Value{
-			Choices: choices,
+			Choices: c,
 			Weights: weights,
 		}
 	}
@@ -192,14 +192,14 @@ func (p *Param) eval(h hashConfig) (ParamValue, error) {
 	return ParamValue{Name: p.Name, Value: val}, nil
 }
 
-// ExperimentResponse holds the data for an evaluated expeiment.
+// ExperimentResponse holds the data for an evaluated experiment.
 type ExperimentResponse struct {
 	Name      string
 	Namespace string
 	Params    []ParamValue
 }
 
-// ParamValue is a key value pair returned from an evalated experiment
+// ParamValue is a key value pair returned from an evaluated experiment
 // parameter.
 type ParamValue struct {
 	Name  string
@@ -210,12 +210,12 @@ type ParamValue struct {
 // based on the current set of namespaces and experiments. It returns
 // a []ExperimentResponse if it is successful or an error if something
 // went wrong.
-func (ec *Config) Experiments(userID string, selector labels.Selector) ([]ExperimentResponse, error) {
+func (c *Config) Experiments(userID string, selector labels.Selector) ([]ExperimentResponse, error) {
 	h := hashConfig{}
 	h.setUserID(userID)
 
 	var response []ExperimentResponse
-	for _, exp := range teamNamespaces(ec.storage, selector) {
+	for _, exp := range teamNamespaces(c.storage, selector) {
 		eResp, err := exp.eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue
