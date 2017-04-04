@@ -1,0 +1,5 @@
+listen_address = ":8085"
+
+[clients]
+dev = "localhost:8080"
+prod = "localhost:8080"
