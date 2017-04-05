@@ -34,12 +34,14 @@ import (
 )
 
 const (
-	cfgListenAddr      = "listen_address"
-	cfgMongoAddr       = "mongo_address"
-	cfgMongoDatabase   = "mongo_database"
-	cfgMongoCollection = "mongo_collection"
-	cfgMongoUsername   = "mongo_username"
-	cfgMongoPassword   = "mongo_password"
+	cfgListenAddr    = "listen_address"
+	cfgMongoAddr     = "mongo_address"
+	cfgMongoDatabase = "mongo_database"
+	cfgMongoUsername = "mongo_username"
+	cfgMongoPassword = "mongo_password"
+
+	collExperiments = "experiments"
+	collNamespaces  = "namespaces"
 )
 
 func main() {
@@ -47,7 +49,6 @@ func main() {
 	viper.SetDefault(cfgListenAddr, ":8080")
 	viper.SetDefault(cfgMongoAddr, "elwin-mongo")
 	viper.SetDefault(cfgMongoDatabase, "elwin")
-	viper.SetDefault(cfgMongoCollection, "dev")
 
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
@@ -70,7 +71,7 @@ func main() {
 	}
 	defer sess.Close()
 	srv := &server{
-		session: sess,
+		Session: sess,
 	}
 
 	lis, err := net.Listen("tcp", viper.GetString(cfgListenAddr))
@@ -94,17 +95,31 @@ func main() {
 }
 
 type experiment struct {
-	ID string `bson:"_id"`
 	storage.Experiment
+	Id string `bson:"_id"`
 }
 
 type server struct {
-	session *mgo.Session
-	c       *mgo.Collection
+	*mgo.Session
 }
 
-func getCollection(s *server) *mgo.Collection {
-	return s.session.DB(viper.GetString(cfgMongoDatabase)).C(viper.GetString(cfgMongoCollection))
+func (s *server) setExperiment(e experiment) error {
+	_, err := s.DB(viper.GetString(cfgMongoDatabase)).
+		C(collExperiments).
+		UpsertId(e.Id, e)
+	return err
+}
+
+func (s *server) getExperiment(id string) (*experiment, error) {
+	var e experiment
+	err := s.DB(viper.GetString(cfgMongoDatabase)).
+		C(collExperiments).
+		FindId(id).
+		One(&e)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not find experiment")
+	}
+	return &e, nil
 }
 
 func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.ListReply, error) {
@@ -132,13 +147,17 @@ func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.Lis
 		}
 	}
 	log.Println(l)
-	c := getCollection(s)
-
 	var iter *mgo.Iter
 	if len(req) == 0 {
-		iter = c.Find(bson.M{}).Iter()
+		iter = s.DB(viper.GetString(cfgMongoDatabase)).
+			C(collExperiments).
+			Find(bson.M{}).
+			Iter()
 	} else {
-		iter = c.Find(l).Iter()
+		iter = s.Session.DB(viper.GetString(cfgMongoDatabase)).
+			C(collExperiments).
+			Find(l).
+			Iter()
 	}
 	var exps []*storage.Experiment
 	var exp experiment
@@ -155,10 +174,9 @@ func (s *server) Get(ctx context.Context, r *storage.GetRequest) (*storage.GetRe
 		return nil, errors.New("request was nil")
 	}
 
-	c := getCollection(s)
-	var exp experiment
-	if err := c.FindId(r.Id).One(&exp); err != nil {
-		return nil, errors.Wrap(err, "could not find record")
+	exp, err := s.getExperiment(r.Id)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get experiment")
 	}
 	return &storage.GetReply{Experiment: &exp.Experiment}, nil
 }
@@ -168,17 +186,17 @@ func (s *server) Set(ctx context.Context, r *storage.SetRequest) (*storage.SetRe
 		return nil, errors.New("request was nil")
 	}
 
-	c := getCollection(s)
-
 	if r.Experiment == nil {
 		return nil, errors.New("experiment was nil")
 	}
 
 	e := experiment{
-		ID:         r.Experiment.Id,
+		Id:         r.Experiment.Id,
 		Experiment: *r.Experiment,
 	}
-	if _, err := c.UpsertId(e.ID, e); err != nil {
+	if _, err := s.DB(viper.GetString(cfgMongoDatabase)).
+		C(collExperiments).
+		UpsertId(e.Id, e); err != nil {
 		return nil, errors.Wrap(err, "could not set experiment")
 	}
 
@@ -190,12 +208,16 @@ func (s *server) Remove(ctx context.Context, r *storage.RemoveRequest) (*storage
 		return nil, errors.New("request was nil")
 	}
 
-	c := getCollection(s)
 	var exp experiment
-	if err := c.FindId(r.Id).One(&exp); err != nil {
+	if err := s.DB(viper.GetString(cfgMongoDatabase)).
+		C(collExperiments).
+		FindId(r.Id).
+		One(&exp); err != nil {
 		return nil, errors.Wrap(err, "could not find record")
 	}
-	if err := c.RemoveId(r.Id); err != nil {
+	if err := s.DB(viper.GetString(cfgMongoDatabase)).
+		C(collExperiments).
+		RemoveId(r.Id); err != nil {
 		return nil, errors.Wrap(err, "could not delete record")
 	}
 	return &storage.RemoveReply{Experiment: &exp.Experiment}, nil
