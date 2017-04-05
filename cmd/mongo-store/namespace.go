@@ -1,12 +1,14 @@
 package main
 
 import (
+	crand "crypto/rand"
+	"encoding/hex"
+	"io"
 	"math/rand"
 
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"k8s.io/contrib/compare/Godeps/_workspace/src/github.com/opencontainers/runc/libcontainer/utils"
 )
 
 type namespace struct {
@@ -79,10 +81,23 @@ func (s *server) createNamespace(name string, numSegments int) (*namespace, erro
 	}, nil
 }
 
+// GenerateRandomName returns a new name joined with a prefix.  This size
+// specified is used to truncate the randomly generated value
+func GenerateRandomName(prefix string, size int) (string, error) {
+	id := make([]byte, 32)
+	if _, err := io.ReadFull(crand.Reader, id); err != nil {
+		return "", err
+	}
+	if size > 64 {
+		size = 64
+	}
+	return prefix + hex.EncodeToString(id)[:size], nil
+}
+
 func (s *server) createExperiment(name, namespace string, nsSegments, expSegments int, labels map[string]string, params []*storage.Param) error {
 	ns, err := s.getNamespace(namespace)
 	if err != nil {
-		name, err := utils.GenerateRandomName("", 7)
+		name, err := GenerateRandomName("", 7)
 		if err != nil {
 			return errors.Wrap(err, "could not genereate new namespace name")
 		}
@@ -97,7 +112,7 @@ func (s *server) createExperiment(name, namespace string, nsSegments, expSegment
 		return errors.Wrap(err, "could not update namespace")
 	}
 
-	id, err := utils.GenerateRandomName(name, 32)
+	id, err := GenerateRandomName(name, 32)
 	if err != nil {
 		return errors.Wrap(err, "could not generate experiment id")
 	}
