@@ -48,6 +48,16 @@ func sendMail(addr string, a smtp.Auth, from string, to []string, msg []byte) er
 	return c.Quit()
 }
 
+type noAuth struct{}
+
+func (a noAuth) Start(*smtp.ServerInfo) (string, []byte, error) {
+	return "", nil, nil
+}
+
+func (a noAuth) Next([]byte, bool) ([]byte, error) {
+	return nil, nil
+}
+
 type loginAuth struct {
 	username, password string
 }

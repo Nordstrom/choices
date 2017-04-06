@@ -26,12 +26,9 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
-
 	"net/textproto"
 	"strings"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/boltdb/bolt"
 	"github.com/foolusion/elwinprotos/storage"
@@ -41,6 +38,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
@@ -607,7 +605,7 @@ func sendEmail(r *storage.ExperimentIntakeRequest) error {
 		return errors.Wrap(err, "could not close ")
 	}
 
-	return sendMail(viper.GetString(cfgMailAddr), &loginAuth{}, viper.GetString(cfgMailFrom), append(to, cc...), msg.Bytes())
+	return sendMail(viper.GetString(cfgMailAddr), noAuth{}, viper.GetString(cfgMailFrom), append(to, cc...), msg.Bytes())
 }
 
 func makeParam(params []*storage.Param) []param {
