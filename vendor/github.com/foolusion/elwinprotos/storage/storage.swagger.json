@@ -58,6 +58,33 @@
         ]
       }
     },
+    "/api/v1/new": {
+      "post": {
+        "summary": "New creates a new experiment and namespace if needed.",
+        "operationId": "New",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/storageNewReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/storageNewRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ElwinStorage"
+        ]
+      }
+    },
     "/api/v1/remove/{id}": {
       "delete": {
         "summary": "Remove removes the namespace from the given environment.",
@@ -157,6 +184,9 @@
       "properties": {
         "experiment": {
           "$ref": "#/definitions/storageExperiment"
+        },
+        "namespace": {
+          "$ref": "#/definitions/storageNamespace"
         }
       },
       "description": "GetReply response containing then experiment requested."
@@ -193,6 +223,55 @@
       },
       "description": "ListRequest retuns all the experiments from the given environment."
     },
+    "storageNamespace": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "numSegments": {
+          "type": "string",
+          "format": "int64"
+        },
+        "segments": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "storageNewReply": {
+      "type": "object",
+      "properties": {
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
+        },
+        "namespace": {
+          "$ref": "#/definitions/storageNamespace"
+        }
+      },
+      "description": "NewReply represents a response from the New rpc."
+    },
+    "storageNewRequest": {
+      "type": "object",
+      "properties": {
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
+        },
+        "namespace": {
+          "$ref": "#/definitions/storageNamespace"
+        },
+        "eSegments": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nSegments": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "description": "NewRequest represents a request to create a new experiment and\npotentially a new namespace."
+    },
     "storageParam": {
       "type": "object",
       "properties": {
@@ -202,10 +281,6 @@
         },
         "value": {
           "$ref": "#/definitions/storageValue"
-        },
-        "id": {
-          "type": "string",
-          "format": "string"
         }
       },
       "title": "Param structure"
@@ -215,6 +290,9 @@
       "properties": {
         "experiment": {
           "$ref": "#/definitions/storageExperiment"
+        },
+        "namespace": {
+          "$ref": "#/definitions/storageNamespace"
         }
       },
       "description": "RemoveReply response containing the removed experiment."
@@ -234,6 +312,9 @@
       "properties": {
         "experiment": {
           "$ref": "#/definitions/storageExperiment"
+        },
+        "namespace": {
+          "$ref": "#/definitions/storageNamespace"
         }
       },
       "description": "SetReply response containing the newly created Experiment."
@@ -243,6 +324,9 @@
       "properties": {
         "experiment": {
           "$ref": "#/definitions/storageExperiment"
+        },
+        "namespace": {
+          "$ref": "#/definitions/storageNamespace"
         }
       },
       "description": "SetRequest request message to create a new experiment in an\nenvironment."

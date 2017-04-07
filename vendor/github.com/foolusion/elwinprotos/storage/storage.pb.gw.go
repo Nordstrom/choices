@@ -44,6 +44,19 @@ func request_ElwinStorage_List_0(ctx context.Context, marshaler runtime.Marshale
 
 }
 
+func request_ElwinStorage_New_0(ctx context.Context, marshaler runtime.Marshaler, client ElwinStorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq NewRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.New(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
 func request_ElwinStorage_Get_0(ctx context.Context, marshaler runtime.Marshaler, client ElwinStorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
@@ -169,6 +182,34 @@ func RegisterElwinStorageHandler(ctx context.Context, mux *runtime.ServeMux, con
 
 	})
 
+	mux.Handle("POST", pattern_ElwinStorage_New_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_ElwinStorage_New_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ElwinStorage_New_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_ElwinStorage_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
@@ -259,6 +300,8 @@ func RegisterElwinStorageHandler(ctx context.Context, mux *runtime.ServeMux, con
 var (
 	pattern_ElwinStorage_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "list"}, ""))
 
+	pattern_ElwinStorage_New_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "new"}, ""))
+
 	pattern_ElwinStorage_Get_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "get", "id"}, ""))
 
 	pattern_ElwinStorage_Set_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "set"}, ""))
@@ -268,6 +311,8 @@ var (
 
 var (
 	forward_ElwinStorage_List_0 = runtime.ForwardResponseMessage
+
+	forward_ElwinStorage_New_0 = runtime.ForwardResponseMessage
 
 	forward_ElwinStorage_Get_0 = runtime.ForwardResponseMessage
 

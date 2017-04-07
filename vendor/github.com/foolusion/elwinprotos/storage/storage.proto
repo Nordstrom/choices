@@ -15,6 +15,14 @@ service ElwinStorage {
     };
   }
 
+  // New creates a new experiment and namespace if needed.
+  rpc New(NewRequest) returns (NewReply) {
+    option(google.api.http) = {
+      post: "/api/v1/new"
+      body: "*"
+    };
+  }
+
   // Get returns the experiment matching the supplied name from the
   // given environment.
   rpc Get(GetRequest) returns (GetReply) {
@@ -50,15 +58,32 @@ message ListReply {
   repeated Experiment experiments = 1;
 }
 
+// NewRequest represents a request to create a new experiment and
+// potentially a new namespace.
+message NewRequest {
+  Experiment experiment = 1;
+  Namespace namespace = 2;
+  int64 eSegments = 3;
+  int64 nSegments = 4;
+}
+
+// NewReply represents a response from the New rpc.
+message NewReply {
+  Experiment experiment = 1;
+  Namespace namespace = 2;
+}
+
 // SetRequest request message to create a new experiment in an
 // environment. 
 message SetRequest {
   Experiment experiment = 1;
+  Namespace namespace = 2;
 }
 
 // SetReply response containing the newly created Experiment.
 message SetReply {
   Experiment experiment = 1;
+  Namespace namespace = 2;
 }
 
 // GetRequest request message to get an experiment by id.
@@ -69,6 +94,7 @@ message GetRequest {
 // GetReply response containing then experiment requested.
 message GetReply {
   Experiment experiment = 1;
+  Namespace namespace = 2;
 }
 
 // RemoveRequest request message to remove an existing experiment from
@@ -80,6 +106,7 @@ message RemoveRequest {
 // RemoveReply response containing the removed experiment.
 message RemoveReply {
   Experiment experiment = 1;
+  Namespace namespace = 2;
 }
 
 // Experiment structure
@@ -97,11 +124,16 @@ message Experiment {
 message Param {
   string name = 1;
   Value value = 2;
-  string id = 4;
 }
 
 // Value structure
 message Value {
   repeated string choices = 1;
   repeated double weights = 2;
+}
+
+message Namespace {
+  string name = 1;
+  int64 numSegments = 2;
+  bytes segments = 3;
 }

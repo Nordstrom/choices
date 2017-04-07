@@ -18,14 +18,11 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
-
-	"golang.org/x/net/context"
-
-	"google.golang.org/grpc"
-
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 // constants for storage environments. So far only support a staging and
@@ -85,7 +82,7 @@ func (n *experimentStore) read() []Experiment {
 }
 
 // update requests the data from storage server and updates the in memory copy
-// with the lastest data. It returns wether or not the update was successful.
+// with the latest data. It returns wether or not the update was successful.
 func (n *experimentStore) update() error {
 	ar, err := n.el.List(context.TODO(), &storage.ListRequest{})
 	if err != nil {
@@ -102,9 +99,18 @@ func (n *experimentStore) update() error {
 	return nil
 }
 
+func FromNamespace(s *storage.Namespace) Namespace {
+	return Namespace{
+		Name:        s.Name,
+		NumSegments: int(s.NumSegments),
+		Segments:    s.Segments,
+	}
+}
+
 // FromExperiment converts a *storage.Experiment into an Experiment
 func FromExperiment(s *storage.Experiment) Experiment {
 	exp := Experiment{
+		ID:        s.Id,
 		Name:      s.Name,
 		Namespace: s.Namespace,
 		Params:    make([]Param, len(s.Params)),

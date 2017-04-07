@@ -161,6 +161,10 @@ func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.Lis
 	return ar, nil
 }
 
+func (s *server) New(ctx context.Context, r *storage.NewRequest) (*storage.NewReply, error) {
+	return nil, errors.New("unimplemented")
+}
+
 // Set creates an experiment in the given environment.
 func (s *server) Set(ctx context.Context, r *storage.SetRequest) (*storage.SetReply, error) {
 	if r == nil {

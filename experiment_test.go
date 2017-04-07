@@ -64,49 +64,6 @@ func TestExperiment(t *testing.T) {
 	}
 }
 
-func TestExperimentSampleSegments(t *testing.T) {
-	tests := map[string]struct {
-		nsSeg   segments
-		num     int
-		nsWant  segments
-		expWant segments
-	}{
-		"all": {
-			nsSeg:   make(segments, 16),
-			num:     128,
-			nsWant:  segmentsAll,
-			expWant: segmentsAll,
-		},
-		"half": {
-			nsSeg:   segments{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
-			num:     64,
-			nsWant:  segmentsAll,
-			expWant: segments{0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
-		},
-		"too much": {
-			nsSeg:   make(segments, 16),
-			num:     9000,
-			nsWant:  segmentsAll,
-			expWant: segmentsAll,
-		},
-	}
-
-	for k, test := range tests {
-		e := NewExperiment("e")
-		got := e.SampleSegments(test.nsSeg, test.num)
-		for i := range got {
-			if got[i] != test.expWant[i] {
-				t.Fatalf("%s: experiment segments: %v, want %v", k, got, test.expWant)
-			}
-		}
-		for i := range test.nsSeg {
-			if test.nsSeg[i] != test.nsWant[i] {
-				t.Errorf("%s: namespace segments: %v, want %v", k, test.nsSeg, test.nsWant)
-			}
-		}
-	}
-}
-
 func TestParamEval(t *testing.T) {
 	backup := globalSalt
 	defer func() {

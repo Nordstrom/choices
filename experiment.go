@@ -31,7 +31,7 @@ var (
 // Experiment is a structure that represents a single experiment in
 // elwin. It can contain multiple parameters.
 type Experiment struct {
-	id        string
+	ID        string
 	Name      string
 	Namespace string
 	Labels    labels.Set
@@ -55,26 +55,11 @@ func (e *Experiment) SetSegments(seg segments) *Experiment {
 	return e
 }
 
-// SampleSegments takes a namespace and an amount of segments you want
-// in your experiment and returns a random sample of the unclaimed
-// segments from the namespace.
-func (e *Experiment) SampleSegments(ns segments, num int) segments {
-	seg := ns.sample(num)
-	nsSeg, err := ns.Claim(seg)
-	if err != nil {
-		panic(err)
-	}
-	if i := copy(ns[:], nsSeg[:]); i != 16 {
-		panic("didn't do full copy")
-	}
-	return seg
-}
-
 // ToExperiment is a helper function that converts an Experiment into
 // a *storage.Experiment.
 func (e *Experiment) ToExperiment() *storage.Experiment {
 	exp := &storage.Experiment{
-		Id:        e.id,
+		Id:        e.ID,
 		Name:      e.Name,
 		Namespace: e.Namespace,
 		Labels:    e.Labels,
