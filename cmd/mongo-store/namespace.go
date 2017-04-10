@@ -24,7 +24,7 @@ func (s *server) SetNamespace(n *choices.Namespace) error {
 		Name:      n.Name,
 		Namespace: *n,
 	}
-	if _, err := s.DB(viper.GetString(cfgMongoDatabase)).C(collNamespaces).UpsertId(n.Name, n); err != nil {
+	if _, err := s.DB(viper.GetString(cfgMongoDatabase)).C(collNamespaces).UpsertId(ns.Name, ns); err != nil {
 		return errors.Wrap(err, "could not update namespace")
 	}
 	return nil
