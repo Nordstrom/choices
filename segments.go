@@ -35,6 +35,18 @@ var (
 	ErrDifferentLengthSegments = errors.New("segments have different lengths")
 )
 
+func (s segments) contains(in segments) bool {
+	if len(s) != len(in) {
+		return false
+	}
+	for i := range s {
+		if s[i]&in[i] != in[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // Claim claims the segments in out from s and throws an error if a
 // segment has already been claimed
 func (s segments) Claim(out segments) (segments, error) {

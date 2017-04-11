@@ -21,6 +21,27 @@ import (
 
 func TestSegmentContains(t *testing.T) {
 	tests := map[string]struct {
+		main segments
+		in   segments
+		want bool
+	}{
+		"empty matches empty":    {main: make(segments, 2), in: make(segments, 2), want: true},
+		"subset":                 {main: segments{0xff, 0xff}, in: segments{0xf0, 0xf0}, want: true},
+		"different lengths fail": {main: make(segments, 2), in: make(segments, 1), want: false},
+		"empty ns non-empty exp": {main: segments{0, 0}, in: segments{255, 255}, want: false},
+		"non claimed":            {main: segments{255, 0}, in: segments{0, 255}, want: false},
+		"overlapping":            {main: segments{0x0f, 0xff}, in: segments{0xf0, 0xf0}, want: false},
+	}
+	for k, test := range tests {
+		got := test.main.contains(test.in)
+		if got != test.want {
+			t.Errorf("%s: %v.contains(%v) = %v want %v", k, test.main, test.in, got, test.want)
+		}
+	}
+}
+
+func TestSegmentIsClaimed(t *testing.T) {
+	tests := map[string]struct {
 		seg  segments
 		n    uint64
 		want bool
@@ -35,7 +56,7 @@ func TestSegmentContains(t *testing.T) {
 	for k, test := range tests {
 		got := test.seg.isClaimed(test.n)
 		if test.want != got {
-			t.Errorf("%s: %v.contains(%v) = %v, want %v", k, test.seg, test.n, got, test.want)
+			t.Errorf("%s: %v.isClaimed(%v) = %v, want %v", k, test.seg, test.n, got, test.want)
 		}
 	}
 }
