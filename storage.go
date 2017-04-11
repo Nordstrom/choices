@@ -59,7 +59,7 @@ type experimentStore struct {
 	mu            sync.RWMutex
 	el            storage.ElwinStorageClient
 	env           int
-	cache         []Experiment
+	cache         []*Experiment
 	failedUpdates int
 }
 
@@ -73,8 +73,8 @@ func newExperimentStore(cc *grpc.ClientConn, env int) *experimentStore {
 }
 
 // read returns the current list of Experiment that are in memory.
-func (n *experimentStore) read() []Experiment {
-	out := make([]Experiment, len(n.cache))
+func (n *experimentStore) read() []*Experiment {
+	out := make([]*Experiment, len(n.cache))
 	n.mu.RLock()
 	copy(out, n.cache)
 	n.mu.RUnlock()
@@ -89,7 +89,7 @@ func (n *experimentStore) update() error {
 		return errors.Wrap(err, "error requesting All from storage")
 	}
 
-	cache := make([]Experiment, len(ar.Experiments))
+	cache := make([]*Experiment, len(ar.Experiments))
 	for i, exp := range ar.Experiments {
 		cache[i] = FromExperiment(exp)
 	}
@@ -99,8 +99,8 @@ func (n *experimentStore) update() error {
 	return nil
 }
 
-func FromNamespace(s *storage.Namespace) Namespace {
-	return Namespace{
+func FromNamespace(s *storage.Namespace) *Namespace {
+	return &Namespace{
 		Name:        s.Name,
 		NumSegments: int(s.NumSegments),
 		Segments:    s.Segments,
@@ -108,8 +108,8 @@ func FromNamespace(s *storage.Namespace) Namespace {
 }
 
 // FromExperiment converts a *storage.Experiment into an Experiment
-func FromExperiment(s *storage.Experiment) Experiment {
-	exp := Experiment{
+func FromExperiment(s *storage.Experiment) *Experiment {
+	exp := &Experiment{
 		ID:        s.Id,
 		Name:      s.Name,
 		Namespace: s.Namespace,
@@ -119,14 +119,14 @@ func FromExperiment(s *storage.Experiment) Experiment {
 	}
 
 	for i, p := range s.Params {
-		exp.Params[i] = FromParam(p)
+		exp.Params[i] = fromParam(p)
 	}
 
 	return exp
 }
 
 // FromParam converts a *storage.Param into a Param
-func FromParam(s *storage.Param) Param {
+func fromParam(s *storage.Param) Param {
 	par := Param{
 		Name: s.Name,
 	}
@@ -149,9 +149,9 @@ func FromParam(s *storage.Param) Param {
 }
 
 // teamNamespaces filters the namespaces from storage based on teamID.
-func teamNamespaces(s *experimentStore, selector labels.Selector) []Experiment {
+func teamNamespaces(s *experimentStore, selector labels.Selector) []*Experiment {
 	experiments := s.read()
-	filtered := make([]Experiment, 0, len(experiments))
+	filtered := make([]*Experiment, 0, len(experiments))
 	for _, e := range experiments {
 		if selector.Matches(e.Labels) {
 			filtered = append(filtered, e)

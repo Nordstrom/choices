@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
@@ -26,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
-	"golang.org/x/net/context"
+	oldctx "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -46,8 +47,154 @@ const (
 )
 
 var (
-	ErrNilRequest error = errors.New("request was nil")
+	errNilRequest = errors.New("request was nil")
 )
+
+type experiment struct {
+	choices.Experiment
+	ID string `bson:"_id"`
+}
+
+type server struct {
+	*mgo.Session
+	db string
+}
+
+func (s *server) SetExperiment(ctx context.Context, e *choices.Experiment) error {
+	if e == nil {
+		return errors.New("experiment is nil")
+	}
+	exp := experiment{
+		Experiment: *e,
+		ID:         e.ID,
+	}
+	_, err := s.DB(s.db).C(collExperiments).UpsertId(e.ID, exp)
+	return err
+}
+
+func (s *server) Experiment(ctx context.Context, id string) (*choices.Experiment, error) {
+	var e experiment
+	if err := s.DB(s.db).C(collExperiments).FindId(id).One(&e); err != nil {
+		return nil, errors.Wrap(err, "could not find experiment")
+	}
+	return &e.Experiment, nil
+}
+
+func (s *server) AllExperiments(ctx context.Context) ([]*choices.Experiment, error) {
+	resp, err := s.List(ctx, &storage.ListRequest{})
+	if err != nil {
+		return nil, nil
+	}
+	exps := make([]*choices.Experiment, len(resp.Experiments))
+	for i, exp := range resp.Experiments {
+		e := choices.FromExperiment(exp)
+		exps[i] = e
+	}
+	return exps, nil
+}
+
+func (s *server) New(ctx oldctx.Context, r *storage.NewRequest) (*storage.NewReply, error) {
+	if r == nil {
+		return nil, errNilRequest
+	}
+	exp := choices.FromExperiment(r.Experiment)
+	ns := choices.FromNamespace(r.Namespace)
+	if err := choices.CreateExperiment(ctx, s, exp, ns, int(r.NSegments), int(r.ESegments)); err != nil {
+		return nil, errors.Wrap(err, "could not create experiment")
+	}
+	return &storage.NewReply{}, nil
+}
+
+func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.ListReply, error) {
+	if r == nil {
+		return nil, errNilRequest
+	}
+	sel, err := labels.Parse(r.Query)
+	if err != nil {
+		return nil, errors.New("could not parse labels")
+	}
+	req, selectable := sel.Requirements()
+	if !selectable {
+		return nil, errors.New("requirements are not selectable")
+	}
+	log.Println(req)
+	l := bson.M{}
+	for _, v := range req {
+		switch v.Operator() {
+		case selection.Equals, selection.DoubleEquals:
+			l["experiment.labels."+v.Key()] = v.Values().List()[0]
+		case selection.In:
+			l["experiment.labels."+v.Key()] = bson.M{"$in": v.Values().List()}
+		default:
+			continue
+		}
+	}
+	log.Println(l)
+	var iter *mgo.Iter
+	if len(req) == 0 {
+		iter = s.DB(s.db).C(collExperiments).Find(bson.M{}).Iter()
+	} else {
+		iter = s.Session.DB(s.db).C(collExperiments).Find(l).Iter()
+	}
+	var exps []*storage.Experiment
+	var exp experiment
+	for iter.Next(&exp) {
+		var a *storage.Experiment
+		a = exp.Experiment.ToExperiment()
+		exps = append(exps, a)
+	}
+	return &storage.ListReply{Experiments: exps}, nil
+}
+
+func (s *server) Get(ctx oldctx.Context, r *storage.GetRequest) (*storage.GetReply, error) {
+	if r == nil {
+		return nil, errNilRequest
+	}
+
+	exp, err := s.Experiment(ctx, r.Id)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get experiment")
+	}
+	return &storage.GetReply{Experiment: exp.ToExperiment()}, nil
+}
+
+func (s *server) Set(ctx oldctx.Context, r *storage.SetRequest) (*storage.SetReply, error) {
+	if r == nil {
+		return nil, errNilRequest
+	}
+
+	if r.Experiment == nil {
+		return nil, errors.New("experiment is nil")
+	}
+
+	exp := choices.FromExperiment(r.Experiment)
+	if err := s.SetExperiment(ctx, exp); err != nil {
+		return nil, errors.Wrap(err, "could not set experiment")
+	}
+
+	err := choices.AutoFix(ctx, s)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not autofix namespaces")
+	}
+
+	return &storage.SetReply{Experiment: r.Experiment}, nil
+}
+
+func (s *server) Remove(ctx oldctx.Context, r *storage.RemoveRequest) (*storage.RemoveReply, error) {
+	if r == nil {
+		return nil, errNilRequest
+	}
+
+	exp, err := s.Experiment(ctx, r.Id)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get experiment")
+	}
+
+	if err := s.DB(s.db).C(collExperiments).RemoveId(r.Id); err != nil {
+		return nil, errors.Wrap(err, "could not delete record")
+	}
+	return &storage.RemoveReply{Experiment: exp.ToExperiment()}, nil
+}
 
 func main() {
 	log.Println("Starting mongo-store...")
@@ -77,6 +224,7 @@ func main() {
 	defer sess.Close()
 	srv := &server{
 		Session: sess,
+		db:      viper.GetString(cfgMongoDatabase),
 	}
 
 	lis, err := net.Listen("tcp", viper.GetString(cfgListenAddr))
@@ -97,143 +245,4 @@ func main() {
 	}()
 
 	log.Fatal(s.Serve(lis))
-}
-
-type experiment struct {
-	choices.Experiment
-	ID string `bson:"_id"`
-}
-
-type server struct {
-	*mgo.Session
-}
-
-func (s *server) SetExperiment(e *choices.Experiment) error {
-	_, err := s.DB(viper.GetString(cfgMongoDatabase)).
-		C(collExperiments).
-		UpsertId(e.ID, *e)
-	return err
-}
-
-func (s *server) Experiment(id string) (*choices.Experiment, error) {
-	var e experiment
-	err := s.DB(viper.GetString(cfgMongoDatabase)).
-		C(collExperiments).
-		FindId(id).
-		One(&e)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not find experiment")
-	}
-	return &e.Experiment, nil
-}
-
-func (s *server) New(ctx context.Context, r *storage.NewRequest) (*storage.NewReply, error) {
-	if r == nil {
-		return nil, ErrNilRequest
-	}
-	exp := choices.FromExperiment(r.Experiment)
-	ns := choices.FromNamespace(r.Namespace)
-	if err := choices.CreateExperiment(ctx, s, &exp, &ns, int(r.NSegments), int(r.ESegments)); err != nil {
-		return nil, errors.Wrap(err, "could not create experiment")
-	}
-	return &storage.NewReply{}, nil
-}
-
-func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.ListReply, error) {
-	if r == nil {
-		return nil, ErrNilRequest
-	}
-	sel, err := labels.Parse(r.Query)
-	if err != nil {
-		return nil, errors.New("could not parse labels")
-	}
-	req, selectable := sel.Requirements()
-	if !selectable {
-		return nil, errors.New("requirements are not selectable")
-	}
-	log.Println(req)
-	l := bson.M{}
-	for _, v := range req {
-		switch v.Operator() {
-		case selection.Equals, selection.DoubleEquals:
-			l["experiment.labels."+v.Key()] = v.Values().List()[0]
-		case selection.In:
-			l["experiment.labels."+v.Key()] = bson.M{"$in": v.Values().List()}
-		default:
-			continue
-		}
-	}
-	log.Println(l)
-	var iter *mgo.Iter
-	if len(req) == 0 {
-		iter = s.DB(viper.GetString(cfgMongoDatabase)).
-			C(collExperiments).
-			Find(bson.M{}).
-			Iter()
-	} else {
-		iter = s.Session.DB(viper.GetString(cfgMongoDatabase)).
-			C(collExperiments).
-			Find(l).
-			Iter()
-	}
-	var exps []*storage.Experiment
-	var exp experiment
-	for iter.Next(&exp) {
-		var a *storage.Experiment
-		a = exp.Experiment.ToExperiment()
-		exps = append(exps, a)
-	}
-	return &storage.ListReply{Experiments: exps}, nil
-}
-
-func (s *server) Get(ctx context.Context, r *storage.GetRequest) (*storage.GetReply, error) {
-	if r == nil {
-		return nil, ErrNilRequest
-	}
-
-	exp, err := s.Experiment(r.Id)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not get experiment")
-	}
-	return &storage.GetReply{Experiment: exp.ToExperiment()}, nil
-}
-
-func (s *server) Set(ctx context.Context, r *storage.SetRequest) (*storage.SetReply, error) {
-	if r == nil {
-		return nil, ErrNilRequest
-	}
-
-	if r.Experiment == nil {
-		return nil, errors.New("experiment was nil")
-	}
-
-	e := experiment{
-		ID:         r.Experiment.Id,
-		Experiment: choices.FromExperiment(r.Experiment),
-	}
-	if _, err := s.DB(viper.GetString(cfgMongoDatabase)).
-		C(collExperiments).
-		UpsertId(e.ID, e); err != nil {
-		return nil, errors.Wrap(err, "could not set experiment")
-	}
-
-	return &storage.SetReply{Experiment: r.Experiment}, nil
-}
-
-func (s *server) Remove(ctx context.Context, r *storage.RemoveRequest) (*storage.RemoveReply, error) {
-	if r == nil {
-		return nil, ErrNilRequest
-	}
-
-	exp, err := s.Experiment(r.Id)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not get experiment")
-	}
-
-	if err := s.DB(viper.GetString(cfgMongoDatabase)).
-		C(collExperiments).
-		RemoveId(r.Id); err != nil {
-		return nil, errors.Wrap(err, "could not delete record")
-	}
-	return &storage.RemoveReply{Experiment: exp.ToExperiment()}, nil
 }
