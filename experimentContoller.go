@@ -3,6 +3,7 @@ package choices
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/Nordstrom/choices/util"
 	"github.com/foolusion/elwinprotos/storage"
@@ -72,7 +73,7 @@ type NamespaceDoesNotExist struct {
 	*Experiment
 }
 
-func (n NamespaceDoesNotExist) Error() string {
+func (n *NamespaceDoesNotExist) Error() string {
 	return fmt.Sprintf("namespace %s does not exist", n.Namespace)
 }
 
@@ -88,6 +89,7 @@ func ValidateNamespaces(ctx context.Context, e experimentController) error {
 	for _, ns := range namespaces {
 		nsSet[ns.Name] = FromSegments(ns.Segments)
 	}
+	log.Println(nsSet)
 	experiments, err := e.AllExperiments(ctx)
 	if err != nil {
 		return errors.Wrap(err, "could not get all experiments from storage")
@@ -111,7 +113,7 @@ func ValidateNamespaces(ctx context.Context, e experimentController) error {
 		}
 		// check all namespace segments are claimed
 		if s, ok := nsSet[exp.Namespace]; !ok {
-			return NamespaceDoesNotExist{FromExperiment(exp)}
+			return &NamespaceDoesNotExist{FromExperiment(exp)}
 		} else if !s.contains(FromSegments(exp.Segments)) {
 			return &BadSegments{NamespaceSegments: s, Experiment: FromExperiment(exp)}
 		}
