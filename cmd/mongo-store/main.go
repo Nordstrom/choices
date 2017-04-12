@@ -51,7 +51,7 @@ var (
 )
 
 type experiment struct {
-	choices.Experiment
+	*storage.Experiment
 	ID string `bson:"_id"`
 }
 
@@ -60,46 +60,39 @@ type server struct {
 	db string
 }
 
-func (s *server) SetExperiment(ctx context.Context, e *choices.Experiment) error {
+func (s *server) SetExperiment(ctx context.Context, e *storage.Experiment) error {
 	if e == nil {
 		return errors.New("experiment is nil")
 	}
 	exp := experiment{
-		Experiment: *e,
-		ID:         e.ID,
+		Experiment: e,
+		ID:         e.Id,
 	}
-	_, err := s.DB(s.db).C(collExperiments).UpsertId(e.ID, exp)
+	_, err := s.DB(s.db).C(collExperiments).UpsertId(e.Id, exp)
 	return err
 }
 
-func (s *server) Experiment(ctx context.Context, id string) (*choices.Experiment, error) {
+func (s *server) Experiment(ctx context.Context, id string) (*storage.Experiment, error) {
 	var e experiment
 	if err := s.DB(s.db).C(collExperiments).FindId(id).One(&e); err != nil {
 		return nil, errors.Wrap(err, "could not find experiment")
 	}
-	return &e.Experiment, nil
+	return e.Experiment, nil
 }
 
-func (s *server) AllExperiments(ctx context.Context) ([]*choices.Experiment, error) {
+func (s *server) AllExperiments(ctx context.Context) ([]*storage.Experiment, error) {
 	resp, err := s.List(ctx, &storage.ListRequest{})
 	if err != nil {
 		return nil, nil
 	}
-	exps := make([]*choices.Experiment, len(resp.Experiments))
-	for i, exp := range resp.Experiments {
-		e := choices.FromExperiment(exp)
-		exps[i] = e
-	}
-	return exps, nil
+	return resp.Experiments, nil
 }
 
 func (s *server) New(ctx oldctx.Context, r *storage.NewRequest) (*storage.NewReply, error) {
 	if r == nil {
 		return nil, errNilRequest
 	}
-	exp := choices.FromExperiment(r.Experiment)
-	ns := choices.FromNamespace(r.Namespace)
-	if err := choices.CreateExperiment(ctx, s, exp, ns, int(r.NSegments), int(r.ESegments)); err != nil {
+	if err := choices.CreateExperiment(ctx, s, r.Experiment, r.Namespace, int(r.NSegments), int(r.ESegments)); err != nil {
 		return nil, errors.Wrap(err, "could not create experiment")
 	}
 	return &storage.NewReply{}, nil
@@ -139,9 +132,7 @@ func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.List
 	var exps []*storage.Experiment
 	var exp experiment
 	for iter.Next(&exp) {
-		var a *storage.Experiment
-		a = exp.Experiment.ToExperiment()
-		exps = append(exps, a)
+		exps = append(exps, exp.Experiment)
 	}
 	return &storage.ListReply{Experiments: exps}, nil
 }
@@ -155,7 +146,7 @@ func (s *server) Get(ctx oldctx.Context, r *storage.GetRequest) (*storage.GetRep
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get experiment")
 	}
-	return &storage.GetReply{Experiment: exp.ToExperiment()}, nil
+	return &storage.GetReply{Experiment: exp}, nil
 }
 
 func (s *server) Set(ctx oldctx.Context, r *storage.SetRequest) (*storage.SetReply, error) {
@@ -167,8 +158,7 @@ func (s *server) Set(ctx oldctx.Context, r *storage.SetRequest) (*storage.SetRep
 		return nil, errors.New("experiment is nil")
 	}
 
-	exp := choices.FromExperiment(r.Experiment)
-	if err := s.SetExperiment(ctx, exp); err != nil {
+	if err := s.SetExperiment(ctx, r.Experiment); err != nil {
 		return nil, errors.Wrap(err, "could not set experiment")
 	}
 
@@ -193,7 +183,7 @@ func (s *server) Remove(ctx oldctx.Context, r *storage.RemoveRequest) (*storage.
 	if err := s.DB(s.db).C(collExperiments).RemoveId(r.Id); err != nil {
 		return nil, errors.Wrap(err, "could not delete record")
 	}
-	return &storage.RemoveReply{Experiment: exp.ToExperiment()}, nil
+	return &storage.RemoveReply{Experiment: exp}, nil
 }
 
 func main() {
