@@ -4,3 +4,8 @@ go:
 go_import_path: github.com/Nordstrom/choices
 install: true
 script: go test -v $(go list ./... | grep -v /vendor/)
+notifications:
+  slack: 
+    rooms:
+    - nordstrom-ato:SLXWeMeIklpS6tY9SpEfor5H#automation
+    - nordstrom-ato:SLXWeMeIklpS6tY9SpEfor5H#elwin
