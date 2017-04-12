@@ -169,8 +169,7 @@
           }
         },
         "segments": {
-          "type": "string",
-          "format": "byte"
+          "$ref": "#/definitions/storageSegments"
         },
         "detailName": {
           "type": "string",
@@ -235,8 +234,7 @@
           "format": "int64"
         },
         "segments": {
-          "type": "string",
-          "format": "byte"
+          "$ref": "#/definitions/storageSegments"
         }
       }
     },
@@ -306,6 +304,19 @@
         }
       },
       "description": "RemoveRequest request message to remove an existing experiment from\nan environment."
+    },
+    "storageSegments": {
+      "type": "object",
+      "properties": {
+        "len": {
+          "type": "string",
+          "format": "int64"
+        },
+        "b": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
     },
     "storageSetReply": {
       "type": "object",

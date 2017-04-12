@@ -103,8 +103,15 @@ func FromNamespace(s *storage.Namespace) *Namespace {
 	return &Namespace{
 		Name:        s.Name,
 		NumSegments: int(s.NumSegments),
-		Segments:    s.Segments,
+		Segments:    FromSegments(s.Segments),
 	}
+}
+
+func FromSegments(s *storage.Segments) *segments {
+	if s == nil {
+		return &segments{b: make([]byte, defaultNumSegments/8), len: defaultNumSegments}
+	}
+	return &segments{b: s.B, len: int(s.Len)}
 }
 
 // FromExperiment converts a *storage.Experiment into an Experiment
@@ -115,7 +122,7 @@ func FromExperiment(s *storage.Experiment) *Experiment {
 		Namespace: s.Namespace,
 		Params:    make([]Param, len(s.Params)),
 		Labels:    s.Labels,
-		Segments:  segments(s.Segments), // TODO: what do we do if this is nil?
+		Segments:  FromSegments(s.Segments), // TODO: what do we do if this is nil?
 	}
 
 	for i, p := range s.Params {

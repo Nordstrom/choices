@@ -26,20 +26,20 @@ func TestFromExperiment(t *testing.T) {
 		want Experiment
 		err  error
 	}{
-		"emptyExperiment": {in: &storage.Experiment{}, want: Experiment{}, err: nil},
+		"emptyExperiment": {in: &storage.Experiment{}, want: Experiment{Segments: &segments{make([]byte, 16), 128}}, err: nil},
 		"oneExperiment": {
 			in: &storage.Experiment{
 				Namespace: "ns",
 				Name:      "exp1",
 				Labels:    map[string]string{"team": "test"},
-				Segments:  []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+				Segments:  &storage.Segments{Len: 128, B: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
 				Params:    []*storage.Param{{Name: "param1", Value: &storage.Value{Choices: []string{"a", "b"}}}},
 			},
 			want: Experiment{
 				Namespace: "ns",
 				Name:      "exp1",
 				Labels:    map[string]string{"team": "test"},
-				Segments:  segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+				Segments:  &segments{[]byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, 128},
 				Params:    []Param{{Name: "param1", Choices: &Uniform{Choices: []string{"a", "b"}}}},
 			},
 			err: nil,
@@ -51,8 +51,8 @@ func TestFromExperiment(t *testing.T) {
 		if out.Name != test.want.Name {
 			t.Errorf("%s name: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
 		}
-		for i := range out.Segments {
-			if out.Segments[i] != test.want.Segments[i] {
+		for i := range out.Segments.b {
+			if out.Segments.b[i] != test.want.Segments.b[i] {
 				t.Errorf("%s segments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
 			}
 		}

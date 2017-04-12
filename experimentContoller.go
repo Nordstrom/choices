@@ -5,35 +5,35 @@ import (
 	"fmt"
 
 	"github.com/Nordstrom/choices/util"
+	"github.com/foolusion/elwinprotos/storage"
 	"github.com/pkg/errors"
 )
 
 // CreateExperiment will create a new experiment and namespace based on the
 // input that it receives.
-func CreateExperiment(ctx context.Context, s experimentController, exp *Experiment, ns *Namespace, nsSegments, expSegments int) error {
-	var err error
-	if ns == nil {
-		ns = newNamespace(ns.Name, nsSegments)
-	} else {
-		ns, err = s.Namespace(ctx, ns.Name)
-		if err != nil {
-			switch err {
-			case ErrNotFound:
-				ns = newNamespace(ns.Name, nsSegments)
-			default:
-				return errors.Wrap(err, "could not get namespace")
-			}
-		}
-	}
-	// sample the namespaces segments
-	seg := ns.sampleSegments(expSegments)
-
-	if exp == nil {
+func CreateExperiment(
+	ctx context.Context,
+	expcontroller experimentController,
+	sExperiment *storage.Experiment,
+	sNamespace *storage.Namespace,
+	nsNumSegments int,
+	expNumSegments int,
+) error {
+	if sExperiment == nil {
 		return errors.New("experiment is nil")
-	} else if len(exp.Labels) == 0 {
+	} else if len(sExperiment.Labels) == 0 {
 		return errors.New("experiment labels are empty")
 	}
-	exp.Segments = seg
+	exp := FromExperiment(sExperiment)
+	var ns *Namespace
+	if sNamespace == nil {
+		ns = newNamespace(exp.Namespace, nsNumSegments)
+	} else {
+		ns = FromNamespace(sNamespace)
+	}
+	// sample the namespaces segments
+	seg := ns.Segments.sample(expNumSegments)
+	exp.Segments = &segments{b: seg, len: ns.Segments.len}
 	if exp.Name == "" {
 		exp.Name = util.BasicNameGenerator.GenerateName("")
 	}
@@ -41,10 +41,10 @@ func CreateExperiment(ctx context.Context, s experimentController, exp *Experime
 		exp.ID = util.BasicNameGenerator.GenerateName(fmt.Sprintf("exp-%s-", exp.Name))
 	}
 
-	if err := s.SetNamespace(ctx, ns); err != nil {
+	if err := expcontroller.SetNamespace(ctx, ns.ToNamespace()); err != nil {
 		return errors.Wrap(err, "could not save namespace")
 	}
-	if err := s.SetExperiment(ctx, exp); err != nil {
+	if err := expcontroller.SetExperiment(ctx, exp.ToExperiment()); err != nil {
 		return errors.Wrap(err, "could not save experiment")
 	}
 	return nil
@@ -54,8 +54,8 @@ func CreateExperiment(ctx context.Context, s experimentController, exp *Experime
 // experiments claimed segments do not match the namespaces claimed
 // segments.
 type BadSegments struct {
-	NamespaceSegments segments
-	Experiment
+	NamespaceSegments *segments
+	*Experiment
 	Err error
 }
 
@@ -84,35 +84,36 @@ func (n NamespaceDoesNotExist) Error() string {
 // to match the experiment.
 func ValidateNamespaces(ctx context.Context, e experimentController) error {
 	namespaces, err := e.AllNamespaces(ctx)
-	nsSet := make(map[string]segments, len(namespaces))
+	nsSet := make(map[string]*segments, len(namespaces))
 	for _, ns := range namespaces {
-		nsSet[ns.Name] = ns.Segments
+		nsSet[ns.Name] = FromSegments(ns.Segments)
 	}
 	experiments, err := e.AllExperiments(ctx)
 	if err != nil {
 		return errors.Wrap(err, "could not get all experiments from storage")
 	}
-	expSet := make(map[string]segments, len(namespaces))
+	expSet := make(map[string]*segments, len(namespaces))
 	for _, exp := range experiments {
+
 		if s, ok := expSet[exp.Namespace]; !ok {
-			expSet[exp.Namespace] = exp.Segments
+			expSet[exp.Namespace] = FromSegments(exp.Segments)
 		} else {
 			// check for overlapping experiments
-			out, err := s.Claim(exp.Segments)
+			out, err := s.Claim(FromSegments(exp.Segments))
 			if err != nil {
 				return &BadSegments{
 					NamespaceSegments: s,
-					Experiment:        *exp,
+					Experiment:        FromExperiment(exp),
 					Err:               err,
 				}
 			}
-			expSet[exp.Namespace] = out
+			s.b = out
 		}
 		// check all namespace segments are claimed
 		if s, ok := nsSet[exp.Namespace]; !ok {
-			return NamespaceDoesNotExist{exp}
-		} else if !s.contains(exp.Segments) {
-			return &BadSegments{NamespaceSegments: s, Experiment: *exp}
+			return NamespaceDoesNotExist{FromExperiment(exp)}
+		} else if !s.contains(FromSegments(exp.Segments)) {
+			return &BadSegments{NamespaceSegments: s, Experiment: FromExperiment(exp)}
 		}
 	}
 	return nil
@@ -128,10 +129,10 @@ func AutoFix(ctx context.Context, e experimentController) error {
 		case *BadSegments:
 			return errors.Wrap(err, "could not fix bad segments")
 		case *NamespaceDoesNotExist:
-			if err := e.SetNamespace(ctx, &Namespace{
+			if err := e.SetNamespace(ctx, &storage.Namespace{
 				Name:        err.Namespace,
-				NumSegments: len(err.Segments) * 8,
-				Segments:    err.Segments,
+				NumSegments: int64(err.Segments.len),
+				Segments:    err.Segments.ToSegments(),
 			}); err != nil {
 				return errors.Wrap(err, "could not add namespace")
 			}
@@ -149,10 +150,10 @@ var (
 )
 
 type experimentController interface {
-	SetNamespace(context.Context, *Namespace) error
-	Namespace(context.Context, string) (*Namespace, error)
-	AllNamespaces(context.Context) ([]*Namespace, error)
-	SetExperiment(context.Context, *Experiment) error
-	Experiment(context.Context, string) (*Experiment, error)
-	AllExperiments(context.Context) ([]*Experiment, error)
+	SetNamespace(context.Context, *storage.Namespace) error
+	Namespace(context.Context, string) (*storage.Namespace, error)
+	AllNamespaces(context.Context) ([]*storage.Namespace, error)
+	SetExperiment(context.Context, *storage.Experiment) error
+	Experiment(context.Context, string) (*storage.Experiment, error)
+	AllExperiments(context.Context) ([]*storage.Experiment, error)
 }

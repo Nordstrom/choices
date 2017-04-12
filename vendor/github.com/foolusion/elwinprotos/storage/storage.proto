@@ -116,7 +116,7 @@ message Experiment {
   string namespace = 3;
   map<string, string> labels = 4;
   repeated Param params = 5;
-  bytes segments = 6;
+  Segments segments = 6;
   string detailName = 7;
 }
 
@@ -135,5 +135,10 @@ message Value {
 message Namespace {
   string name = 1;
   int64 numSegments = 2;
-  bytes segments = 3;
+  Segments segments = 3;
+}
+
+message Segments {
+  int64 len = 1;
+  bytes b = 2;
 }

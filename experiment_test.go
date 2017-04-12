@@ -27,8 +27,6 @@ func TestExperiment(t *testing.T) {
 		globalSalt = backup
 	}()
 	globalSalt = ""
-	seg := make(segments, 16)
-	copy(seg[:], segmentsAll[:])
 	tests := []struct {
 		exp  Experiment
 		want ExperimentResponse
@@ -41,7 +39,7 @@ func TestExperiment(t *testing.T) {
 					{Name: "p1", Choices: &Uniform{Choices: []string{"a", "b"}}},
 					{Name: "p2", Choices: &Weighted{Choices: []weightedChoice{{"a", 1}, {"b", 10}, {"c", 1}}}},
 				},
-				Segments: seg,
+				Segments: &segmentsAll,
 			},
 			want: ExperimentResponse{Name: "experiment", Namespace: "", Params: []ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}}},
 			err:  nil,
@@ -103,7 +101,7 @@ func BenchmarkExperimentEval(b *testing.B) {
 	e := Experiment{
 		Name:      "experiment",
 		Namespace: "foo",
-		Segments:  segmentsAll,
+		Segments:  &segmentsAll,
 		Params: []Param{
 			{Name: "p", Choices: &Uniform{Choices: []string{"a", "b"}}},
 		},
@@ -119,34 +117,14 @@ func BenchmarkExperimentEval(b *testing.B) {
 	}
 }
 
-func TestSetSegments(t *testing.T) {
-	e := NewExperiment("test")
-	tests := map[string]struct {
-		seg  segments
-		want segments
-	}{
-		"none": {seg: segments{}, want: segments{}},
-		"all":  {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, want: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
-		"some": {seg: segments{255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0}, want: segments{255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0}},
-	}
-	for tname, test := range tests {
-		e.SetSegments(test.seg)
-		for i := range e.Segments {
-			if e.Segments[i] != test.want[i] {
-				t.Fatalf("%s: e.SetSegments(%v) = %v, want %v", tname, test.seg, e.Segments, test.want)
-			}
-		}
-	}
-}
-
 func TestToExperiment(t *testing.T) {
 	tests := map[string]struct {
 		e    Experiment
 		want storage.Experiment
 	}{
 		"simple": {
-			e:    Experiment{Name: "test", Labels: labels.Set{"team": "ato", "platform": "desktop"}, Segments: segments{}, Params: []Param{}},
-			want: storage.Experiment{Name: "test", Labels: map[string]string{"team": "ato", "platform": "desktop"}, Segments: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+			e:    Experiment{Name: "test", Labels: labels.Set{"team": "ato", "platform": "desktop"}, Segments: &segments{}, Params: []Param{}},
+			want: storage.Experiment{Name: "test", Labels: map[string]string{"team": "ato", "platform": "desktop"}, Segments: &storage.Segments{}},
 		},
 	}
 	for tname, test := range tests {

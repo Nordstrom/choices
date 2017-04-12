@@ -36,7 +36,7 @@ type Experiment struct {
 	Namespace string
 	Labels    labels.Set
 	Params    []Param
-	Segments  segments
+	Segments  *segments
 }
 
 // NewExperiment creates an experiment with the supplied name and no
@@ -49,12 +49,6 @@ func NewExperiment(name string) *Experiment {
 	}
 }
 
-// SetSegments copies the segments supplied to the experiment.
-func (e *Experiment) SetSegments(seg segments) *Experiment {
-	copy(e.Segments[:], seg[:])
-	return e
-}
-
 // ToExperiment is a helper function that converts an Experiment into
 // a *storage.Experiment.
 func (e *Experiment) ToExperiment() *storage.Experiment {
@@ -64,9 +58,9 @@ func (e *Experiment) ToExperiment() *storage.Experiment {
 		Namespace: e.Namespace,
 		Labels:    e.Labels,
 		Params:    make([]*storage.Param, len(e.Params)),
-		Segments:  make([]byte, len(e.Segments)),
+		Segments:  e.Segments.ToSegments(),
 	}
-	copy(exp.Segments[:], e.Segments[:])
+
 	for i, p := range e.Params {
 		exp.Params[i] = p.ToParam()
 	}
@@ -81,7 +75,7 @@ func (e *Experiment) eval(h hashConfig) (ExperimentResponse, error) {
 	if err != nil {
 		return ExperimentResponse{}, err
 	}
-	segment := uniform(i, 0, float64(len(e.Segments)*8))
+	segment := uniform(i, 0, float64(e.Segments.len))
 	if !e.Segments.isClaimed(uint64(segment)) {
 		return ExperimentResponse{}, ErrSegmentNotInExperiment
 	}
@@ -106,9 +100,9 @@ func (e *Experiment) eval(h hashConfig) (ExperimentResponse, error) {
 // Experiments.
 func (e *Experiment) MarshalJSON() ([]byte, error) {
 	var aux = struct {
-		Name     string   `json:"name"`
-		Segments segments `json:"segments"`
-		Params   []Param  `json:"params"`
+		Name     string    `json:"name"`
+		Segments *segments `json:"segments"`
+		Params   []Param   `json:"params"`
 	}{
 		Name:     e.Name,
 		Segments: e.Segments,
