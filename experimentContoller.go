@@ -139,6 +139,8 @@ func AutoFix(ctx context.Context, e experimentController) error {
 				return errors.Wrap(err, "could not add namespace")
 			}
 			return AutoFix(ctx, e)
+		default:
+			return err
 		}
 	}
 	return nil

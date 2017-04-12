@@ -156,13 +156,31 @@ func (s *server) Set(ctx oldctx.Context, r *storage.SetRequest) (*storage.SetRep
 		return nil, errors.New("experiment is nil")
 	}
 
+	var backup *storage.Experiment
+	if b, err := s.Experiment(ctx, r.Experiment.Id); err != nil {
+		// probably just not found
+		log.Println(err)
+	} else {
+		backup = b
+	}
+
 	if err := s.SetExperiment(ctx, r.Experiment); err != nil {
 		return nil, errors.Wrap(err, "could not set experiment")
 	}
 
 	err := choices.AutoFix(ctx, s)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not autofix namespaces")
+	if err != nil && backup != nil {
+		// try to restore backup
+		if err2 := s.SetExperiment(ctx, backup); err2 != nil {
+			return nil, errors.Wrap(errors.Wrap(err, err2.Error()), "restore previous version failed")
+		}
+		return nil, errors.Wrap(err, "bad experiment: restored previous version")
+	} else if err != nil {
+		// just delete the bad experiment
+		if _, err := s.Remove(ctx, &storage.RemoveRequest{Id: r.Experiment.Id}); err != nil {
+			return nil, errors.Wrap(err, "could not delete bad experiment")
+		}
+		return nil, errors.Wrap(err, "bad experiment: removed experiment")
 	}
 
 	return &storage.SetReply{Experiment: r.Experiment}, nil
