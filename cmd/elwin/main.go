@@ -140,7 +140,7 @@ func main() {
 	ec, err := choices.NewChoices(
 		ctx,
 		choices.WithGlobalSalt("choices"),
-		choices.WithStorageConfig(viper.GetString(cfgStorageAddr), storageEnv, interval),
+		choices.WithStorageConfig(viper.GetString(cfgStorageAddr), interval),
 		choices.WithUpdateInterval(interval),
 		choices.WithMaxUpdateFailTime(failTimeout),
 	)
