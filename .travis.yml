@@ -5,7 +5,5 @@ go_import_path: github.com/Nordstrom/choices
 install: true
 script: go test -v $(go list ./... | grep -v /vendor/)
 notifications:
-  slack: 
-    rooms:
-    - nordstrom-ato:SLXWeMeIklpS6tY9SpEfor5H#automation
-    - nordstrom-ato:SLXWeMeIklpS6tY9SpEfor5H#elwin
+  slack:
+    secure: uUQioah1XE4BinTlEd0Q0ycha0BaJSWKq3HAryfQgoHtoT6I5KlvHHX/jCvvXA689h3vnKsZ/Dh/NjgMOJt84QqCVroibqL5C3ix/rdtqOIYJE1Z6ssbHpaG5zKjtrclWUVuPe67aireKw9fW50MXAbv+bA+R/zNGg9wdJFmyc8s09l+oVzYmtuTMV1y+KW9p9wfQDOwEa6OC0SGLw4bdXukCrdYqRyys4t9Ib1D321Gj94dTc/D6fcE5hbPE5lpM6+CLXj6L7XZzAoM0YTuVu/GKZbyrBf4GKUOKhU0/7fDfcLLMDQzrWMwuJD3rQBOHFIWrIWc99dvkR6B/fcAznTuV212Sm0HEccuoqMN/oe9cVlhW5SSEKfWZwQT6fKXP5pNzdvfD7cb3v/7T/1tsylsatk5TDRPZYcbozxkLTmwTZcswJhf7+zaBEFoAFZgVuvBCwsJV7RRWvEn/QmM9AfpqD0gDKh0Rg3ZSgjQ3yxpxkinCm2s8iQBDcogmkxdZgj0jUpBgGIAbuz9WiBxDT7XZxYJLc7CezA+emcty5w+vkn10sGRw7UUzvP/sBtNLUdCLqwIKeSGGcalYhHMb/E5tM7D4qHoUpZZsQm4AAjAfzYqFpe48ukDa5YlKsK5uN3AOJyp1yAffDyos5avISJ7S+7Bdk9rF6Q9IeDEEfg=
