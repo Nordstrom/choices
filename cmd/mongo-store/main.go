@@ -51,7 +51,7 @@ var (
 )
 
 type experiment struct {
-	*storage.Experiment
+	storage.Experiment
 	ID string `bson:"_id"`
 }
 
@@ -65,7 +65,7 @@ func (s *server) SetExperiment(ctx context.Context, e *storage.Experiment) error
 		return errors.New("experiment is nil")
 	}
 	exp := experiment{
-		Experiment: e,
+		Experiment: *e,
 		ID:         e.Id,
 	}
 	_, err := s.DB(s.db).C(collExperiments).UpsertId(e.Id, exp)
@@ -77,7 +77,7 @@ func (s *server) Experiment(ctx context.Context, id string) (*storage.Experiment
 	if err := s.DB(s.db).C(collExperiments).FindId(id).One(&e); err != nil {
 		return nil, errors.Wrap(err, "could not find experiment")
 	}
-	return e.Experiment, nil
+	return &e.Experiment, nil
 }
 
 func (s *server) AllExperiments(ctx context.Context) ([]*storage.Experiment, error) {
@@ -110,7 +110,6 @@ func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.List
 	if !selectable {
 		return nil, errors.New("requirements are not selectable")
 	}
-	log.Println(req)
 	l := bson.M{}
 	for _, v := range req {
 		switch v.Operator() {
@@ -122,7 +121,6 @@ func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.List
 			continue
 		}
 	}
-	log.Println(l)
 	var iter *mgo.Iter
 	if len(req) == 0 {
 		iter = s.DB(s.db).C(collExperiments).Find(bson.M{}).Iter()
@@ -132,7 +130,7 @@ func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.List
 	var exps []*storage.Experiment
 	var exp experiment
 	for iter.Next(&exp) {
-		exps = append(exps, exp.Experiment)
+		exps = append(exps, &exp.Experiment)
 	}
 	return &storage.ListReply{Experiments: exps}, nil
 }

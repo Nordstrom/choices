@@ -10,7 +10,7 @@ import (
 
 type namespace struct {
 	Name string `bson:"_id"`
-	*storage.Namespace
+	storage.Namespace
 }
 
 func (s *server) Namespace(ctx context.Context, name string) (*storage.Namespace, error) {
@@ -18,13 +18,13 @@ func (s *server) Namespace(ctx context.Context, name string) (*storage.Namespace
 	if err := s.DB(s.db).C(collNamespaces).FindId(name).One(&ns); err != nil {
 		return nil, errors.Wrap(err, "could not find namespace")
 	}
-	return ns.Namespace, nil
+	return &ns.Namespace, nil
 }
 
 func (s *server) SetNamespace(ctx context.Context, n *storage.Namespace) error {
 	ns := namespace{
 		Name:      n.Name,
-		Namespace: n,
+		Namespace: *n,
 	}
 	if _, err := s.DB(s.db).C(collNamespaces).UpsertId(ns.Name, ns); err != nil {
 		return errors.Wrap(err, "could not update namespace")
@@ -39,7 +39,7 @@ func (s *server) AllNamespaces(ctx context.Context) ([]*storage.Namespace, error
 	}
 	n := make([]*storage.Namespace, len(namespaces))
 	for i := range n {
-		n[i] = namespaces[i].Namespace
+		n[i] = &namespaces[i].Namespace
 	}
 	return n, nil
 }
