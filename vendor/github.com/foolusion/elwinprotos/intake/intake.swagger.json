@@ -63,44 +63,56 @@
       "type": "object",
       "properties": {
         "userID": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "programManagerID": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "productManagerID": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "hypothesis": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "kpi": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "timeBound": {
           "type": "boolean",
           "format": "boolean"
         },
         "plannedStartTime": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "plannedEndTime": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "actualStartTime": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "actualEndTime": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "actionPlanNegative": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "actionPlanNeutral": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "experimentType": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "ExperimentMetadata all the junk that elwin doesn't care about"
@@ -109,18 +121,22 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "params": {
@@ -130,11 +146,11 @@
           }
         },
         "segments": {
-          "type": "string",
-          "format": "byte"
+          "$ref": "#/definitions/storageSegments"
         },
         "detailName": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       },
       "title": "Experiment structure"
@@ -143,16 +159,27 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "value": {
           "$ref": "#/definitions/storageValue"
-        },
-        "id": {
-          "type": "string"
         }
       },
       "title": "Param structure"
+    },
+    "storageSegments": {
+      "type": "object",
+      "properties": {
+        "len": {
+          "type": "string",
+          "format": "int64"
+        },
+        "b": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
     },
     "storageValue": {
       "type": "object",
@@ -160,7 +187,8 @@
         "choices": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "format": "string"
           }
         },
         "weights": {
