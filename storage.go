@@ -25,30 +25,20 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-// constants for storage environments. So far only support a staging and
-// production.
-const (
-	StorageEnvironmentBad = iota
-	StorageEnvironmentDev
-	StorageEnvironmentProd
-)
-
 // ErrBadStorageEnvironment is an error for when the storage environment is not
 // set correctly.
 var ErrBadStorageEnvironment = errors.New("bad storage environment")
 
 // WithStorageConfig is where you set the address and environment you'd like to
 // point. This is used as a ConfigOpt in NewChoices.
-func WithStorageConfig(addr string, env int, updateInterval time.Duration) ConfigOpt {
+func WithStorageConfig(addr string, updateInterval time.Duration) ConfigOpt {
 	return func(c *Config) error {
 		cc, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBackoffMaxDelay(updateInterval))
 		if err != nil {
 			return errors.Wrap(err, "could not dial storage service")
 		}
-		if env == StorageEnvironmentBad {
-			return ErrBadStorageEnvironment
-		}
-		c.storage = newExperimentStore(cc, env)
+
+		c.storage = newExperimentStore(cc)
 		return nil
 	}
 }
@@ -65,10 +55,9 @@ type experimentStore struct {
 
 // newExperimentStore creates a new in memory store for the data and client to
 // use to update the in memory store.
-func newExperimentStore(cc *grpc.ClientConn, env int) *experimentStore {
+func newExperimentStore(cc *grpc.ClientConn) *experimentStore {
 	return &experimentStore{
-		el:  storage.NewElwinStorageClient(cc),
-		env: env,
+		el: storage.NewElwinStorageClient(cc),
 	}
 }
 

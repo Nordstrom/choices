@@ -64,7 +64,6 @@ var (
 
 const (
 	cfgStorageAddr = "storage_address"
-	cfgStorageEnv  = "storage_environment"
 	cfgJSONAddr    = "json_address"
 	cfgGRPCAddr    = "grpc_address"
 	cfgUInterval   = "update_interval"
@@ -89,7 +88,6 @@ func main() {
 	log.Println("Starting elwin...")
 
 	viper.SetDefault(cfgStorageAddr, "elwin-storage:80")
-	viper.SetDefault(cfgStorageEnv, "dev")
 	viper.SetDefault(cfgJSONAddr, ":8080")
 	viper.SetDefault(cfgGRPCAddr, ":8081")
 	viper.SetDefault(cfgUInterval, "10s")
@@ -114,7 +112,6 @@ func main() {
 	viper.SetEnvPrefix("elwin")
 	if err := bind([]string{
 		cfgStorageAddr,
-		cfgStorageEnv,
 		cfgJSONAddr,
 		cfgGRPCAddr,
 		cfgUInterval,
@@ -126,17 +123,6 @@ func main() {
 	}); err != nil {
 		log.Fatal(err)
 	}
-
-	var storageEnv int
-	switch viper.GetString(cfgStorageEnv) {
-	case "staging", "dev", "test":
-		storageEnv = choices.StorageEnvironmentDev
-	case "production", "prod":
-		storageEnv = choices.StorageEnvironmentProd
-	default:
-		log.Fatal("bad storage environment")
-	}
-	log.Println(viper.GetString(cfgStorageEnv), storageEnv)
 
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
