@@ -17,6 +17,7 @@ package choices
 import (
 	"testing"
 
+	"github.com/Nordstrom/choices/util"
 	"github.com/foolusion/elwinprotos/storage"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -110,9 +111,114 @@ func BenchmarkExperimentEval(b *testing.B) {
 	h := hashConfig{
 		salt: [3]string{"namespace", "", ""},
 	}
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if _, err := e.eval(h); err != nil {
 			b.Fatal(err)
+		}
+	}
+}
+
+func Benchmark1Experiments(b *testing.B) {
+	exps := make([]*Experiment, 1)
+	for i := range exps {
+		exps[i] = &Experiment{
+			Name:      util.BasicNameGenerator.GenerateName("e-"),
+			Namespace: util.BasicNameGenerator.GenerateName("ns-"),
+			Labels: labels.Set{
+				"team":     "ato",
+				"platform": "service",
+			},
+			Segments: &segments{
+				b:   []byte{255, 255, 255, 255, 255, 255, 255, 255},
+				len: 8,
+			},
+			Params: []Param{
+				{
+					Name: util.BasicNameGenerator.GenerateName("p-"),
+					Choices: &Uniform{
+						Choices: []string{
+							util.BasicNameGenerator.GenerateName("c-"),
+							util.BasicNameGenerator.GenerateName("c-"),
+						},
+					},
+				},
+			},
+		}
+	}
+	expStore := &experimentStore{
+		cache: exps,
+	}
+
+	sel, err := labels.Parse("team in (ato)")
+	if err != nil {
+		b.Error(err)
+	}
+
+	c := Config{
+		storage: expStore,
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := c.Experiments("andrew", sel)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func randTeam(i int) string {
+	teams := []string{"ato", "epe"}
+	return teams[i%len(teams)]
+}
+
+func Benchmark100Experiments(b *testing.B) {
+	exps := make([]*Experiment, 100)
+	for i := range exps {
+		exps[i] = &Experiment{
+			Name:      util.BasicNameGenerator.GenerateName("e-"),
+			Namespace: util.BasicNameGenerator.GenerateName("ns-"),
+			Labels: labels.Set{
+				"team":     "ato",
+				"platform": "service",
+			},
+			Segments: &segments{
+				b:   []byte{255, 255, 255, 255, 255, 255, 255, 255},
+				len: 8,
+			},
+			Params: []Param{
+				{
+					Name: util.BasicNameGenerator.GenerateName("p-"),
+					Choices: &Uniform{
+						Choices: []string{
+							util.BasicNameGenerator.GenerateName("c-"),
+							util.BasicNameGenerator.GenerateName("c-"),
+						},
+					},
+				},
+			},
+		}
+	}
+	expStore := &experimentStore{
+		cache: exps,
+	}
+
+	sel, err := labels.Parse("team in (ato)")
+	if err != nil {
+		b.Error(err)
+	}
+
+	c := Config{
+		storage: expStore,
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := c.Experiments("andrew", sel)
+		if err != nil {
+			b.Error(err)
 		}
 	}
 }

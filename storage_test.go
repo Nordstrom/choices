@@ -17,6 +17,9 @@ package choices
 import (
 	"testing"
 
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/Nordstrom/choices/util"
 	"github.com/foolusion/elwinprotos/storage"
 )
 
@@ -59,5 +62,48 @@ func TestFromExperiment(t *testing.T) {
 		if len(out.Params) != len(test.want.Params) {
 			t.Errorf("%s experiments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
 		}
+	}
+}
+
+func BenchmarkTeamNamespaces(b *testing.B) {
+	exps := make([]*Experiment, 1)
+	for i := range exps {
+		exps[i] = &Experiment{
+			Name:      util.BasicNameGenerator.GenerateName("e-"),
+			Namespace: util.BasicNameGenerator.GenerateName("ns-"),
+			Labels: labels.Set{
+				"team":     "ato",
+				"platform": "service",
+			},
+			Segments: &segments{
+				b:   []byte{255, 255, 255, 255, 255, 255, 255, 255},
+				len: 8,
+			},
+			Params: []Param{
+				{
+					Name: util.BasicNameGenerator.GenerateName("p-"),
+					Choices: &Uniform{
+						Choices: []string{
+							util.BasicNameGenerator.GenerateName("c-"),
+							util.BasicNameGenerator.GenerateName("c-"),
+						},
+					},
+				},
+			},
+		}
+	}
+	expStore := &experimentStore{
+		cache: exps,
+	}
+
+	sel, err := labels.Parse("team in (ato)")
+	if err != nil {
+		b.Error(err)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		teamNamespaces(expStore, sel)
 	}
 }

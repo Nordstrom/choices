@@ -190,12 +190,13 @@ type ParamValue struct {
 // a []ExperimentResponse if it is successful or an error if something
 // went wrong.
 func (c *Config) Experiments(userID string, selector labels.Selector) ([]ExperimentResponse, error) {
-	h := hashConfig{}
+	var h hashConfig
 	h.setUserID(userID)
 
-	var response []ExperimentResponse
-	for _, exp := range teamNamespaces(c.storage, selector) {
-		eResp, err := exp.eval(h)
+	matched := teamNamespaces(c.storage, selector)
+	response := make([]ExperimentResponse, 0, len(matched))
+	for i := range matched {
+		eResp, err := matched[i].eval(h)
 		if err == ErrSegmentNotInExperiment {
 			continue
 		}
