@@ -17,6 +17,7 @@ package choices
 import (
 	"testing"
 
+	"github.com/Nordstrom/choices/util"
 	"github.com/foolusion/elwinprotos/storage"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -27,23 +28,21 @@ func TestExperiment(t *testing.T) {
 		globalSalt = backup
 	}()
 	globalSalt = ""
-	var seg segments
-	copy(seg[:], segmentsAll[:])
 	tests := []struct {
 		exp  Experiment
-		want []ParamValue
+		want ExperimentResponse
 		err  error
 	}{
 		{
 			exp: Experiment{
 				Name: "experiment",
 				Params: []Param{
-					{Name: "p1", Value: &Uniform{Choices: []string{"a", "b"}}},
-					{Name: "p2", Value: &Weighted{Choices: []string{"a", "b", "c"}, Weights: []float64{1, 10, 1}}},
+					{Name: "p1", Choices: &Uniform{Choices: []string{"a", "b"}}},
+					{Name: "p2", Choices: &Weighted{Choices: []weightedChoice{{"a", 1}, {"b", 10}, {"c", 1}}}},
 				},
-				Segments: seg,
+				Segments: &segmentsAll,
 			},
-			want: []ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}},
+			want: ExperimentResponse{Name: "experiment", Namespace: "", Params: []ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}}},
 			err:  nil,
 		},
 	}
@@ -51,56 +50,15 @@ func TestExperiment(t *testing.T) {
 	for _, test := range tests {
 		got, err := test.exp.eval(h)
 		if err != test.err {
-			t.Errorf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
-			t.FailNow()
+			t.Fatalf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 		}
-		for i, v := range got {
-			if v != test.want[i] {
-				t.Errorf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
-				t.FailNow()
+		if test.want.Name != got.Name || test.want.Namespace != got.Namespace {
+			t.Fatalf("%v.eval() = %v, want %v", test.exp, test.want, got)
+		}
+		for i, v := range got.Params {
+			if v != test.want.Params[i] {
+				t.Fatalf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 			}
-		}
-	}
-}
-
-func TestExperimentSampleSegments(t *testing.T) {
-	tests := map[string]struct {
-		nsSeg   segments
-		num     int
-		nsWant  segments
-		expWant segments
-	}{
-		"all": {
-			nsSeg:   segments{},
-			num:     128,
-			nsWant:  segmentsAll,
-			expWant: segmentsAll,
-		},
-		"half": {
-			nsSeg:   segments{255, 255, 255, 255, 255, 255, 255, 255},
-			num:     64,
-			nsWant:  segmentsAll,
-			expWant: segments{0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
-		},
-		"too much": {
-			nsSeg:   segments{},
-			num:     9000,
-			nsWant:  segmentsAll,
-			expWant: segmentsAll,
-		},
-	}
-
-	ns := NewNamespace("test")
-
-	for k, test := range tests {
-		ns.Segments = test.nsSeg
-		e := NewExperiment("e")
-		e = e.SampleSegments(ns, test.num)
-		if e.Segments != test.expWant {
-			t.Errorf("%s: experient segments: %v, want %v", k, e.Segments, test.expWant)
-		}
-		if ns.Segments != test.nsWant {
-			t.Errorf("%s: namespace segments: %v, want %v", k, ns.Segments, test.nsWant)
 		}
 	}
 }
@@ -118,12 +76,12 @@ func TestParamEval(t *testing.T) {
 		err  error
 	}{
 		{
-			p:    Param{Name: "test", Value: &Uniform{Choices: []string{"a", "b"}}},
+			p:    Param{Name: "test", Choices: &Uniform{Choices: []string{"a", "b"}}},
 			want: ParamValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
 		{
-			p:    Param{Name: "test", Value: &Weighted{Choices: []string{"a", "b"}, Weights: []float64{10, 90}}},
+			p:    Param{Name: "test", Choices: &Weighted{Choices: []weightedChoice{{"a", 10}, {"b", 90}}}},
 			want: ParamValue{Name: "test", Value: "b"},
 			err:  nil,
 		},
@@ -133,26 +91,28 @@ func TestParamEval(t *testing.T) {
 		got, err := test.p.eval(h)
 		if err != test.err {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
-			t.FailNow()
 		}
 		if got != test.want {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
-			t.FailNow()
 		}
 	}
 }
 
 func BenchmarkExperimentEval(b *testing.B) {
 	e := Experiment{
-		Name: "experiment",
+		Name:      "experiment",
+		Namespace: "foo",
+		Segments:  &segmentsAll,
 		Params: []Param{
-			{Name: "p", Value: &Uniform{Choices: []string{"a", "b"}}},
+			{Name: "p", Choices: &Uniform{Choices: []string{"a", "b"}}},
 		},
+		Labels: map[string]string{"test": "true"},
 	}
-	copy(e.Segments[:], segmentsAll[:])
 	h := hashConfig{
 		salt: [3]string{"namespace", "", ""},
 	}
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if _, err := e.eval(h); err != nil {
 			b.Fatal(err)
@@ -160,20 +120,105 @@ func BenchmarkExperimentEval(b *testing.B) {
 	}
 }
 
-func TestSetSegments(t *testing.T) {
-	e := NewExperiment("test")
-	tests := map[string]struct {
-		seg  segments
-		want segments
-	}{
-		"none": {seg: segments{}, want: segments{}},
-		"all":  {seg: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, want: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
-		"some": {seg: segments{255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0}, want: segments{255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0}},
+func Benchmark1Experiments(b *testing.B) {
+	exps := make([]*Experiment, 1)
+	for i := range exps {
+		exps[i] = &Experiment{
+			Name:      util.BasicNameGenerator.GenerateName("e-"),
+			Namespace: util.BasicNameGenerator.GenerateName("ns-"),
+			Labels: labels.Set{
+				"team":     "ato",
+				"platform": "service",
+			},
+			Segments: &segments{
+				b:   []byte{255, 255, 255, 255, 255, 255, 255, 255},
+				len: 8,
+			},
+			Params: []Param{
+				{
+					Name: util.BasicNameGenerator.GenerateName("p-"),
+					Choices: &Uniform{
+						Choices: []string{
+							util.BasicNameGenerator.GenerateName("c-"),
+							util.BasicNameGenerator.GenerateName("c-"),
+						},
+					},
+				},
+			},
+		}
 	}
-	for tname, test := range tests {
-		e.SetSegments(test.seg)
-		if e.Segments != test.want {
-			t.Fatalf("%s: e.SetSegments(%v) = %v, want %v", tname, test.seg, e.Segments, test.want)
+	expStore := &experimentStore{
+		cache: exps,
+	}
+
+	sel, err := labels.Parse("team in (ato)")
+	if err != nil {
+		b.Error(err)
+	}
+
+	c := Config{
+		storage: expStore,
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := c.Experiments("andrew", sel)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func randTeam(i int) string {
+	teams := []string{"ato", "epe"}
+	return teams[i%len(teams)]
+}
+
+func Benchmark100Experiments(b *testing.B) {
+	exps := make([]*Experiment, 100)
+	for i := range exps {
+		exps[i] = &Experiment{
+			Name:      util.BasicNameGenerator.GenerateName("e-"),
+			Namespace: util.BasicNameGenerator.GenerateName("ns-"),
+			Labels: labels.Set{
+				"team":     "ato",
+				"platform": "service",
+			},
+			Segments: &segments{
+				b:   []byte{255, 255, 255, 255, 255, 255, 255, 255},
+				len: 8,
+			},
+			Params: []Param{
+				{
+					Name: util.BasicNameGenerator.GenerateName("p-"),
+					Choices: &Uniform{
+						Choices: []string{
+							util.BasicNameGenerator.GenerateName("c-"),
+							util.BasicNameGenerator.GenerateName("c-"),
+						},
+					},
+				},
+			},
+		}
+	}
+	expStore := &experimentStore{
+		cache: exps,
+	}
+
+	sel, err := labels.Parse("team in (ato)")
+	if err != nil {
+		b.Error(err)
+	}
+
+	c := Config{
+		storage: expStore,
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := c.Experiments("andrew", sel)
+		if err != nil {
+			b.Error(err)
 		}
 	}
 }
@@ -184,8 +229,8 @@ func TestToExperiment(t *testing.T) {
 		want storage.Experiment
 	}{
 		"simple": {
-			e:    Experiment{Name: "test", Labels: labels.Set{"team": "ato", "platform": "desktop"}, Segments: segments{}, Params: []Param{}},
-			want: storage.Experiment{Name: "test", Labels: map[string]string{"team": "ato", "platform": "desktop"}, Segments: []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+			e:    Experiment{Name: "test", Labels: labels.Set{"team": "ato", "platform": "desktop"}, Segments: &segments{}, Params: []Param{}},
+			want: storage.Experiment{Name: "test", Labels: map[string]string{"team": "ato", "platform": "desktop"}, Segments: &storage.Segments{}},
 		},
 	}
 	for tname, test := range tests {

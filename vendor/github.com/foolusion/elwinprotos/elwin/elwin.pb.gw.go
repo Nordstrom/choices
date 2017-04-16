@@ -27,15 +27,19 @@ var _ io.Reader
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
-func request_Elwin_GetNamespaces_0(ctx context.Context, marshaler runtime.Marshaler, client ElwinClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Identifier
+var (
+	filter_Elwin_Get_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_Elwin_Get_0(ctx context.Context, marshaler runtime.Marshaler, client ElwinClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_Elwin_Get_0); err != nil {
 		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.GetNamespaces(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.Get(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
@@ -70,7 +74,7 @@ func RegisterElwinHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux
 func RegisterElwinHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
 	client := NewElwinClient(conn)
 
-	mux.Handle("POST", pattern_Elwin_GetNamespaces_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Elwin_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
@@ -87,14 +91,14 @@ func RegisterElwinHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 		}
-		resp, md, err := request_Elwin_GetNamespaces_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Elwin_Get_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Elwin_GetNamespaces_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Elwin_Get_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -102,9 +106,9 @@ func RegisterElwinHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc
 }
 
 var (
-	pattern_Elwin_GetNamespaces_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "get-namespaces"}, ""))
+	pattern_Elwin_Get_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"elwin", "v1", "experiments"}, ""))
 )
 
 var (
-	forward_Elwin_GetNamespaces_0 = runtime.ForwardResponseMessage
+	forward_Elwin_Get_0 = runtime.ForwardResponseMessage
 )

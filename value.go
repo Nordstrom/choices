@@ -30,10 +30,10 @@ const (
 	ValueTypeWeighted
 )
 
-// Value is the interface Param Values must implement. They take a hash value
+// choice is the interface Param Choices must implement. They take a hash value
 // and return the string that represents the value or an error.
-type Value interface {
-	Value(i uint64) (string, error)
+type choice interface {
+	Choice(i uint64) (string, error)
 }
 
 // Uniform is a way to select from a list of Choices with uniform probability.
@@ -41,8 +41,8 @@ type Uniform struct {
 	Choices []string
 }
 
-// Value implements the Value interface for Uniform choices.
-func (u *Uniform) Value(i uint64) (string, error) {
+// Choice implements the choice interface for Uniform choices.
+func (u *Uniform) Choice(i uint64) (string, error) {
 	choice := int(i % uint64(len(u.Choices)))
 	return u.Choices[choice], nil
 }
@@ -60,30 +60,38 @@ func (u *Uniform) MarshalJSON() ([]byte, error) {
 // Weighted is a way to select from a list of Choices with probability ratio
 // supplied in Weights.
 type Weighted struct {
-	Choices []string
-	Weights []float64
+	Choices []weightedChoice
 }
 
-// Value implements the Value interface for Weighted choices.
-func (w *Weighted) Value(i uint64) (string, error) {
-	if len(w.Choices) != len(w.Weights) {
-		return "", fmt.Errorf(
-			"len(w.Choices) != len(w.Weights): %v != %v",
-			len(w.Choices),
-			len(w.Weights))
-	}
+type weightedChoice struct {
+	name   string
+	weight float64
+}
 
-	selection := make([]float64, len(w.Weights))
+func (w *weightedChoice) MarshalJSON() ([]byte, error) {
+	var aux = struct {
+		Name   string  `json:"name"`
+		Weight float64 `json:"weight"`
+	}{
+		Name:   w.name,
+		Weight: w.weight,
+	}
+	return json.Marshal(aux)
+}
+
+// Choice implements the choice interface for Weighted choices.
+func (w *Weighted) Choice(i uint64) (string, error) {
+	selection := make([]float64, len(w.Choices))
 	cumSum := 0.0
-	for ii, v := range w.Weights {
-		cumSum += v
+	for ii, v := range w.Choices {
+		cumSum += v.weight
 		selection[ii] = cumSum
 	}
 	choice := uniform(i, 0, cumSum)
 
 	for ii, v := range selection {
 		if choice <= v {
-			return w.Choices[ii], nil
+			return w.Choices[ii].name, nil
 		}
 	}
 	return "", fmt.Errorf("no selection was made")
@@ -92,11 +100,9 @@ func (w *Weighted) Value(i uint64) (string, error) {
 // MarshalJSON implements the json.Marshaler interface for Weighted choices.
 func (w *Weighted) MarshalJSON() ([]byte, error) {
 	var aux = struct {
-		Choices []string  `json:"choices"`
-		Weights []float64 `json:"weights"`
+		Choices []weightedChoice `json:"choices"`
 	}{
 		Choices: w.Choices,
-		Weights: w.Weights,
 	}
 	return json.Marshal(aux)
 }

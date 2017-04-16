@@ -1,0 +1,5 @@
+listen_address = ":8080"
+
+[clients]
+prod = "elwin-prod-mongo:80"
+dev = "elwin-dev-mongo:80"

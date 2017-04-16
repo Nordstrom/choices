@@ -27,18 +27,17 @@ import (
 	"syscall"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
-
-	"golang.org/x/net/context"
-
 	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/elwin"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
 var (
@@ -65,7 +64,6 @@ var (
 
 const (
 	cfgStorageAddr = "storage_address"
-	cfgStorageEnv  = "storage_environment"
 	cfgJSONAddr    = "json_address"
 	cfgGRPCAddr    = "grpc_address"
 	cfgUInterval   = "update_interval"
@@ -90,7 +88,6 @@ func main() {
 	log.Println("Starting elwin...")
 
 	viper.SetDefault(cfgStorageAddr, "elwin-storage:80")
-	viper.SetDefault(cfgStorageEnv, "dev")
 	viper.SetDefault(cfgJSONAddr, ":8080")
 	viper.SetDefault(cfgGRPCAddr, ":8081")
 	viper.SetDefault(cfgUInterval, "10s")
@@ -115,7 +112,6 @@ func main() {
 	viper.SetEnvPrefix("elwin")
 	if err := bind([]string{
 		cfgStorageAddr,
-		cfgStorageEnv,
 		cfgJSONAddr,
 		cfgGRPCAddr,
 		cfgUInterval,
@@ -127,17 +123,6 @@ func main() {
 	}); err != nil {
 		log.Fatal(err)
 	}
-
-	var storageEnv int
-	switch viper.GetString(cfgStorageEnv) {
-	case "staging", "dev", "test":
-		storageEnv = choices.StorageEnvironmentDev
-	case "production", "prod":
-		storageEnv = choices.StorageEnvironmentProd
-	default:
-		log.Fatal("bad storage environment")
-	}
-	log.Println(viper.GetString(cfgStorageEnv), storageEnv)
 
 	// create elwin config
 	ctx, cancel := context.WithCancel(context.Background())
@@ -155,7 +140,7 @@ func main() {
 	ec, err := choices.NewChoices(
 		ctx,
 		choices.WithGlobalSalt("choices"),
-		choices.WithStorageConfig(viper.GetString(cfgStorageAddr), storageEnv, interval),
+		choices.WithStorageConfig(viper.GetString(cfgStorageAddr), interval),
 		choices.WithUpdateInterval(interval),
 		choices.WithMaxUpdateFailTime(failTimeout),
 	)
@@ -179,7 +164,7 @@ func main() {
 	mux.Handle("/", &jsonServer{ec})
 	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
-	mux.Handle("/metrics", prometheus.Handler())
+	mux.Handle("/metrics", promhttp.Handler())
 	if viper.IsSet(cfgProf) {
 		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	}
@@ -244,35 +229,35 @@ type elwinServer struct {
 	*choices.Config
 }
 
-func (e *elwinServer) GetNamespaces(ctx context.Context, id *elwin.Identifier) (*elwin.Experiments, error) {
-	log.Printf("GetNamespaces: %v", id)
-	if id == nil {
+func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.GetReply, error) {
+	log.Printf("GetNamespaces: %v", req)
+	if req == nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier received")
 	}
-	// TODO: we really need to pass in the requirements in the request. This requires an update to elwin.proto
-	selector := labels.NewSelector()
-	r, err := labels.NewRequirement("team", selection.In, []string{id.TeamID})
+	// TODO: we really need to pass in the requirements in the request.
+	// This requires an update to elwin.proto
+	selector, err := labels.Parse(req.Query)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not create requirement")
+		return nil, errors.Wrap(err, "could not parse query")
 	}
-	selector = selector.Add(*r)
-	resp, err := e.Namespaces(id.UserID, selector)
+	resp, err := e.Experiments(req.UserID, selector)
 	if err != nil {
-		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", id.TeamID, id.UserID, err)
+		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", req.Query, req.UserID, err)
 	}
 
-	exp := &elwin.Experiments{
-		Experiments: make(map[string]*elwin.Experiment, len(resp)),
+	exp := &elwin.GetReply{
+		Experiments: make([]*elwin.Experiment, len(resp)),
 	}
 
-	for _, v := range resp {
-		exp.Experiments[v.Name] = &elwin.Experiment{
+	for i, v := range resp {
+		exp.Experiments[i] = &elwin.Experiment{
+			Name:      v.Name,
 			Namespace: v.Namespace,
 			Params:    make([]*elwin.Param, len(v.Params)),
 		}
 
-		for i, p := range v.Params {
-			exp.Experiments[v.Name].Params[i] = &elwin.Param{
+		for j, p := range v.Params {
+			exp.Experiments[i].Params[j] = &elwin.Param{
 				Name:  p.Name,
 				Value: p.Value,
 			}
@@ -333,9 +318,9 @@ func (j *jsonServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp, err := j.Namespaces(r.Form.Get("userid"), sel)
+	resp, err := j.Experiments(r.Form.Get("userid"), sel)
 	if err != nil {
-		j.ErrChan <- fmt.Errorf("rootHandler: couldn't get Namespaces: %v", err)
+		j.ErrChan <- fmt.Errorf("rootHandler: couldn't get Experiments: %v", err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -1,5 +1,4 @@
 storage_address = ":8080"
-storage_environment = "dev"
 
 json_address = ":8082"
 grpc_address = ":8083"

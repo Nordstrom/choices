@@ -23,7 +23,7 @@ func TestValueUniform(t *testing.T) {
 }
 
 func TestValueWeighted(t *testing.T) {
-	w := &Weighted{Choices: []string{"a", "b", "c"}, Weights: []float64{1, 2, 1}}
+	w := &Weighted{Choices: []weightedChoice{{"a", 1}, {"b", 2}, {"c", 1}}}
 	tests := []struct {
 		in   uint64
 		want string
@@ -43,7 +43,7 @@ func TestValueWeighted(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got, err := w.Value(test.in)
+		got, err := w.Choice(test.in)
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -19,44 +19,80 @@ import (
 	"encoding/json"
 	"errors"
 	"math/rand"
+
+	"github.com/foolusion/elwinprotos/storage"
 )
 
-type segments [16]byte
+type segments struct {
+	b   []byte
+	len int
+}
+
+func (s *segments) ToSegments() *storage.Segments {
+	return &storage.Segments{
+		B:   s.b,
+		Len: int64(s.len),
+	}
+}
 
 // segmentsAll is a value where every segment is available
-var segmentsAll = segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
+var segmentsAll = segments{b: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, len: 128}
 
 var (
 	// ErrSegmentUnavailable is thrown when you request an a segment set to
 	// 0, an unavailable segment.
 	ErrSegmentUnavailable = errors.New("segment unavailable")
+	// ErrDifferentLengthSegments is thrown when you make a request with
+	// segments that have different lengths.
+	ErrDifferentLengthSegments = errors.New("segments have different lengths")
 )
 
-// Claim removes the segments in del from s and throws an error if the
-func (s segments) Claim(out segments) (segments, error) {
-	var seg segments
-	for i := range seg {
-		if s[i]&out[i] > 0 {
-			return s, ErrSegmentUnavailable
-		}
-		seg[i] = s[i] | out[i]
+func (s *segments) contains(in *segments) bool {
+	if len(s.b) != len(in.b) || s.len != in.len {
+		return false
 	}
-	return seg, nil
+	for i := range s.b {
+		if s.b[i]&in.b[i] != in.b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Claim claims the segments in out from s and throws an error if a
+// segment has already been claimed. If there is no error you can
+// overwrite the segments.b with the returned value.
+func (s *segments) Claim(out *segments) ([]byte, error) {
+	if len(s.b) != len(out.b) || s.len != out.len {
+		return nil, ErrDifferentLengthSegments
+	}
+	b := make([]byte, len(out.b))
+	for i := range b {
+		if s.b[i]&out.b[i] > 0 {
+			return s.b, ErrSegmentUnavailable
+		}
+		b[i] = s.b[i] | out.b[i]
+	}
+	return b, nil
 }
 
 // isClaimed returns whether or not a given segment is claimed from the
 // segments.
-func (s segments) isClaimed(seg uint64) bool {
+func (s *segments) isClaimed(seg uint64) bool {
 	index, pos := seg/8, seg%8
-	return s[index]>>pos&1 == 1
+	return s.b[index]>>pos&1 == 1
 }
 
 // available returns a list of segments that are available.
-func (s segments) available() []int {
-	out := make([]int, 0, 128)
-	for i := range s {
+func (s *segments) available() []int {
+	out := make([]int, 0, s.len)
+	for i := range s.b {
 		for shift := uint8(0); shift < 8; shift++ {
-			if s[i]&(1<<shift) != 1<<shift {
+			// check if we have reached the end
+			if i*8+int(shift) > s.len {
+				break
+			}
+			if s.b[i]&(1<<shift) != 1<<shift {
 				out = append(out, i*8+int(shift))
 			}
 		}
@@ -71,61 +107,44 @@ const (
 	one
 )
 
-// set claims or releases the segment at the given index
-func (s segments) set(index int, val bit) segments {
+func set(b []byte, index int) {
 	i, pos := index/8, uint8(index%8)
-	switch val {
-	case zero:
-		s[i] &= ^(1 << pos)
-	case one:
-		s[i] |= 1 << pos
-	}
-	return s
+	b[i] |= 1 << pos
+}
+
+func clear(b []byte, index int) {
+	i, pos := index/8, uint8(index%8)
+	b[i] &= ^(1 << pos)
 }
 
 // sample samples segments that are unclaimed and returns a the segments and
 // the sample. If n is greater than the number of available segments it returns
 // an error.
-func (s segments) sample(n int) segments {
+func (s *segments) sample(n int) []byte {
 	avail := s.available()
 	p := rand.Perm(len(avail))
-	var out segments
+	out := make([]byte, len(s.b))
 	if n > len(avail) {
 		n = len(avail)
 	}
 	for i := 0; i < n; i++ {
-		out = out.set(avail[p[i]], one)
+		set(out, avail[p[i]])
 	}
 	return out
 }
 
 // count returns the number of claimed segments
-func (s segments) count() int {
+func (s *segments) count() int {
 	count := 0
-	for _, v := range s {
+	for _, v := range s.b {
 		count += int(cnt[v])
 	}
 	return count
 }
 
-// InSegment takes a namespace name, userID and segments and returns whether
-// the userID is in a segment that is claimed. Typical use case for this is
-// determining whether or not a user is in a given experiment.
-func InSegment(namespace, userID string, s segments) bool {
-	h := hashConfig{userID: userID}
-	h.setNs(namespace)
-	i, err := hash(h)
-	if err != nil {
-		return false
-	}
-	segment := uniform(i, 0, float64(len(s)*8))
-
-	return s.isClaimed(uint64(segment))
-}
-
 // MarshalJSON implements the json.Marshaler interface for segments
-func (s segments) MarshalJSON() ([]byte, error) {
-	return json.Marshal(hex.EncodeToString(s[:]))
+func (s *segments) MarshalJSON() ([]byte, error) {
+	return json.Marshal(hex.EncodeToString(s.b[:]))
 }
 
 var cnt = [256]byte{0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8}

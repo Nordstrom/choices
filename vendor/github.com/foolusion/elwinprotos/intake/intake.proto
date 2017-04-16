@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package elwin.intake;
+
+import "google/api/annotations.proto";
+import "storage.proto";
+
+option go_package = "github.com/foolusion/elwinprotos/intake";
+
+// The ExperientIntake service definition
+service ExperimentIntake {
+  // ExperimentIntake takes a request from a web form and creates the
+  // experiment in the data store.
+  rpc ExperimentIntake(ExperimentIntakeRequest) returns (ExperimentIntakeReply) {
+    option(google.api.http) = {
+      post: "/api/v1/experiment-intake"
+      body: "*"
+    };
+  }
+}
+
+// ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers
+message ExperimentIntakeRequest {
+  ExperimentMetadata metadata = 1;
+  storage.Experiment experiment = 2;
+}
+
+message ExperimentIntakeReply {
+}
+
+// ExperimentMetadata all the junk that elwin doesn't care about
+message ExperimentMetadata {
+  string userID = 1;
+  string programManagerID = 2;
+  string productManagerID = 3;
+  string hypothesis = 4;
+  string kpi = 5;
+  bool timeBound = 6;
+  string plannedStartTime = 7;
+  string plannedEndTime = 8;
+  string actualStartTime = 9;
+  string actualEndTime = 10;
+  string actionPlanNegative = 11;
+  string actionPlanNeutral = 12;
+  string experimentType = 13;
+}

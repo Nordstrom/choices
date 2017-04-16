@@ -15,37 +15,44 @@
 package main
 
 import (
-	"fmt"
+	"crypto/rand"
+	"encoding/binary"
 	"log"
 	"net"
 	"net/http"
-
-	"golang.org/x/net/context"
 
 	"github.com/boltdb/bolt"
 	"github.com/foolusion/elwinprotos/storage"
 	"github.com/gogo/protobuf/proto"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
-func bind(s []string) error {
+func bind(s ...string) error {
 	if len(s) == 0 {
 		return nil
 	}
 	if err := viper.BindEnv(s[0]); err != nil {
 		return err
 	}
-	return bind(s[1:])
+	return bind(s[1:]...)
 }
+
+var (
+	ErrNilRequest = errors.New("request is nil")
+)
 
 func main() {
 	log.Println("Starting bolt-store...")
 
 	viper.SetDefault("db_file", "test.db")
+	viper.SetDefault("db_bucket", "dev")
 	viper.SetDefault("listen_address", ":8080")
 	viper.SetDefault("metrics_address", ":8081")
 
@@ -62,15 +69,15 @@ func main() {
 	}
 
 	viper.SetEnvPrefix("bolt_store")
-	if err := bind([]string{
+	if err := bind(
 		"db_file",
 		"listen_address",
 		"metrics_address",
-	}); err != nil {
+	); err != nil {
 		log.Fatal(err)
 	}
 
-	server, err := newServer(viper.GetString("db_file"))
+	server, err := newServer(viper.GetString("db_file"), viper.GetString("db_bucket"))
 
 	log.Printf("lisening for grpc on %q", viper.GetString("listen_address"))
 	lis, err := net.Listen("tcp", viper.GetString("listen_address"))
@@ -84,7 +91,7 @@ func main() {
 	storage.RegisterElwinStorageServer(s, server)
 	grpc_prometheus.Register(s)
 	go func() {
-		http.Handle("/metrics", prometheus.Handler())
+		http.Handle("/metrics", promhttp.Handler())
 		log.Printf("listening for /metrics on %q", viper.GetString("metrics_address"))
 		log.Fatal(http.ListenAndServe(viper.GetString("metrics_address"), nil))
 	}()
@@ -92,28 +99,23 @@ func main() {
 	log.Fatal(s.Serve(lis))
 }
 
-var (
-	environmentStaging    = []byte("staging")
-	environmentProduction = []byte("production")
-)
-
 type server struct {
-	db *bolt.DB
+	db     *bolt.DB
+	bucket []byte
 }
 
-func newServer(file string) (*server, error) {
+func newServer(file, bucket string) (*server, error) {
 	db, err := bolt.Open(file, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	if bucket == "" {
+		return nil, errors.New("bucket is empty")
+	}
+
 	if err := db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucket(environmentStaging); err != nil {
-			if err != bolt.ErrBucketExists {
-				return err
-			}
-		}
-		if _, err := tx.CreateBucket(environmentProduction); err != nil {
+		if _, err := tx.CreateBucket([]byte(bucket)); err != nil {
 			if err != bolt.ErrBucketExists {
 				return err
 			}
@@ -122,29 +124,35 @@ func newServer(file string) (*server, error) {
 	}); err != nil {
 		return nil, err
 	}
-	return &server{db: db}, nil
+	return &server{db: db, bucket: []byte(bucket)}, nil
 }
 
 func (s *server) Close() error {
 	return s.db.Close()
 }
 
-// All returns all the namespaces for a given environment.
-func (s *server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllReply, error) {
+// List returns all the experiments that match a query.
+func (s *server) List(ctx context.Context, r *storage.ListRequest) (*storage.ListReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
+		return nil, ErrNilRequest
 	}
-	env := envFromStorageRequest(r.Environment)
 
-	ar := &storage.AllReply{}
+	selector, err := labels.Parse(r.Query)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not parse query")
+	}
+
+	ar := &storage.ListReply{}
 	if err := s.db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket(env).Cursor()
+		c := tx.Bucket(s.bucket).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var ns storage.Namespace
-			if err := proto.Unmarshal(v, &ns); err != nil {
+			var exp storage.Experiment
+			if err := proto.Unmarshal(v, &exp); err != nil {
 				return err
 			}
-			ar.Namespaces = append(ar.Namespaces, &ns)
+			if selector.Matches(labels.Set(exp.Labels)) {
+				ar.Experiments = append(ar.Experiments, &exp)
+			}
 		}
 		return nil
 	}); err != nil {
@@ -153,24 +161,36 @@ func (s *server) All(ctx context.Context, r *storage.AllRequest) (*storage.AllRe
 	return ar, nil
 }
 
-// Create creates a namespace in the given environment.
-func (s *server) Create(ctx context.Context, r *storage.CreateRequest) (*storage.CreateReply, error) {
+func (s *server) New(ctx context.Context, r *storage.NewRequest) (*storage.NewReply, error) {
+	return nil, errors.New("unimplemented")
+}
+
+// Set creates an experiment in the given environment.
+func (s *server) Set(ctx context.Context, r *storage.SetRequest) (*storage.SetReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
-	}
-	env := envFromStorageRequest(r.Environment)
-
-	ns := r.Namespace
-	if ns == nil {
-		return nil, fmt.Errorf("namespace is nil")
+		return nil, ErrNilRequest
 	}
 
-	pns, err := proto.Marshal(ns)
+	exp := r.Experiment
+	if exp == nil {
+		return nil, errors.New("experiment is nil")
+	}
+
+	if exp.Id == "" {
+		// TODO: set exp.Id to a new generated id
+		if name, err := randName(32); err != nil {
+			errors.Wrap(err, "could not create random name")
+		} else {
+			exp.Id = name
+		}
+	}
+
+	pexp, err := proto.Marshal(exp)
 	if err != nil {
 		return nil, err
 	}
 	if err := s.db.Update(func(tx *bolt.Tx) error {
-		err := tx.Bucket(env).Put([]byte(ns.Name), pns)
+		err := tx.Bucket(s.bucket).Put([]byte(exp.Id), pexp)
 		if err != nil {
 			return err
 		}
@@ -178,104 +198,73 @@ func (s *server) Create(ctx context.Context, r *storage.CreateRequest) (*storage
 	}); err != nil {
 		return nil, err
 	}
-	return &storage.CreateReply{Namespace: ns}, nil
+	return &storage.SetReply{Experiment: exp}, nil
 }
 
-// Read returns the namespace matching the supplied name from the given
+func randName(n int) (string, error) {
+	const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	var str string
+	b := make([]byte, 8*n)
+	if _, err := rand.Read(b); err != nil {
+		return "", errors.Wrap(err, "could not read from rand")
+	}
+	for i := 0; i < n; i++ {
+		a := binary.BigEndian.Uint64(b[i*8:(i+1)*8]) % uint64(len(alphabet))
+		str += alphabet[a : a+1]
+	}
+	return str, nil
+}
+
+// Get returns the experiment matching the supplied id from the given
 // environment.
-func (s *server) Read(ctx context.Context, r *storage.ReadRequest) (*storage.ReadReply, error) {
+func (s *server) Get(ctx context.Context, r *storage.GetRequest) (*storage.GetReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
-	}
-	env := envFromStorageRequest(r.Environment)
-
-	if len(r.Name) == 0 {
-		return nil, fmt.Errorf("name is empty")
+		return nil, ErrNilRequest
 	}
 
-	ns := storage.Namespace{}
+	if r.Id == "" {
+		return nil, errors.New("id is empty")
+	}
+
+	exp := storage.Experiment{}
 	if err := s.db.View(func(tx *bolt.Tx) error {
-		buf := tx.Bucket(env).Get([]byte(r.Name))
+		buf := tx.Bucket(s.bucket).Get([]byte(r.Id))
 		if buf == nil {
 			return grpc.Errorf(codes.NotFound, "key not found")
 		}
-		if err := proto.Unmarshal(buf, &ns); err != nil {
+		if err := proto.Unmarshal(buf, &exp); err != nil {
 			return err
 		}
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-	return &storage.ReadReply{Namespace: &ns}, nil
+	return &storage.GetReply{Experiment: &exp}, nil
 }
 
-// Update replaces the namespace in the given environment with the namespace
-// supplied.
-func (s *server) Update(ctx context.Context, r *storage.UpdateRequest) (*storage.UpdateReply, error) {
+// Remove deletes the experiment from the given environment.
+func (s *server) Remove(ctx context.Context, r *storage.RemoveRequest) (*storage.RemoveReply, error) {
 	if r == nil {
-		return nil, fmt.Errorf("request is nil")
-	}
-	env := envFromStorageRequest(r.Environment)
-
-	ns := r.GetNamespace()
-	if ns == nil {
-		return nil, fmt.Errorf("namespace is nil")
+		return nil, ErrNilRequest
 	}
 
-	pns, err := proto.Marshal(ns)
-	if err != nil {
-		return nil, err
+	if r.Id == "" {
+		return nil, errors.New("id is empty")
 	}
+
+	exp := storage.Experiment{}
 	if err := s.db.Update(func(tx *bolt.Tx) error {
-		err := tx.Bucket(env).Put([]byte(ns.Name), pns)
-		if err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return &storage.UpdateReply{Namespace: ns}, nil
-}
-
-// Delete deletes the namespace from the given environment.
-func (s *server) Delete(ctx context.Context, r *storage.DeleteRequest) (*storage.DeleteReply, error) {
-	if r == nil {
-		return nil, fmt.Errorf("request is nil")
-	}
-	env := envFromStorageRequest(r.Environment)
-
-	if len(r.Name) == 0 {
-		return nil, fmt.Errorf("name is empty")
-	}
-
-	ns := storage.Namespace{}
-	if err := s.db.Update(func(tx *bolt.Tx) error {
-		buf := tx.Bucket(env).Get([]byte(r.Name))
+		buf := tx.Bucket(s.bucket).Get([]byte(r.Id))
 		if buf == nil {
 			return grpc.Errorf(codes.NotFound, "key not found")
 		}
-		if err := proto.Unmarshal(buf, &ns); err != nil {
+		if err := proto.Unmarshal(buf, &exp); err != nil {
 			return err
 		}
-		return tx.Bucket(env).Delete([]byte(r.Name))
+		return tx.Bucket(s.bucket).Delete([]byte(r.Id))
 	}); err != nil {
 		return nil, err
 	}
-	return &storage.DeleteReply{Namespace: &ns}, nil
-}
-
-func (s *server) ExperimentIntake(ctx context.Context, r *storage.ExperimentIntakeRequest) (*storage.ExperimentIntakeReply, error) {
-	return &storage.ExperimentIntakeReply{}, nil
-}
-
-func envFromStorageRequest(e storage.Environment) []byte {
-	switch e {
-	case storage.Staging:
-		return environmentStaging
-	case storage.Production:
-		return environmentProduction
-	default:
-		return environmentStaging
-	}
+	return &storage.RemoveReply{Experiment: &exp}, nil
 }

@@ -1,0 +1,205 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "intake.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/experiment-intake": {
+      "post": {
+        "summary": "ExperimentIntake takes a request from a web form and creates the\nexperiment in the data store.",
+        "operationId": "ExperimentIntake",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/intakeExperimentIntakeReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/intakeExperimentIntakeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ExperimentIntake"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "intakeExperimentIntakeReply": {
+      "type": "object"
+    },
+    "intakeExperimentIntakeRequest": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/definitions/intakeExperimentMetadata"
+        },
+        "experiment": {
+          "$ref": "#/definitions/storageExperiment"
+        }
+      },
+      "title": "ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers"
+    },
+    "intakeExperimentMetadata": {
+      "type": "object",
+      "properties": {
+        "userID": {
+          "type": "string",
+          "format": "string"
+        },
+        "programManagerID": {
+          "type": "string",
+          "format": "string"
+        },
+        "productManagerID": {
+          "type": "string",
+          "format": "string"
+        },
+        "hypothesis": {
+          "type": "string",
+          "format": "string"
+        },
+        "kpi": {
+          "type": "string",
+          "format": "string"
+        },
+        "timeBound": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "plannedStartTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "plannedEndTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "actualStartTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "actualEndTime": {
+          "type": "string",
+          "format": "string"
+        },
+        "actionPlanNegative": {
+          "type": "string",
+          "format": "string"
+        },
+        "actionPlanNeutral": {
+          "type": "string",
+          "format": "string"
+        },
+        "experimentType": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "ExperimentMetadata all the junk that elwin doesn't care about"
+    },
+    "storageExperiment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "string"
+        },
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "namespace": {
+          "type": "string",
+          "format": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/storageParam"
+          }
+        },
+        "segments": {
+          "$ref": "#/definitions/storageSegments"
+        },
+        "detailName": {
+          "type": "string",
+          "format": "string"
+        }
+      },
+      "title": "Experiment structure"
+    },
+    "storageParam": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/storageValue"
+        }
+      },
+      "title": "Param structure"
+    },
+    "storageSegments": {
+      "type": "object",
+      "properties": {
+        "len": {
+          "type": "string",
+          "format": "int64"
+        },
+        "b": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "storageValue": {
+      "type": "object",
+      "properties": {
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "string"
+          }
+        },
+        "weights": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "title": "Value structure"
+    }
+  }
+}

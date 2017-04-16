@@ -1,5 +1,5 @@
 {
-    "memo": "74ac6e7c2ba682f41cd0f5b5d4ccb8d756e9168fac61d6b59e71e24ecd6c78ed",
+    "memo": "21ae24839533cf817a26d633df754ea31ff0fcbe2bc229d40035a6d5bc85445b",
     "projects": [
         {
             "name": "github.com/beorn7/perks",
@@ -19,8 +19,8 @@
         },
         {
             "name": "github.com/foolusion/elwinprotos",
-            "branch": "master",
-            "revision": "3de4e65990081311478fdf98db8649a402a8d8be",
+            "version": "v0.0.6",
+            "revision": "a1f2791290902b3036e75a979fd14cd8c4f146a0",
             "packages": [
                 "elwin",
                 "storage"
@@ -36,8 +36,8 @@
         },
         {
             "name": "github.com/gogo/protobuf",
-            "version": "v0.3",
-            "revision": "909568be09de550ed094403c2bf8a261b5bb730a",
+            "version": "v0.4",
+            "revision": "100ba4e885062801d56799d78530b73b178a78f3",
             "packages": [
                 "proto",
                 "sortkeys"
@@ -54,7 +54,7 @@
         {
             "name": "github.com/golang/protobuf",
             "branch": "master",
-            "revision": "c9c7427a2a70d2eb3bafa0ab2dc163e45f143317",
+            "revision": "2bba0603135d7d7f5cb73b2125beeda19c09f4ef",
             "packages": [
                 "jsonpb",
                 "proto",
@@ -89,8 +89,8 @@
         },
         {
             "name": "github.com/magiconair/properties",
-            "version": "v1.7.0",
-            "revision": "c265cfa48dda6474e208715ca93e987829f572f8",
+            "version": "v1.7.2",
+            "revision": "f917359f079a3759162704eaa8caeec3d01d9f91",
             "packages": [
                 "."
             ]
@@ -140,7 +140,8 @@
             "version": "v0.8.0",
             "revision": "c5b7fccd204277076155f10851dad72b76a49317",
             "packages": [
-                "prometheus"
+                "prometheus",
+                "prometheus/promhttp"
             ]
         },
         {
@@ -195,7 +196,7 @@
         {
             "name": "github.com/spf13/pflag",
             "branch": "master",
-            "revision": "9ff6c6923cfffbcd502984b8e0c80539a94968b7",
+            "revision": "9a906f17374922ed0f74e1b2f593d3723f2ffb00",
             "packages": [
                 "."
             ]
@@ -211,7 +212,7 @@
         {
             "name": "golang.org/x/net",
             "branch": "master",
-            "revision": "d379faa25cbdc04d653984913a2ceb43b0bc46d7",
+            "revision": "d1e1b351919c6738fdeb9893d5c998b161464f0c",
             "packages": [
                 "context",
                 "http2",
@@ -222,7 +223,7 @@
         {
             "name": "golang.org/x/sys",
             "branch": "master",
-            "revision": "e48874b42435b4347fc52bdee0424a52abc974d7",
+            "revision": "f3918c30c5c2cb527c0b071a27c35120a6c0719a",
             "packages": [
                 "unix"
             ]
@@ -230,16 +231,17 @@
         {
             "name": "golang.org/x/text",
             "branch": "master",
-            "revision": "f28f36722d5ef2f9655ad3de1f248e3e52ad5ebd",
+            "revision": "f4b4367115ec2de254587813edaa901bc1c723a8",
             "packages": [
+                "secure/bidirule",
                 "transform",
                 "unicode/norm"
             ]
         },
         {
             "name": "google.golang.org/grpc",
-            "version": "v1.0.5",
-            "revision": "708a7f9f3283aa2d4f6132d287d78683babe55c8",
+            "version": "v1.2.1",
+            "revision": "8050b9cbc271307e5a716a9d782803d09b0d6f2d",
             "packages": [
                 ".",
                 "codes",
@@ -259,7 +261,7 @@
         {
             "name": "gopkg.in/yaml.v2",
             "branch": "v2",
-            "revision": "a3f3340b5840cee44f372bddb5880fcbc419b46a",
+            "revision": "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b",
             "packages": [
                 "."
             ]
@@ -267,7 +269,7 @@
         {
             "name": "k8s.io/apimachinery",
             "branch": "master",
-            "revision": "c810e4931f2cf80a6f0a007f8ba9c05ef0165cee",
+            "revision": "22062ea7ff0c73d5114c07ad4a0875c15a8a9826",
             "packages": [
                 "pkg/labels",
                 "pkg/selection"

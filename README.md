@@ -1,5 +1,6 @@
 [![GoDoc](https://godoc.org/github.com/Nordstrom/choices?status.svg)](https://godoc.org/github.com/Nordstrom/choices)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Nordstrom/choices)](https://goreportcard.com/report/github.com/Nordstrom/choices)
+[![Build Status](https://travis-ci.org/foolusion/choices.svg?branch=master)](https://travis-ci.org/foolusion/choices)
 
 # choices
 A way to choose things.

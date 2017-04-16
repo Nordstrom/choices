@@ -17,32 +17,93 @@ package choices
 import (
 	"testing"
 
+	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/Nordstrom/choices/util"
 	"github.com/foolusion/elwinprotos/storage"
 )
 
-func TestFromNamespace(t *testing.T) {
+func TestFromExperiment(t *testing.T) {
 	tests := map[string]struct {
-		in   *storage.Namespace
-		want Namespace
+		in   *storage.Experiment
+		want Experiment
 		err  error
 	}{
-		"emptyNamespace": {in: &storage.Namespace{}, want: Namespace{}, err: nil},
-		"oneExperiment":  {in: &storage.Namespace{Name: "ns", Experiments: []*storage.Experiment{{Name: "exp1", Labels: map[string]string{"team": "test"}, Segments: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []*storage.Param{{Name: "param1", Value: &storage.Value{Choices: []string{"a", "b"}}}}}}}, want: Namespace{Name: "ns", Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Experiments: []Experiment{{Name: "exp1", Labels: map[string]string{"team": "test"}, Segments: segments{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, Params: []Param{{Name: "param1", Value: &Uniform{Choices: []string{"a", "b"}}}}}}}, err: nil},
+		"emptyExperiment": {in: &storage.Experiment{}, want: Experiment{Segments: &segments{make([]byte, 16), 128}}, err: nil},
+		"oneExperiment": {
+			in: &storage.Experiment{
+				Namespace: "ns",
+				Name:      "exp1",
+				Labels:    map[string]string{"team": "test"},
+				Segments:  &storage.Segments{Len: 128, B: []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}},
+				Params:    []*storage.Param{{Name: "param1", Value: &storage.Value{Choices: []string{"a", "b"}}}},
+			},
+			want: Experiment{
+				Namespace: "ns",
+				Name:      "exp1",
+				Labels:    map[string]string{"team": "test"},
+				Segments:  &segments{[]byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, 128},
+				Params:    []Param{{Name: "param1", Choices: &Uniform{Choices: []string{"a", "b"}}}},
+			},
+			err: nil,
+		},
 	}
 
 	for k, test := range tests {
-		out, err := FromNamespace(test.in)
+		out := FromExperiment(test.in)
 		if out.Name != test.want.Name {
 			t.Errorf("%s name: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
 		}
-		if out.Segments != test.want.Segments {
-			t.Errorf("%s segments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
+		for i := range out.Segments.b {
+			if out.Segments.b[i] != test.want.Segments.b[i] {
+				t.Errorf("%s segments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
+			}
 		}
-		if len(out.Experiments) != len(test.want.Experiments) {
+		if len(out.Params) != len(test.want.Params) {
 			t.Errorf("%s experiments: FromNamespace(%+v) = %+v want %+v", k, test.in, out, test.want)
 		}
-		if err != test.err {
-			t.Errorf("%s: FromNamespace(%+v) = %+v want %+v", k, test.in, err, test.err)
+	}
+}
+
+func BenchmarkTeamNamespaces(b *testing.B) {
+	exps := make([]*Experiment, 1)
+	for i := range exps {
+		exps[i] = &Experiment{
+			Name:      util.BasicNameGenerator.GenerateName("e-"),
+			Namespace: util.BasicNameGenerator.GenerateName("ns-"),
+			Labels: labels.Set{
+				"team":     "ato",
+				"platform": "service",
+			},
+			Segments: &segments{
+				b:   []byte{255, 255, 255, 255, 255, 255, 255, 255},
+				len: 8,
+			},
+			Params: []Param{
+				{
+					Name: util.BasicNameGenerator.GenerateName("p-"),
+					Choices: &Uniform{
+						Choices: []string{
+							util.BasicNameGenerator.GenerateName("c-"),
+							util.BasicNameGenerator.GenerateName("c-"),
+						},
+					},
+				},
+			},
 		}
+	}
+	expStore := &experimentStore{
+		cache: exps,
+	}
+
+	sel, err := labels.Parse("team in (ato)")
+	if err != nil {
+		b.Error(err)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		teamNamespaces(expStore, sel)
 	}
 }
