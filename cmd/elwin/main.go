@@ -266,6 +266,7 @@ func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.Ge
 		exp.Experiments[i] = &elwin.Experiment{
 			Name:      v.Name,
 			Namespace: v.Namespace,
+			Labels:    v.Labels,
 			Params:    make([]*elwin.Param, len(v.Params)),
 		}
 
@@ -287,6 +288,8 @@ func appendToGroup(br map[string]*elwin.ExperimentList, e choices.ExperimentResp
 	ee := &elwin.Experiment{
 		Name:      e.Name,
 		Namespace: e.Namespace,
+		Labels:    e.Labels,
+		Params:    make([]*elwin.Param, len(e.Params)),
 	}
 	for i, p := range e.Params {
 		ee.Params[i] = &elwin.Param{
