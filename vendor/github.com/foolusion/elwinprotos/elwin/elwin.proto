@@ -17,9 +17,15 @@ service Elwin {
 message GetRequest {
 	string userID = 1;
 	string query = 2;
+	string by = 3;
 }
 
 message GetReply {
+	repeated Experiment experiments = 1;
+	map<string, ExperimentList> group = 2;
+}
+
+message ExperimentList {
 	repeated Experiment experiments = 1;
 }
 
@@ -27,6 +33,7 @@ message Experiment {
 	string name = 1;
 	string namespace = 2;
 	repeated Param params = 3;
+	map<string, string> labels = 4;
 }
 
 message Param {

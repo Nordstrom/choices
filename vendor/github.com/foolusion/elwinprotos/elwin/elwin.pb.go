@@ -11,6 +11,7 @@
 	It has these top-level messages:
 		GetRequest
 		GetReply
+		ExperimentList
 		Experiment
 		Param
 */
@@ -23,6 +24,7 @@ import _ "github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/google/a
 
 import strings "strings"
 import reflect "reflect"
+import github_com_gogo_protobuf_sortkeys "github.com/gogo/protobuf/sortkeys"
 
 import (
 	context "golang.org/x/net/context"
@@ -45,6 +47,7 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 type GetRequest struct {
 	UserID string `protobuf:"bytes,1,opt,name=userID,proto3" json:"userID,omitempty"`
 	Query  string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	By     string `protobuf:"bytes,3,opt,name=by,proto3" json:"by,omitempty"`
 }
 
 func (m *GetRequest) Reset()                    { *m = GetRequest{} }
@@ -65,8 +68,16 @@ func (m *GetRequest) GetQuery() string {
 	return ""
 }
 
+func (m *GetRequest) GetBy() string {
+	if m != nil {
+		return m.By
+	}
+	return ""
+}
+
 type GetReply struct {
-	Experiments []*Experiment `protobuf:"bytes,1,rep,name=experiments" json:"experiments,omitempty"`
+	Experiments []*Experiment              `protobuf:"bytes,1,rep,name=experiments" json:"experiments,omitempty"`
+	Group       map[string]*ExperimentList `protobuf:"bytes,2,rep,name=group" json:"group,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value"`
 }
 
 func (m *GetReply) Reset()                    { *m = GetReply{} }
@@ -80,15 +91,38 @@ func (m *GetReply) GetExperiments() []*Experiment {
 	return nil
 }
 
+func (m *GetReply) GetGroup() map[string]*ExperimentList {
+	if m != nil {
+		return m.Group
+	}
+	return nil
+}
+
+type ExperimentList struct {
+	Experiments []*Experiment `protobuf:"bytes,1,rep,name=experiments" json:"experiments,omitempty"`
+}
+
+func (m *ExperimentList) Reset()                    { *m = ExperimentList{} }
+func (*ExperimentList) ProtoMessage()               {}
+func (*ExperimentList) Descriptor() ([]byte, []int) { return fileDescriptorElwin, []int{2} }
+
+func (m *ExperimentList) GetExperiments() []*Experiment {
+	if m != nil {
+		return m.Experiments
+	}
+	return nil
+}
+
 type Experiment struct {
-	Name      string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Namespace string   `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	Params    []*Param `protobuf:"bytes,3,rep,name=params" json:"params,omitempty"`
+	Name      string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Namespace string            `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Params    []*Param          `protobuf:"bytes,3,rep,name=params" json:"params,omitempty"`
+	Labels    map[string]string `protobuf:"bytes,4,rep,name=labels" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
 func (m *Experiment) Reset()                    { *m = Experiment{} }
 func (*Experiment) ProtoMessage()               {}
-func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptorElwin, []int{2} }
+func (*Experiment) Descriptor() ([]byte, []int) { return fileDescriptorElwin, []int{3} }
 
 func (m *Experiment) GetName() string {
 	if m != nil {
@@ -111,6 +145,13 @@ func (m *Experiment) GetParams() []*Param {
 	return nil
 }
 
+func (m *Experiment) GetLabels() map[string]string {
+	if m != nil {
+		return m.Labels
+	}
+	return nil
+}
+
 type Param struct {
 	Name  string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
@@ -118,7 +159,7 @@ type Param struct {
 
 func (m *Param) Reset()                    { *m = Param{} }
 func (*Param) ProtoMessage()               {}
-func (*Param) Descriptor() ([]byte, []int) { return fileDescriptorElwin, []int{3} }
+func (*Param) Descriptor() ([]byte, []int) { return fileDescriptorElwin, []int{4} }
 
 func (m *Param) GetName() string {
 	if m != nil {
@@ -137,6 +178,7 @@ func (m *Param) GetValue() string {
 func init() {
 	proto.RegisterType((*GetRequest)(nil), "elwin.api.GetRequest")
 	proto.RegisterType((*GetReply)(nil), "elwin.api.GetReply")
+	proto.RegisterType((*ExperimentList)(nil), "elwin.api.ExperimentList")
 	proto.RegisterType((*Experiment)(nil), "elwin.api.Experiment")
 	proto.RegisterType((*Param)(nil), "elwin.api.Param")
 }
@@ -171,6 +213,9 @@ func (this *GetRequest) Equal(that interface{}) bool {
 	if this.Query != that1.Query {
 		return false
 	}
+	if this.By != that1.By {
+		return false
+	}
 	return true
 }
 func (this *GetReply) Equal(that interface{}) bool {
@@ -184,6 +229,49 @@ func (this *GetReply) Equal(that interface{}) bool {
 	that1, ok := that.(*GetReply)
 	if !ok {
 		that2, ok := that.(GetReply)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	} else if this == nil {
+		return false
+	}
+	if len(this.Experiments) != len(that1.Experiments) {
+		return false
+	}
+	for i := range this.Experiments {
+		if !this.Experiments[i].Equal(that1.Experiments[i]) {
+			return false
+		}
+	}
+	if len(this.Group) != len(that1.Group) {
+		return false
+	}
+	for i := range this.Group {
+		if !this.Group[i].Equal(that1.Group[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (this *ExperimentList) Equal(that interface{}) bool {
+	if that == nil {
+		if this == nil {
+			return true
+		}
+		return false
+	}
+
+	that1, ok := that.(*ExperimentList)
+	if !ok {
+		that2, ok := that.(ExperimentList)
 		if ok {
 			that1 = &that2
 		} else {
@@ -247,6 +335,14 @@ func (this *Experiment) Equal(that interface{}) bool {
 			return false
 		}
 	}
+	if len(this.Labels) != len(that1.Labels) {
+		return false
+	}
+	for i := range this.Labels {
+		if this.Labels[i] != that1.Labels[i] {
+			return false
+		}
+	}
 	return true
 }
 func (this *Param) Equal(that interface{}) bool {
@@ -286,10 +382,11 @@ func (this *GetRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 6)
+	s := make([]string, 0, 7)
 	s = append(s, "&elwin.GetRequest{")
 	s = append(s, "UserID: "+fmt.Sprintf("%#v", this.UserID)+",\n")
 	s = append(s, "Query: "+fmt.Sprintf("%#v", this.Query)+",\n")
+	s = append(s, "By: "+fmt.Sprintf("%#v", this.By)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -297,8 +394,33 @@ func (this *GetReply) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 5)
+	s := make([]string, 0, 6)
 	s = append(s, "&elwin.GetReply{")
+	if this.Experiments != nil {
+		s = append(s, "Experiments: "+fmt.Sprintf("%#v", this.Experiments)+",\n")
+	}
+	keysForGroup := make([]string, 0, len(this.Group))
+	for k, _ := range this.Group {
+		keysForGroup = append(keysForGroup, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Strings(keysForGroup)
+	mapStringForGroup := "map[string]*ExperimentList{"
+	for _, k := range keysForGroup {
+		mapStringForGroup += fmt.Sprintf("%#v: %#v,", k, this.Group[k])
+	}
+	mapStringForGroup += "}"
+	if this.Group != nil {
+		s = append(s, "Group: "+mapStringForGroup+",\n")
+	}
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *ExperimentList) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&elwin.ExperimentList{")
 	if this.Experiments != nil {
 		s = append(s, "Experiments: "+fmt.Sprintf("%#v", this.Experiments)+",\n")
 	}
@@ -309,12 +431,25 @@ func (this *Experiment) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 7)
+	s := make([]string, 0, 8)
 	s = append(s, "&elwin.Experiment{")
 	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
 	s = append(s, "Namespace: "+fmt.Sprintf("%#v", this.Namespace)+",\n")
 	if this.Params != nil {
 		s = append(s, "Params: "+fmt.Sprintf("%#v", this.Params)+",\n")
+	}
+	keysForLabels := make([]string, 0, len(this.Labels))
+	for k, _ := range this.Labels {
+		keysForLabels = append(keysForLabels, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
+	mapStringForLabels := "map[string]string{"
+	for _, k := range keysForLabels {
+		mapStringForLabels += fmt.Sprintf("%#v: %#v,", k, this.Labels[k])
+	}
+	mapStringForLabels += "}"
+	if this.Labels != nil {
+		s = append(s, "Labels: "+mapStringForLabels+",\n")
 	}
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -438,6 +573,12 @@ func (m *GetRequest) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintElwin(dAtA, i, uint64(len(m.Query)))
 		i += copy(dAtA[i:], m.Query)
 	}
+	if len(m.By) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintElwin(dAtA, i, uint64(len(m.By)))
+		i += copy(dAtA[i:], m.By)
+	}
 	return i, nil
 }
 
@@ -452,6 +593,64 @@ func (m *GetReply) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *GetReply) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Experiments) > 0 {
+		for _, msg := range m.Experiments {
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintElwin(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if len(m.Group) > 0 {
+		for k, _ := range m.Group {
+			dAtA[i] = 0x12
+			i++
+			v := m.Group[k]
+			msgSize := 0
+			if v != nil {
+				msgSize = v.Size()
+				msgSize += 1 + sovElwin(uint64(msgSize))
+			}
+			mapSize := 1 + len(k) + sovElwin(uint64(len(k))) + msgSize
+			i = encodeVarintElwin(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintElwin(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			if v != nil {
+				dAtA[i] = 0x12
+				i++
+				i = encodeVarintElwin(dAtA, i, uint64(v.Size()))
+				n1, err := v.MarshalTo(dAtA[i:])
+				if err != nil {
+					return 0, err
+				}
+				i += n1
+			}
+		}
+	}
+	return i, nil
+}
+
+func (m *ExperimentList) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ExperimentList) MarshalTo(dAtA []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
@@ -508,6 +707,23 @@ func (m *Experiment) MarshalTo(dAtA []byte) (int, error) {
 				return 0, err
 			}
 			i += n
+		}
+	}
+	if len(m.Labels) > 0 {
+		for k, _ := range m.Labels {
+			dAtA[i] = 0x22
+			i++
+			v := m.Labels[k]
+			mapSize := 1 + len(k) + sovElwin(uint64(len(k))) + 1 + len(v) + sovElwin(uint64(len(v)))
+			i = encodeVarintElwin(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintElwin(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintElwin(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
 		}
 	}
 	return i, nil
@@ -581,10 +797,39 @@ func (m *GetRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovElwin(uint64(l))
 	}
+	l = len(m.By)
+	if l > 0 {
+		n += 1 + l + sovElwin(uint64(l))
+	}
 	return n
 }
 
 func (m *GetReply) Size() (n int) {
+	var l int
+	_ = l
+	if len(m.Experiments) > 0 {
+		for _, e := range m.Experiments {
+			l = e.Size()
+			n += 1 + l + sovElwin(uint64(l))
+		}
+	}
+	if len(m.Group) > 0 {
+		for k, v := range m.Group {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				l = v.Size()
+				l += 1 + sovElwin(uint64(l))
+			}
+			mapEntrySize := 1 + len(k) + sovElwin(uint64(len(k))) + l
+			n += mapEntrySize + 1 + sovElwin(uint64(mapEntrySize))
+		}
+	}
+	return n
+}
+
+func (m *ExperimentList) Size() (n int) {
 	var l int
 	_ = l
 	if len(m.Experiments) > 0 {
@@ -611,6 +856,14 @@ func (m *Experiment) Size() (n int) {
 		for _, e := range m.Params {
 			l = e.Size()
 			n += 1 + l + sovElwin(uint64(l))
+		}
+	}
+	if len(m.Labels) > 0 {
+		for k, v := range m.Labels {
+			_ = k
+			_ = v
+			mapEntrySize := 1 + len(k) + sovElwin(uint64(len(k))) + 1 + len(v) + sovElwin(uint64(len(v)))
+			n += mapEntrySize + 1 + sovElwin(uint64(mapEntrySize))
 		}
 	}
 	return n
@@ -650,6 +903,7 @@ func (this *GetRequest) String() string {
 	s := strings.Join([]string{`&GetRequest{`,
 		`UserID:` + fmt.Sprintf("%v", this.UserID) + `,`,
 		`Query:` + fmt.Sprintf("%v", this.Query) + `,`,
+		`By:` + fmt.Sprintf("%v", this.By) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -658,7 +912,28 @@ func (this *GetReply) String() string {
 	if this == nil {
 		return "nil"
 	}
+	keysForGroup := make([]string, 0, len(this.Group))
+	for k, _ := range this.Group {
+		keysForGroup = append(keysForGroup, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Strings(keysForGroup)
+	mapStringForGroup := "map[string]*ExperimentList{"
+	for _, k := range keysForGroup {
+		mapStringForGroup += fmt.Sprintf("%v: %v,", k, this.Group[k])
+	}
+	mapStringForGroup += "}"
 	s := strings.Join([]string{`&GetReply{`,
+		`Experiments:` + strings.Replace(fmt.Sprintf("%v", this.Experiments), "Experiment", "Experiment", 1) + `,`,
+		`Group:` + mapStringForGroup + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ExperimentList) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ExperimentList{`,
 		`Experiments:` + strings.Replace(fmt.Sprintf("%v", this.Experiments), "Experiment", "Experiment", 1) + `,`,
 		`}`,
 	}, "")
@@ -668,10 +943,21 @@ func (this *Experiment) String() string {
 	if this == nil {
 		return "nil"
 	}
+	keysForLabels := make([]string, 0, len(this.Labels))
+	for k, _ := range this.Labels {
+		keysForLabels = append(keysForLabels, k)
+	}
+	github_com_gogo_protobuf_sortkeys.Strings(keysForLabels)
+	mapStringForLabels := "map[string]string{"
+	for _, k := range keysForLabels {
+		mapStringForLabels += fmt.Sprintf("%v: %v,", k, this.Labels[k])
+	}
+	mapStringForLabels += "}"
 	s := strings.Join([]string{`&Experiment{`,
 		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
 		`Namespace:` + fmt.Sprintf("%v", this.Namespace) + `,`,
 		`Params:` + strings.Replace(fmt.Sprintf("%v", this.Params), "Param", "Param", 1) + `,`,
+		`Labels:` + mapStringForLabels + `,`,
 		`}`,
 	}, "")
 	return s
@@ -782,6 +1068,35 @@ func (m *GetRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Query = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field By", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthElwin
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.By = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipElwin(dAtA[iNdEx:])
@@ -830,6 +1145,208 @@ func (m *GetReply) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: GetReply: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Experiments", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthElwin
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Experiments = append(m.Experiments, &Experiment{})
+			if err := m.Experiments[len(m.Experiments)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Group", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthElwin
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var keykey uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				keykey |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			var stringLenmapkey uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLenmapkey |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLenmapkey := int(stringLenmapkey)
+			if intStringLenmapkey < 0 {
+				return ErrInvalidLengthElwin
+			}
+			postStringIndexmapkey := iNdEx + intStringLenmapkey
+			if postStringIndexmapkey > l {
+				return io.ErrUnexpectedEOF
+			}
+			mapkey := string(dAtA[iNdEx:postStringIndexmapkey])
+			iNdEx = postStringIndexmapkey
+			if m.Group == nil {
+				m.Group = make(map[string]*ExperimentList)
+			}
+			if iNdEx < postIndex {
+				var valuekey uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowElwin
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					valuekey |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				var mapmsglen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowElwin
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					mapmsglen |= (int(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if mapmsglen < 0 {
+					return ErrInvalidLengthElwin
+				}
+				postmsgIndex := iNdEx + mapmsglen
+				if mapmsglen < 0 {
+					return ErrInvalidLengthElwin
+				}
+				if postmsgIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				mapvalue := &ExperimentList{}
+				if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+					return err
+				}
+				iNdEx = postmsgIndex
+				m.Group[mapkey] = mapvalue
+			} else {
+				var mapvalue *ExperimentList
+				m.Group[mapkey] = mapvalue
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipElwin(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthElwin
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ExperimentList) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowElwin
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ExperimentList: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ExperimentList: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1000,6 +1517,122 @@ func (m *Experiment) Unmarshal(dAtA []byte) error {
 			m.Params = append(m.Params, &Param{})
 			if err := m.Params[len(m.Params)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Labels", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthElwin
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var keykey uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				keykey |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			var stringLenmapkey uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowElwin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLenmapkey |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLenmapkey := int(stringLenmapkey)
+			if intStringLenmapkey < 0 {
+				return ErrInvalidLengthElwin
+			}
+			postStringIndexmapkey := iNdEx + intStringLenmapkey
+			if postStringIndexmapkey > l {
+				return io.ErrUnexpectedEOF
+			}
+			mapkey := string(dAtA[iNdEx:postStringIndexmapkey])
+			iNdEx = postStringIndexmapkey
+			if m.Labels == nil {
+				m.Labels = make(map[string]string)
+			}
+			if iNdEx < postIndex {
+				var valuekey uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowElwin
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					valuekey |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				var stringLenmapvalue uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowElwin
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLenmapvalue |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLenmapvalue := int(stringLenmapvalue)
+				if intStringLenmapvalue < 0 {
+					return ErrInvalidLengthElwin
+				}
+				postStringIndexmapvalue := iNdEx + intStringLenmapvalue
+				if postStringIndexmapvalue > l {
+					return io.ErrUnexpectedEOF
+				}
+				mapvalue := string(dAtA[iNdEx:postStringIndexmapvalue])
+				iNdEx = postStringIndexmapvalue
+				m.Labels[mapkey] = mapvalue
+			} else {
+				var mapvalue string
+				m.Labels[mapkey] = mapvalue
 			}
 			iNdEx = postIndex
 		default:
@@ -1239,28 +1872,35 @@ var (
 func init() { proto.RegisterFile("elwin.proto", fileDescriptorElwin) }
 
 var fileDescriptorElwin = []byte{
-	// 359 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x51, 0xc1, 0x4e, 0xea, 0x40,
-	0x14, 0xed, 0xc0, 0x2b, 0x79, 0x5c, 0x36, 0x2f, 0xf3, 0xe0, 0xbd, 0x86, 0xe0, 0x84, 0x74, 0x61,
-	0x58, 0xb5, 0x01, 0x17, 0x26, 0x2e, 0x55, 0x42, 0xdc, 0x91, 0xc6, 0x8d, 0xee, 0x06, 0x32, 0x42,
-	0x93, 0xb6, 0x33, 0x74, 0xa6, 0x28, 0x3b, 0xe3, 0x17, 0x98, 0xf8, 0x13, 0x7e, 0x8a, 0x4b, 0x12,
-	0x37, 0x2e, 0xa5, 0xba, 0x70, 0xc9, 0x27, 0x18, 0xa6, 0x15, 0x1a, 0xe3, 0x6a, 0xee, 0x39, 0xe7,
-	0xce, 0x3d, 0xf7, 0xcc, 0x40, 0x8d, 0x05, 0xd7, 0x7e, 0xe4, 0x88, 0x98, 0x2b, 0x8e, 0xab, 0x19,
-	0xa0, 0xc2, 0x6f, 0xb6, 0x26, 0x9c, 0x4f, 0x02, 0xe6, 0x52, 0xe1, 0xbb, 0x34, 0x8a, 0xb8, 0xa2,
-	0xca, 0xe7, 0x91, 0xcc, 0x1a, 0xed, 0x23, 0x80, 0x01, 0x53, 0x1e, 0x9b, 0x25, 0x4c, 0x2a, 0xfc,
-	0x0f, 0x2a, 0x89, 0x64, 0xf1, 0xd9, 0xa9, 0x85, 0xda, 0xa8, 0x53, 0xf5, 0x72, 0x84, 0xeb, 0x60,
-	0xce, 0x12, 0x16, 0x2f, 0xac, 0x92, 0xa6, 0x33, 0x60, 0x9f, 0xc0, 0x6f, 0x7d, 0x57, 0x04, 0x0b,
-	0x7c, 0x08, 0x35, 0x76, 0x23, 0x58, 0xec, 0x87, 0x2c, 0x52, 0xd2, 0x42, 0xed, 0x72, 0xa7, 0xd6,
-	0x6b, 0x38, 0xdb, 0x35, 0x9c, 0xfe, 0x56, 0xf5, 0x8a, 0x9d, 0xf6, 0x14, 0x60, 0x27, 0x61, 0x0c,
-	0xbf, 0x22, 0x1a, 0xb2, 0xdc, 0x5e, 0xd7, 0xb8, 0x05, 0xd5, 0xcd, 0x29, 0x05, 0x1d, 0xb3, 0x7c,
-	0x81, 0x1d, 0x81, 0x3b, 0x50, 0x11, 0x34, 0xa6, 0xa1, 0xb4, 0xca, 0xda, 0xf3, 0x4f, 0xc1, 0x73,
-	0xb8, 0x11, 0xbc, 0x5c, 0xb7, 0xbb, 0x60, 0x6a, 0xe2, 0x47, 0x93, 0x3a, 0x98, 0x73, 0x1a, 0x24,
-	0x5f, 0x06, 0x19, 0xe8, 0x5d, 0x80, 0xd9, 0xdf, 0x4c, 0xc3, 0x43, 0x28, 0x0f, 0x98, 0xc2, 0xc5,
-	0x40, 0xbb, 0x67, 0x6b, 0xfe, 0xfd, 0x4e, 0x8b, 0x60, 0x61, 0xef, 0xdd, 0x3d, 0xbf, 0x3f, 0x94,
-	0xfe, 0xe3, 0x86, 0xab, 0x45, 0x77, 0xde, 0x75, 0x0b, 0xb9, 0x8f, 0xcf, 0x97, 0x2b, 0x62, 0xbc,
-	0xac, 0x88, 0xb1, 0x5e, 0x11, 0x74, 0x9b, 0x12, 0xf4, 0x98, 0x12, 0xf4, 0x94, 0x12, 0xb4, 0x4c,
-	0x09, 0x7a, 0x4d, 0x09, 0xfa, 0x48, 0x89, 0xb1, 0x4e, 0x09, 0xba, 0x7f, 0x23, 0xc6, 0xe5, 0xfe,
-	0xc4, 0x57, 0xd3, 0x64, 0xe4, 0x8c, 0x79, 0xe8, 0x5e, 0x71, 0x1e, 0x24, 0xd2, 0xe7, 0x51, 0x36,
-	0x58, 0xff, 0xa3, 0xcc, 0xea, 0x51, 0x45, 0xa3, 0x83, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5f,
-	0xe0, 0x97, 0x68, 0x0d, 0x02, 0x00, 0x00,
+	// 474 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0xb1, 0x6e, 0xd4, 0x40,
+	0x10, 0xbd, 0xb5, 0xe3, 0x13, 0x37, 0x96, 0xa2, 0x68, 0xc9, 0x81, 0x39, 0x85, 0x55, 0x70, 0x81,
+	0xae, 0xb2, 0x95, 0x03, 0x09, 0x42, 0x89, 0x38, 0x9d, 0x82, 0x52, 0x44, 0x86, 0x06, 0xba, 0x75,
+	0x34, 0x1c, 0x16, 0xb6, 0xd7, 0xf1, 0xae, 0x03, 0xee, 0x10, 0x5f, 0x80, 0xc4, 0x4f, 0xf0, 0x29,
+	0x54, 0x28, 0x12, 0x0d, 0x15, 0xe2, 0x0c, 0x05, 0x65, 0x3e, 0x01, 0x79, 0x6d, 0xee, 0x0c, 0x72,
+	0x45, 0xe5, 0x99, 0x79, 0x6f, 0x66, 0xdf, 0x3c, 0xef, 0x82, 0x8d, 0xf1, 0xeb, 0x28, 0xf5, 0xb2,
+	0x5c, 0x28, 0x41, 0x47, 0x4d, 0xc2, 0xb3, 0x68, 0xb2, 0xb7, 0x14, 0x62, 0x19, 0xa3, 0xcf, 0xb3,
+	0xc8, 0xe7, 0x69, 0x2a, 0x14, 0x57, 0x91, 0x48, 0x65, 0x43, 0x74, 0x1f, 0x03, 0x2c, 0x50, 0x05,
+	0x78, 0x56, 0xa0, 0x54, 0xf4, 0x1a, 0x0c, 0x0b, 0x89, 0xf9, 0xd1, 0x23, 0x87, 0xec, 0x93, 0xe9,
+	0x28, 0x68, 0x33, 0xba, 0x0b, 0xd6, 0x59, 0x81, 0x79, 0xe9, 0x18, 0xba, 0xdc, 0x24, 0x74, 0x1b,
+	0x8c, 0xb0, 0x74, 0x4c, 0x5d, 0x32, 0xc2, 0xd2, 0xfd, 0x4c, 0xe0, 0x8a, 0x1e, 0x96, 0xc5, 0x25,
+	0xbd, 0x07, 0x36, 0xbe, 0xc9, 0x30, 0x8f, 0x12, 0x4c, 0x95, 0x74, 0xc8, 0xbe, 0x39, 0xb5, 0x67,
+	0x63, 0x6f, 0xad, 0xcb, 0x9b, 0xaf, 0xd1, 0xa0, 0xcb, 0xa4, 0x77, 0xc1, 0x5a, 0xe6, 0xa2, 0xc8,
+	0x1c, 0x43, 0xb7, 0xb0, 0x4e, 0xcb, 0x9f, 0xe1, 0xde, 0xa2, 0x26, 0xcc, 0x53, 0x95, 0x97, 0x41,
+	0x43, 0x9e, 0x3c, 0x01, 0xd8, 0x14, 0xe9, 0x0e, 0x98, 0xaf, 0xb0, 0x6c, 0x97, 0xa8, 0x43, 0xea,
+	0x83, 0x75, 0xce, 0xe3, 0x02, 0xf5, 0x06, 0xf6, 0xec, 0x46, 0xaf, 0x90, 0xe3, 0x48, 0xaa, 0xa0,
+	0xe1, 0x3d, 0x30, 0xee, 0x13, 0xf7, 0x08, 0xb6, 0xff, 0x06, 0xff, 0x7b, 0x2b, 0xf7, 0x1b, 0x01,
+	0xd8, 0x60, 0x94, 0xc2, 0x56, 0xca, 0x13, 0x6c, 0x15, 0xea, 0x98, 0xee, 0xc1, 0xa8, 0xfe, 0xca,
+	0x8c, 0x9f, 0x62, 0x6b, 0xf4, 0xa6, 0x40, 0xa7, 0x30, 0xcc, 0x78, 0xce, 0x13, 0xe9, 0x98, 0xfa,
+	0xd0, 0x9d, 0xce, 0xa1, 0x27, 0x35, 0x10, 0xb4, 0x38, 0x3d, 0x84, 0x61, 0xcc, 0x43, 0x8c, 0xa5,
+	0xb3, 0xa5, 0x99, 0xb7, 0x7a, 0xe5, 0x79, 0xc7, 0x9a, 0xd3, 0x98, 0xd8, 0x36, 0x4c, 0x0e, 0xc1,
+	0xee, 0x94, 0x7b, 0x6c, 0xdc, 0xed, 0xda, 0x38, 0xea, 0x7a, 0x75, 0x00, 0x96, 0x96, 0xd1, 0xbb,
+	0x5a, 0x6f, 0xdb, 0xec, 0x19, 0x58, 0xf3, 0x5a, 0x19, 0x3d, 0x01, 0x73, 0x81, 0x8a, 0x8e, 0xff,
+	0xfd, 0xd5, 0xfa, 0x52, 0x4e, 0xae, 0xf6, 0xdc, 0x00, 0xf7, 0xe6, 0xbb, 0x2f, 0x3f, 0x3f, 0x18,
+	0xd7, 0xe9, 0xd8, 0xd7, 0xa0, 0x7f, 0x7e, 0xe0, 0x77, 0xec, 0x7e, 0xf8, 0xf4, 0x62, 0xc5, 0x06,
+	0x5f, 0x57, 0x6c, 0x70, 0xb9, 0x62, 0xe4, 0x6d, 0xc5, 0xc8, 0xc7, 0x8a, 0x91, 0x4f, 0x15, 0x23,
+	0x17, 0x15, 0x23, 0xdf, 0x2b, 0x46, 0x7e, 0x55, 0x6c, 0x70, 0x59, 0x31, 0xf2, 0xfe, 0x07, 0x1b,
+	0x3c, 0xbf, 0xbd, 0x8c, 0xd4, 0xcb, 0x22, 0xf4, 0x4e, 0x45, 0xe2, 0xbf, 0x10, 0x22, 0x2e, 0x64,
+	0x24, 0xd2, 0x66, 0xb0, 0x7e, 0x25, 0xb2, 0x89, 0xc3, 0xa1, 0xce, 0xee, 0xfc, 0x0e, 0x00, 0x00,
+	0xff, 0xff, 0x9b, 0xcf, 0x70, 0xee, 0x6b, 0x03, 0x00, 0x00,
 }

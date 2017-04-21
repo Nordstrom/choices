@@ -230,9 +230,8 @@ type elwinServer struct {
 }
 
 func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.GetReply, error) {
-	log.Printf("GetNamespaces: %v", req)
 	if req == nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier received")
+		return nil, grpc.Errorf(codes.InvalidArgument, "Get: request is nil")
 	}
 	// TODO: we really need to pass in the requirements in the request.
 	// This requires an update to elwin.proto
@@ -242,7 +241,21 @@ func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.Ge
 	}
 	resp, err := e.Experiments(req.UserID, selector)
 	if err != nil {
-		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", req.Query, req.UserID, err)
+		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", req.Query, req.UserID, err)
+	}
+
+	if req.By != "" {
+		byResp := make(map[string]*elwin.ExperimentList, 10)
+		for _, v := range resp {
+			if group, ok := v.Labels[req.By]; !ok {
+				appendToGroup(byResp, v, "None")
+			} else {
+				appendToGroup(byResp, v, group)
+			}
+		}
+		return &elwin.GetReply{
+			Group: byResp,
+		}, nil
 	}
 
 	exp := &elwin.GetReply{
@@ -264,6 +277,25 @@ func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.Ge
 		}
 	}
 	return exp, nil
+}
+
+func appendToGroup(br map[string]*elwin.ExperimentList, e choices.ExperimentResponse, group string) {
+	if br[group] == nil {
+		br[group] = &elwin.ExperimentList{}
+	}
+	elist := br[group].Experiments
+	ee := &elwin.Experiment{
+		Name:      e.Name,
+		Namespace: e.Namespace,
+	}
+	for i, p := range e.Params {
+		ee.Params[i] = &elwin.Param{
+			Name:  p.Name,
+			Value: p.Value,
+		}
+	}
+	elist = append(elist, ee)
+	br[group].Experiments = elist
 }
 
 func logCloseErr(c io.Closer) {

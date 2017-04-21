@@ -26,20 +26,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "userID",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "query",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "Elwin"
         ]
@@ -51,15 +37,35 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "namespace": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "params": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/apiParam"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "string"
+          }
+        }
+      }
+    },
+    "apiExperimentList": {
+      "type": "object",
+      "properties": {
+        "experiments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiExperiment"
           }
         }
       }
@@ -72,6 +78,12 @@
           "items": {
             "$ref": "#/definitions/apiExperiment"
           }
+        },
+        "group": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/apiExperimentList"
+          }
         }
       }
     },
@@ -79,10 +91,16 @@
       "type": "object",
       "properties": {
         "userID": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "query": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
+        },
+        "by": {
+          "type": "string",
+          "format": "string"
         }
       }
     },
@@ -90,10 +108,12 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         },
         "value": {
-          "type": "string"
+          "type": "string",
+          "format": "string"
         }
       }
     }
