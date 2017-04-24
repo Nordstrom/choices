@@ -9,20 +9,35 @@ option go_package = "github.com/foolusion/elwinprotos/elwin";
 service Elwin {
 	rpc Get(GetRequest) returns (GetReply) {
 		option(google.api.http) = {
-			get: "/elwin/v1/experiments"
+			post: "/elwin/v1/experiments"
+			body: "*"
 		};
 	}
 }
 
 message GetRequest {
 	string userID = 1;
-	string query = 2;
+	repeated Requirement requirements = 2;
 	string by = 3;
 }
 
 message GetReply {
 	repeated Experiment experiments = 1;
 	map<string, ExperimentList> group = 2;
+}
+
+message Requirement {
+	string key = 1;
+	Operation op = 2;
+	repeated string values = 3;
+}
+
+enum Operation {
+	EXISTS = 0;
+	EQUAL = 1;
+	NOT_EQUAL = 2;
+	IN = 3;
+	NOT_IN = 4;
 }
 
 message ExperimentList {

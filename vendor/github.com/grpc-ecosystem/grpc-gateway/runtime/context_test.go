@@ -28,7 +28,7 @@ func TestAnnotateContext_WorksWithEmpty(t *testing.T) {
 		t.Errorf("runtime.AnnotateContext(ctx, %#v) failed with %v; want success", request, err)
 		return
 	}
-	md, ok := metadata.FromContext(annotated)
+	md, ok := metadata.FromOutgoingContext(annotated)
 	if !ok || len(md) != emptyForwardMetaCount {
 		t.Errorf("Expected %d metadata items in context; got %v", emptyForwardMetaCount, md)
 	}
@@ -50,15 +50,18 @@ func TestAnnotateContext_ForwardsGrpcMetadata(t *testing.T) {
 		t.Errorf("runtime.AnnotateContext(ctx, %#v) failed with %v; want success", request, err)
 		return
 	}
-	md, ok := metadata.FromContext(annotated)
-	if got, want := len(md), emptyForwardMetaCount+3; !ok || got != want {
-		t.Errorf("Expected %d metadata items in context; got %d", got, want)
+	md, ok := metadata.FromOutgoingContext(annotated)
+	if got, want := len(md), emptyForwardMetaCount+4; !ok || got != want {
+		t.Errorf("metadata items in context = %d want %d: %v", got, want, md)
 	}
 	if got, want := md["foobar"], []string{"Value1"}; !reflect.DeepEqual(got, want) {
-		t.Errorf(`md["foobar"] = %q; want %q`, got, want)
+		t.Errorf(`md["grpcgateway-foobar"] = %q; want %q`, got, want)
 	}
 	if got, want := md["foo-baz"], []string{"Value2", "Value3"}; !reflect.DeepEqual(got, want) {
-		t.Errorf(`md["foo-baz"] = %q want %q`, got, want)
+		t.Errorf(`md["grpcgateway-foo-baz"] = %q want %q`, got, want)
+	}
+	if got, want := md["grpcgateway-authorization"], []string{"Token 1234567890"}; !reflect.DeepEqual(got, want) {
+		t.Errorf(`md["grpcgateway-authorization"] = %q want %q`, got, want)
 	}
 	if got, want := md["authorization"], []string{"Token 1234567890"}; !reflect.DeepEqual(got, want) {
 		t.Errorf(`md["authorization"] = %q want %q`, got, want)
@@ -79,7 +82,7 @@ func TestAnnotateContext_XForwardedFor(t *testing.T) {
 		t.Errorf("runtime.AnnotateContext(ctx, %#v) failed with %v; want success", request, err)
 		return
 	}
-	md, ok := metadata.FromContext(annotated)
+	md, ok := metadata.FromOutgoingContext(annotated)
 	if !ok || len(md) != emptyForwardMetaCount+1 {
 		t.Errorf("Expected %d metadata items in context; got %v", emptyForwardMetaCount+1, md)
 	}

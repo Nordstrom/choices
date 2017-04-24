@@ -1,7 +1,40 @@
 {
     "dependencies": {
+        "github.com/boltdb/bolt": {
+            "branch": "master"
+        },
         "github.com/foolusion/elwinprotos": {
-            "version": "v0.0.10"
+            "branch": "requirements"
+        },
+        "github.com/gogo/protobuf": {
+            "branch": "master"
+        },
+        "github.com/grpc-ecosystem/go-grpc-prometheus": {
+            "branch": "master"
+        },
+        "github.com/grpc-ecosystem/grpc-gateway": {
+            "version": "^1.2.0"
+        },
+        "github.com/pkg/errors": {
+            "branch": "master"
+        },
+        "github.com/prometheus/client_golang": {
+            "branch": "master"
+        },
+        "github.com/spf13/viper": {
+            "branch": "master"
+        },
+        "golang.org/x/net": {
+            "branch": "master"
+        },
+        "google.golang.org/grpc": {
+            "branch": "master"
+        },
+        "gopkg.in/mgo.v2": {
+            "branch": "v2"
+        },
+        "k8s.io/apimachinery": {
+            "branch": "master"
         }
     }
 }

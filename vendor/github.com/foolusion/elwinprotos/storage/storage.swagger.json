@@ -32,8 +32,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -53,6 +52,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "ElwinStorage"
         ]
@@ -102,8 +109,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         ],
         "tags": [
@@ -144,22 +150,18 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "namespace": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "params": {
@@ -172,8 +174,7 @@
           "$ref": "#/definitions/storageSegments"
         },
         "detailName": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "Experiment structure"
@@ -194,8 +195,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "description": "GetRequest request message to get an experiment by id."
@@ -216,8 +216,7 @@
       "type": "object",
       "properties": {
         "query": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "description": "ListRequest retuns all the experiments from the given environment."
@@ -226,8 +225,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "numSegments": {
           "type": "string",
@@ -274,8 +272,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "value": {
           "$ref": "#/definitions/storageValue"
@@ -299,8 +296,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "description": "RemoveRequest request message to remove an existing experiment from\nan environment."
@@ -348,8 +344,7 @@
         "choices": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "weights": {

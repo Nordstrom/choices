@@ -229,25 +229,43 @@ type elwinServer struct {
 	*choices.Config
 }
 
-func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.GetReply, error) {
-	if req == nil {
+func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetReply, error) {
+	if r == nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "Get: request is nil")
 	}
-	// TODO: we really need to pass in the requirements in the request.
-	// This requires an update to elwin.proto
-	selector, err := labels.Parse(req.Query)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not parse query")
-	}
-	resp, err := e.Experiments(req.UserID, selector)
-	if err != nil {
-		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", req.Query, req.UserID, err)
+	selector := labels.NewSelector()
+	for _, requirement := range r.Requirements {
+		var op selection.Operator
+		switch requirement.Op {
+		case elwin.Operation_EXISTS:
+			op = selection.Exists
+		case elwin.Operation_EQUAL:
+			op = selection.Equals
+		case elwin.Operation_NOT_EQUAL:
+			op = selection.NotEquals
+		case elwin.Operation_IN:
+			op = selection.In
+		case elwin.Operation_NOT_IN:
+			op = selection.NotIn
+		default:
+			return nil, errors.New("invalid operator in requirements")
+		}
+		req, err := labels.NewRequirement(requirement.Key, op, requirement.Values)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not create requirement")
+		}
+		selector = selector.Add(*req)
 	}
 
-	if req.By != "" {
+	resp, err := e.Experiments(r.UserID, selector)
+	if err != nil {
+		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", r.Requirements, r.UserID, err)
+	}
+
+	if r.By != "" {
 		byResp := make(map[string]*elwin.ExperimentList, 10)
 		for _, v := range resp {
-			if group, ok := v.Labels[req.By]; !ok {
+			if group, ok := v.Labels[r.By]; !ok {
 				appendToGroup(byResp, v, "None")
 			} else {
 				appendToGroup(byResp, v, group)

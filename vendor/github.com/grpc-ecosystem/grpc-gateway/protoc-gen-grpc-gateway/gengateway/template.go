@@ -13,7 +13,8 @@ import (
 
 type param struct {
 	*descriptor.File
-	Imports []descriptor.GoPackage
+	Imports           []descriptor.GoPackage
+	UseRequestContext bool
 }
 
 type binding struct {
@@ -66,27 +67,43 @@ func (f queryParamFilter) String() string {
 	return fmt.Sprintf("&utilities.DoubleArray{Encoding: map[string]int{%s}, Base: %#v, Check: %#v}", e, f.Base, f.Check)
 }
 
+type trailerParams struct {
+	Services          []*descriptor.Service
+	UseRequestContext bool
+}
+
 func applyTemplate(p param) (string, error) {
 	w := bytes.NewBuffer(nil)
 	if err := headerTemplate.Execute(w, p); err != nil {
 		return "", err
 	}
-	var methodSeen bool
+	var targetServices []*descriptor.Service
 	for _, svc := range p.Services {
+		var methodWithBindingsSeen bool
 		for _, meth := range svc.Methods {
 			glog.V(2).Infof("Processing %s.%s", svc.GetName(), meth.GetName())
-			methodSeen = true
+			methName := strings.Title(*meth.Name)
+			meth.Name = &methName
 			for _, b := range meth.Bindings {
+				methodWithBindingsSeen = true
 				if err := handlerTemplate.Execute(w, binding{Binding: b}); err != nil {
 					return "", err
 				}
 			}
 		}
+		if methodWithBindingsSeen {
+			targetServices = append(targetServices, svc)
+		}
 	}
-	if !methodSeen {
+	if len(targetServices) == 0 {
 		return "", errNoTargetService
 	}
-	if err := trailerTemplate.Execute(w, p.Services); err != nil {
+
+	tp := trailerParams{
+		Services:          targetServices,
+		UseRequestContext: p.UseRequestContext,
+	}
+	if err := trailerTemplate.Execute(w, tp); err != nil {
 		return "", err
 	}
 	return w.String(), nil
@@ -262,8 +279,11 @@ var (
 		return nil
 	}
 	if err := handleSend(); err != nil {
-		if err := stream.CloseSend(); err != nil {
-			grpclog.Printf("Failed to terminate client stream: %v", err)
+		if cerr := stream.CloseSend(); cerr != nil {
+			grpclog.Printf("Failed to terminate client stream: %v", cerr)
+		}
+		if err == io.EOF {
+			return stream, metadata, nil
 		}
 		return nil, metadata, err
 	}
@@ -288,7 +308,8 @@ var (
 `))
 
 	trailerTemplate = template.Must(template.New("trailer").Parse(`
-{{range $svc := .}}
+{{$UseRequestContext := .UseRequestContext}}
+{{range $svc := .Services}}
 // Register{{$svc.GetName}}HandlerFromEndpoint is same as Register{{$svc.GetName}}Handler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func Register{{$svc.GetName}}HandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
@@ -321,7 +342,11 @@ func Register{{$svc.GetName}}Handler(ctx context.Context, mux *runtime.ServeMux,
 	{{range $m := $svc.Methods}}
 	{{range $b := $m.Bindings}}
 	mux.Handle({{$b.HTTPMethod | printf "%q"}}, pattern_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	{{- if $UseRequestContext }}
+		ctx, cancel := context.WithCancel(req.Context())
+	{{- else -}}
 		ctx, cancel := context.WithCancel(ctx)
+	{{- end }}
 		defer cancel()
 		if cn, ok := w.(http.CloseNotifier); ok {
 			go func(done <-chan struct{}, closed <-chan bool) {
