@@ -15,7 +15,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net"
@@ -297,6 +299,28 @@ func (l launchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	b, err := json.Marshal(struct {
+		ID    string `json:"id"`
+		State string `json:"state"`
+	}{
+		ID:    r.Form.Get("id"),
+		State: "START",
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	buf := bytes.NewBuffer(b)
+	req, err := http.NewRequest("POST", "http://"+r.Form.Get("to")+"/api/v1/experiment-change-state", buf)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if _, err := http.DefaultClient.Do(req); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
