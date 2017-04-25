@@ -3,8 +3,10 @@ syntax = "proto3";
 package elwin.api;
 
 import "google/api/annotations.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 option go_package = "github.com/foolusion/elwinprotos/elwin";
+option (gogoproto.goproto_registration) = true;
 
 service Elwin {
 	rpc Get(GetRequest) returns (GetReply) {

@@ -236,15 +236,15 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 	for _, requirement := range r.Requirements {
 		var op selection.Operator
 		switch requirement.Op {
-		case elwin.Operation_EXISTS:
+		case elwin.EXISTS:
 			op = selection.Exists
-		case elwin.Operation_EQUAL:
+		case elwin.EQUAL:
 			op = selection.Equals
-		case elwin.Operation_NOT_EQUAL:
+		case elwin.NOT_EQUAL:
 			op = selection.NotEquals
-		case elwin.Operation_IN:
+		case elwin.IN:
 			op = selection.In
-		case elwin.Operation_NOT_IN:
+		case elwin.NOT_IN:
 			op = selection.NotIn
 		default:
 			return nil, errors.New("invalid operator in requirements")

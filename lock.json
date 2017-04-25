@@ -20,7 +20,7 @@
         {
             "name": "github.com/foolusion/elwinprotos",
             "branch": "requirements",
-            "revision": "6c30ace90bb464bba2b072fbbc9944167f86bb32",
+            "revision": "e63c037cfbfc58263110e130f8a44a98a4b1e1a4",
             "packages": [
                 "elwin",
                 "storage"
@@ -39,7 +39,9 @@
             "branch": "master",
             "revision": "7efa791bd276fd4db00867cbd982b552627c24cb",
             "packages": [
-                "proto"
+                "gogoproto",
+                "proto",
+                "sortkeys"
             ]
         },
         {
@@ -222,7 +224,7 @@
         {
             "name": "golang.org/x/sys",
             "branch": "master",
-            "revision": "8c0a5eacbac818f9011015b17992f53d9cec3e8f",
+            "revision": "9f30dcbe5be197894515a338a9bda9253567ea8f",
             "packages": [
                 "unix"
             ]

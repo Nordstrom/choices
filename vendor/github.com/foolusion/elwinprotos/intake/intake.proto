@@ -3,9 +3,11 @@ syntax = "proto3";
 package elwin.intake;
 
 import "google/api/annotations.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "storage.proto";
 
 option go_package = "github.com/foolusion/elwinprotos/intake";
+option (gogoproto.goproto_registration) = true;
 
 // The ExperientIntake service definition
 service ExperimentIntake {
