@@ -61,6 +61,7 @@ type server struct {
 }
 
 func (s *server) SetExperiment(ctx context.Context, e *storage.Experiment) error {
+	s.Refresh()
 	if e == nil {
 		return errors.New("experiment is nil")
 	}
@@ -73,6 +74,7 @@ func (s *server) SetExperiment(ctx context.Context, e *storage.Experiment) error
 }
 
 func (s *server) Experiment(ctx context.Context, id string) (*storage.Experiment, error) {
+	s.Refresh()
 	var e experiment
 	if err := s.DB(s.db).C(collExperiments).FindId(id).One(&e); err != nil {
 		return nil, errors.Wrap(err, "could not find experiment")
@@ -81,6 +83,7 @@ func (s *server) Experiment(ctx context.Context, id string) (*storage.Experiment
 }
 
 func (s *server) AllExperiments(ctx context.Context) ([]*storage.Experiment, error) {
+	s.Refresh()
 	resp, err := s.List(ctx, &storage.ListRequest{})
 	if err != nil {
 		return nil, nil
@@ -99,6 +102,7 @@ func (s *server) New(ctx oldctx.Context, r *storage.NewRequest) (*storage.NewRep
 }
 
 func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.ListReply, error) {
+	s.Refresh()
 	if r == nil {
 		return nil, errNilRequest
 	}
@@ -136,6 +140,7 @@ func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.List
 }
 
 func (s *server) Get(ctx oldctx.Context, r *storage.GetRequest) (*storage.GetReply, error) {
+	s.Refresh()
 	if r == nil {
 		return nil, errNilRequest
 	}
@@ -148,6 +153,7 @@ func (s *server) Get(ctx oldctx.Context, r *storage.GetRequest) (*storage.GetRep
 }
 
 func (s *server) Set(ctx oldctx.Context, r *storage.SetRequest) (*storage.SetReply, error) {
+	s.Refresh()
 	if r == nil {
 		return nil, errNilRequest
 	}
@@ -187,6 +193,7 @@ func (s *server) Set(ctx oldctx.Context, r *storage.SetRequest) (*storage.SetRep
 }
 
 func (s *server) Remove(ctx oldctx.Context, r *storage.RemoveRequest) (*storage.RemoveReply, error) {
+	s.Refresh()
 	if r == nil {
 		return nil, errNilRequest
 	}
