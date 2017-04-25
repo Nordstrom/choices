@@ -316,10 +316,13 @@ func (l launchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if _, err := http.DefaultClient.Do(req); err != nil {
+	redshiftResp, err := http.DefaultClient.Do(req)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer redshiftResp.Body.Close()
+	log.Println(redshiftResp.Body)
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }
