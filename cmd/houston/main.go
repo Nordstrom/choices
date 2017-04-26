@@ -368,7 +368,7 @@ func (d deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	buf := bytes.NewBuffer(b)
-	req, err := http.NewRequest("POST", "http://"+r.Form.Get("to")+"/api/v1/experiment-change-state", buf)
+	req, err := http.NewRequest("POST", "http://"+r.Form.Get("environment")+"/api/v1/experiment-change-state", buf)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
