@@ -15,11 +15,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"html/template"
+	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -297,6 +301,31 @@ func (l launchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	b, err := json.Marshal(struct {
+		ID    string `json:"id"`
+		State string `json:"state"`
+	}{
+		ID:    r.Form.Get("id"),
+		State: "START",
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	buf := bytes.NewBuffer(b)
+	req, err := http.NewRequest("POST", "http://"+r.Form.Get("to")+"/api/v1/experiment-change-state", buf)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	redshiftResp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer redshiftResp.Body.Close()
+	io.Copy(os.Stdout, redshiftResp.Body)
+
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
@@ -326,6 +355,32 @@ func (d deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	b, err := json.Marshal(struct {
+		ID    string `json:"id"`
+		State string `json:"state"`
+	}{
+		ID:    r.Form.Get("id"),
+		State: "END",
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	buf := bytes.NewBuffer(b)
+	req, err := http.NewRequest("POST", "http://"+r.Form.Get("environment")+"/api/v1/experiment-change-state", buf)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	redshiftResp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer redshiftResp.Body.Close()
+	io.Copy(os.Stdout, redshiftResp.Body)
+
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
