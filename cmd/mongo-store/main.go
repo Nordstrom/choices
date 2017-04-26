@@ -95,10 +95,11 @@ func (s *server) New(ctx oldctx.Context, r *storage.NewRequest) (*storage.NewRep
 	if r == nil {
 		return nil, errNilRequest
 	}
-	if err := choices.CreateExperiment(ctx, s, r.Experiment, r.Namespace, int(r.NSegments), int(r.ESegments)); err != nil {
+	exp, err := choices.CreateExperiment(ctx, s, r.Experiment, r.Namespace, int(r.NSegments), int(r.ESegments))
+	if err != nil {
 		return nil, errors.Wrap(err, "could not create experiment")
 	}
-	return &storage.NewReply{}, nil
+	return &storage.NewReply{Experiment: exp}, nil
 }
 
 func (s *server) List(ctx oldctx.Context, r *storage.ListRequest) (*storage.ListReply, error) {

@@ -19,11 +19,11 @@ func CreateExperiment(
 	sNamespace *storage.Namespace,
 	nsNumSegments int,
 	expNumSegments int,
-) error {
+) (*storage.Experiment, error) {
 	if sExperiment == nil {
-		return errors.New("experiment is nil")
+		return nil, errors.New("experiment is nil")
 	} else if len(sExperiment.Labels) == 0 {
-		return errors.New("experiment labels are empty")
+		return nil, errors.New("experiment labels are empty")
 	}
 	exp := FromExperiment(sExperiment)
 	var ns *Namespace
@@ -44,12 +44,15 @@ func CreateExperiment(
 	}
 
 	if err := expcontroller.SetNamespace(ctx, ns.ToNamespace()); err != nil {
-		return errors.Wrap(err, "could not save namespace")
+		return nil, errors.Wrap(err, "could not save namespace")
 	}
 	if err := expcontroller.SetExperiment(ctx, exp.ToExperiment()); err != nil {
-		return errors.Wrap(err, "could not save experiment")
+		return nil, errors.Wrap(err, "could not save experiment")
 	}
-	return nil
+	// TODO: do this in a better way
+	out := exp.ToExperiment()
+	out.DetailName = sExperiment.DetailName
+	return out, nil
 }
 
 // BadSegments implements an Error interface. It is used when then
