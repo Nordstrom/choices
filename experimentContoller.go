@@ -32,6 +32,7 @@ func CreateExperiment(
 	} else {
 		ns = FromNamespace(sNamespace)
 	}
+	exp.Namespace = ns.Name
 	// sample the namespaces segments
 	seg := ns.Segments.sample(expNumSegments)
 	exp.Segments = &segments{b: seg, len: ns.Segments.len}
