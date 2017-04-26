@@ -39,9 +39,7 @@ func CreateExperiment(
 	if exp.Name == "" {
 		exp.Name = util.BasicNameGenerator.GenerateName("")
 	}
-	if exp.ID == "" {
-		exp.ID = util.BasicNameGenerator.GenerateName(fmt.Sprintf("exp-%s-", exp.Name))
-	}
+	exp.ID = util.BasicNameGenerator.GenerateName(fmt.Sprintf("exp-%s-", exp.Name))
 
 	if err := expcontroller.SetNamespace(ctx, ns.ToNamespace()); err != nil {
 		return nil, errors.Wrap(err, "could not save namespace")
