@@ -19,9 +19,11 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
+	"io"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -322,7 +324,7 @@ func (l launchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer redshiftResp.Body.Close()
-	log.Println(redshiftResp.Body)
+	io.Copy(os.Stdout, redshiftResp.Body)
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }
