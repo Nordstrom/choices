@@ -1,5 +1,5 @@
 {
-    "memo": "4368e11c3d5e8fd5e9085a76d4fe68f9b1fc5f12ae390250d7e2f5aa9621dbce",
+    "memo": "22a89ae5ccf3ee157626731580a4426f20cac09edc5c24a9e7a29d892c376af4",
     "projects": [
         {
             "name": "github.com/beorn7/perks",
@@ -19,8 +19,8 @@
         },
         {
             "name": "github.com/foolusion/elwinprotos",
-            "branch": "requirements",
-            "revision": "e63c037cfbfc58263110e130f8a44a98a4b1e1a4",
+            "branch": "master",
+            "revision": "af9ae3e99c2c87721ae18b172211399c86644c92",
             "packages": [
                 "elwin",
                 "storage"
@@ -37,7 +37,7 @@
         {
             "name": "github.com/gogo/protobuf",
             "branch": "master",
-            "revision": "7efa791bd276fd4db00867cbd982b552627c24cb",
+            "revision": "30433562cfbf487fe1df7cd26c7bab168d2f14d0",
             "packages": [
                 "gogoproto",
                 "proto",
@@ -139,7 +139,7 @@
         {
             "name": "github.com/prometheus/client_golang",
             "branch": "master",
-            "revision": "d01fd6222241828327e3507d64c90f796673bad0",
+            "revision": "7d9484283ebefa862b5b7727d4344cfdf9a0d138",
             "packages": [
                 "prometheus",
                 "prometheus/promhttp"
@@ -156,7 +156,7 @@
         {
             "name": "github.com/prometheus/common",
             "branch": "master",
-            "revision": "9e0844febd9e2856f839c9cb974fbd676d1755a8",
+            "revision": "13ba4ddd0caa9c28ca7b7bffe1dfa9ed8d5ef207",
             "packages": [
                 "expfmt",
                 "model"
@@ -197,7 +197,7 @@
         {
             "name": "github.com/spf13/pflag",
             "branch": "master",
-            "revision": "2300d0f8576fe575f71aaa5b9bbe4e1b0dc2eb51",
+            "revision": "f1d95a35e132e8a1868023a08932b14f0b8b8fcb",
             "packages": [
                 "."
             ]
@@ -224,7 +224,7 @@
         {
             "name": "golang.org/x/sys",
             "branch": "master",
-            "revision": "9f30dcbe5be197894515a338a9bda9253567ea8f",
+            "revision": "9ccfe848b9db8435a24c424abbc07a921adf1df5",
             "packages": [
                 "unix"
             ]
@@ -232,7 +232,7 @@
         {
             "name": "golang.org/x/text",
             "branch": "master",
-            "revision": "a9a820217f98f7c8a207ec1e45a874e1fe12c478",
+            "revision": "470f45bf29f4147d6fbd7dfd0a02a848e49f5bf4",
             "packages": [
                 "secure/bidirule",
                 "transform",
@@ -251,7 +251,7 @@
         {
             "name": "google.golang.org/grpc",
             "branch": "master",
-            "revision": "38df39bad1892a821a4feac7f7506a19a13661f2",
+            "revision": "b610ffd3f8786563002bd5b6a9951d56f64a4921",
             "packages": [
                 ".",
                 "codes",
@@ -279,7 +279,7 @@
         {
             "name": "k8s.io/apimachinery",
             "branch": "master",
-            "revision": "836ee7c3beaa3f1b25f682e5c4b3594d6b50f6a2",
+            "revision": "c1b276d6169561e7973bb67c81e3b25a493ed80c",
             "packages": [
                 "pkg/labels",
                 "pkg/selection"

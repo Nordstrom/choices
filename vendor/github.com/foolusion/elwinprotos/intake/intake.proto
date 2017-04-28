@@ -19,6 +19,12 @@ service ExperimentIntake {
       body: "*"
     };
   }
+  rpc ExperimentChangeState(ExperimentChangeStateRequest) returns (ExperimentChangeStateReply) {
+    option(google.api.http) = {
+      post: "/api/v1/experiment-change-state"
+      body: "*"
+    };
+  }
 }
 
 // ExperimentIntakeRequest creates an experiment in the database and sends a notification for reviewers
@@ -45,4 +51,21 @@ message ExperimentMetadata {
   string actionPlanNegative = 11;
   string actionPlanNeutral = 12;
   string experimentType = 13;
+}
+
+enum State {
+  ERR = 0;
+  START = 1;
+  END = 2;
+}
+
+message ExperimentChangeStateRequest {
+  string id = 1;
+  string date = 2;
+  State state = 3;
+}
+
+message ExperimentChangeStateReply {
+  string id = 1;
+  State state = 2;
 }

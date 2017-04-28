@@ -40,6 +40,19 @@ func request_ExperimentIntake_ExperimentIntake_0(ctx context.Context, marshaler 
 
 }
 
+func request_ExperimentIntake_ExperimentChangeState_0(ctx context.Context, marshaler runtime.Marshaler, client ExperimentIntakeClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ExperimentChangeStateRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil {
+		return nil, metadata, grpc.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ExperimentChangeState(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
 // RegisterExperimentIntakeHandlerFromEndpoint is same as RegisterExperimentIntakeHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterExperimentIntakeHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
@@ -98,13 +111,45 @@ func RegisterExperimentIntakeHandler(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("POST", pattern_ExperimentIntake_ExperimentChangeState_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		if cn, ok := w.(http.CloseNotifier); ok {
+			go func(done <-chan struct{}, closed <-chan bool) {
+				select {
+				case <-done:
+				case <-closed:
+					cancel()
+				}
+			}(ctx.Done(), cn.CloseNotify())
+		}
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, req)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+		}
+		resp, md, err := request_ExperimentIntake_ExperimentChangeState_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ExperimentIntake_ExperimentChangeState_0(ctx, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
 var (
 	pattern_ExperimentIntake_ExperimentIntake_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "experiment-intake"}, ""))
+
+	pattern_ExperimentIntake_ExperimentChangeState_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "experiment-change-state"}, ""))
 )
 
 var (
 	forward_ExperimentIntake_ExperimentIntake_0 = runtime.ForwardResponseMessage
+
+	forward_ExperimentIntake_ExperimentChangeState_0 = runtime.ForwardResponseMessage
 )
