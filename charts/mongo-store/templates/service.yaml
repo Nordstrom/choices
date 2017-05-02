@@ -1,0 +1,17 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ .Release.Name }}-{{ .Values.Name }}"
+  labels:
+    app: "{{ .Release.Name }}-{{ .Values.Name }}"
+    env: "{{ .Values.Environment }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    run: "{{ .Release.Name }}-{{ .Values.Name }}"
+    env: "{{ .Values.Environment }}"

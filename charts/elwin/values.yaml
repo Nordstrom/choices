@@ -1,0 +1,9 @@
+Name: elwin
+Image: quay.io/nordstrom/choices
+Environment: prod
+storageAddress: elwin-mongo:80
+readTimeout: 5s
+writeTimeout: 5s
+idleTimeout: 2m
+failTimeout: 15m
+updateInterval: 10s
