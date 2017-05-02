@@ -161,7 +161,6 @@ func main() {
 	log.Printf("Listening for json on %s", viper.GetString(cfgJSONAddr))
 
 	mux := http.NewServeMux()
-	mux.Handle("/", &jsonServer{ec})
 	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.Handle("/metrics", promhttp.Handler())
@@ -229,20 +228,51 @@ type elwinServer struct {
 	*choices.Config
 }
 
-func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.GetReply, error) {
-	log.Printf("GetNamespaces: %v", req)
-	if req == nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "GetNamespaces: no Identifier received")
+func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetReply, error) {
+	if r == nil {
+		return nil, grpc.Errorf(codes.InvalidArgument, "Get: request is nil")
 	}
-	// TODO: we really need to pass in the requirements in the request.
-	// This requires an update to elwin.proto
-	selector, err := labels.Parse(req.Query)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not parse query")
+	selector := labels.NewSelector()
+	for _, requirement := range r.Requirements {
+		var op selection.Operator
+		switch requirement.Op {
+		case elwin.EXISTS:
+			op = selection.Exists
+		case elwin.EQUAL:
+			op = selection.Equals
+		case elwin.NOT_EQUAL:
+			op = selection.NotEquals
+		case elwin.IN:
+			op = selection.In
+		case elwin.NOT_IN:
+			op = selection.NotIn
+		default:
+			return nil, errors.New("invalid operator in requirements")
+		}
+		req, err := labels.NewRequirement(requirement.Key, op, requirement.Values)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not create requirement")
+		}
+		selector = selector.Add(*req)
 	}
-	resp, err := e.Experiments(req.UserID, selector)
+
+	resp, err := e.Experiments(r.UserID, selector)
 	if err != nil {
-		return nil, fmt.Errorf("error resolving namespaces for %s, %s: %v", req.Query, req.UserID, err)
+		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", r.Requirements, r.UserID, err)
+	}
+
+	if r.By != "" {
+		byResp := make(map[string]*elwin.ExperimentList, 10)
+		for _, v := range resp {
+			if group, ok := v.Labels[r.By]; !ok {
+				appendToGroup(byResp, v, "None")
+			} else {
+				appendToGroup(byResp, v, group)
+			}
+		}
+		return &elwin.GetReply{
+			Group: byResp,
+		}, nil
 	}
 
 	exp := &elwin.GetReply{
@@ -253,6 +283,7 @@ func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.Ge
 		exp.Experiments[i] = &elwin.Experiment{
 			Name:      v.Name,
 			Namespace: v.Namespace,
+			Labels:    v.Labels,
 			Params:    make([]*elwin.Param, len(v.Params)),
 		}
 
@@ -266,136 +297,31 @@ func (e *elwinServer) Get(ctx context.Context, req *elwin.GetRequest) (*elwin.Ge
 	return exp, nil
 }
 
+func appendToGroup(br map[string]*elwin.ExperimentList, e choices.ExperimentResponse, group string) {
+	if br[group] == nil {
+		br[group] = &elwin.ExperimentList{}
+	}
+	elist := br[group].Experiments
+	ee := &elwin.Experiment{
+		Name:      e.Name,
+		Namespace: e.Namespace,
+		Labels:    e.Labels,
+		Params:    make([]*elwin.Param, len(e.Params)),
+	}
+	for i, p := range e.Params {
+		ee.Params[i] = &elwin.Param{
+			Name:  p.Name,
+			Value: p.Value,
+		}
+	}
+	elist = append(elist, ee)
+	br[group].Experiments = elist
+}
+
 func logCloseErr(c io.Closer) {
 	if err := c.Close(); err != nil {
 		log.Printf("could not close response body: %s", err)
 	}
-}
-
-type jsonServer struct {
-	*choices.Config
-}
-
-func (j *jsonServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-	defer jsonRequests.Inc()
-	defer func() {
-		jsonDurations.Observe(float64(time.Since(start)))
-	}()
-	if err := r.ParseForm(); err != nil {
-		log.Printf("could not parse form: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-type", "text/plain")
-		if _, err := w.Write([]byte("invalid form data")); err != nil {
-			log.Printf("could not write to root connection: %s", err)
-		}
-		return
-	}
-	if r.Body != nil {
-		defer logCloseErr(r.Body)
-	}
-
-	sel := labels.NewSelector()
-
-	for k, v := range r.Form {
-		switch k {
-		case "userid":
-			continue
-		case "team", "label", "teamid", "group-id":
-			r, err := labels.NewRequirement("team", selection.In, v)
-			if err != nil {
-				j.ErrChan <- errors.Wrap(err, "could not create selection requirement")
-				return
-			}
-			sel = sel.Add(*r)
-		default:
-			r, err := labels.NewRequirement(k, selection.In, v)
-			if err != nil {
-				j.ErrChan <- errors.Wrap(err, "could not create selection requirement")
-				return
-			}
-			sel = sel.Add(*r)
-		}
-	}
-
-	resp, err := j.Experiments(r.Form.Get("userid"), sel)
-	if err != nil {
-		j.ErrChan <- fmt.Errorf("rootHandler: couldn't get Experiments: %v", err)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := elwinJSON(resp, w); err != nil {
-		j.ErrChan <- err
-		return
-	}
-}
-
-type errWriter struct {
-	w   io.Writer
-	err error
-}
-
-func (ew *errWriter) write(buf []byte) {
-	if ew.err != nil {
-		return
-	}
-	_, ew.err = ew.w.Write(buf)
-}
-
-func (ew *errWriter) writeKey(buf []byte) {
-	ew.write(jsonQuote)
-	ew.write(buf)
-	ew.write(jsonQuote)
-	ew.write(jsonKeyEnd)
-}
-
-func (ew *errWriter) writeString(buf []byte) {
-	ew.write(jsonQuote)
-	ew.write(buf)
-	ew.write(jsonQuote)
-}
-
-var (
-	jsonQuote    = []byte{'"'}
-	jsonKeyEnd   = []byte{':', ' '}
-	jsonComma    = []byte{',', ' '}
-	jsonOpenObj  = []byte{'{'}
-	jsonCloseObj = []byte{'}'}
-)
-
-func elwinJSON(er []choices.ExperimentResponse, w io.Writer) error {
-	ew := &errWriter{w: w}
-	ew.write(jsonOpenObj)
-	ew.writeKey([]byte("experiments"))
-	ew.write(jsonOpenObj)
-	for i, exp := range er {
-		ew.writeKey([]byte(exp.Name))
-		ew.write(jsonOpenObj)
-		ew.writeKey([]byte("namespace"))
-		ew.writeString([]byte(exp.Namespace))
-		ew.write(jsonComma)
-		ew.writeKey([]byte("params"))
-		ew.write(jsonOpenObj)
-		for j, param := range exp.Params {
-			ew.writeKey([]byte(param.Name))
-			ew.writeString([]byte(param.Value))
-			if j < len(exp.Params)-1 {
-				ew.write(jsonComma)
-			}
-		}
-		ew.write(jsonCloseObj)
-		ew.write(jsonCloseObj)
-		if i < len(er)-1 {
-			ew.write(jsonComma)
-		}
-	}
-	ew.write(jsonCloseObj)
-	ew.write(jsonCloseObj)
-	ew.write([]byte{'\n'})
-	if ew.err != nil {
-		return ew.err
-	}
-	return nil
 }
 
 func healthzHandler(healthChecks map[string]interface{}) http.HandlerFunc {

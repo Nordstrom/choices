@@ -3,9 +3,11 @@ syntax = "proto3";
 package elwin.intake;
 
 import "google/api/annotations.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "storage.proto";
 
 option go_package = "github.com/foolusion/elwinprotos/intake";
+option (gogoproto.goproto_registration) = true;
 
 // The ExperientIntake service definition
 service ExperimentIntake {
@@ -14,6 +16,12 @@ service ExperimentIntake {
   rpc ExperimentIntake(ExperimentIntakeRequest) returns (ExperimentIntakeReply) {
     option(google.api.http) = {
       post: "/api/v1/experiment-intake"
+      body: "*"
+    };
+  }
+  rpc ExperimentChangeState(ExperimentChangeStateRequest) returns (ExperimentChangeStateReply) {
+    option(google.api.http) = {
+      post: "/api/v1/experiment-change-state"
       body: "*"
     };
   }
@@ -43,4 +51,21 @@ message ExperimentMetadata {
   string actionPlanNegative = 11;
   string actionPlanNeutral = 12;
   string experimentType = 13;
+}
+
+enum State {
+  ERR = 0;
+  START = 1;
+  END = 2;
+}
+
+message ExperimentChangeStateRequest {
+  string id = 1;
+  string date = 2;
+  State state = 3;
+}
+
+message ExperimentChangeStateReply {
+  string id = 1;
+  State state = 2;
 }

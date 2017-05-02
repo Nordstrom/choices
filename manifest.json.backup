@@ -1,0 +1,13 @@
+{
+    "dependencies": {
+        "github.com/foolusion/elwinprotos": {
+            "branch": "requirements"
+        },
+        "github.com/grpc-ecosystem/grpc-gateway": {
+            "version": "v1.2.0"
+        },
+        "google.golang.org/grpc": {
+            "version": "v1.2.0"
+        }
+    }
+}

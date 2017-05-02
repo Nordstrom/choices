@@ -93,6 +93,7 @@ func (e *Experiment) eval(h hashConfig) (ExperimentResponse, error) {
 		Name:      e.Name,
 		Namespace: e.Namespace,
 		Params:    p,
+		Labels:    e.Labels,
 	}, nil
 }
 
@@ -176,6 +177,7 @@ type ExperimentResponse struct {
 	Name      string
 	Namespace string
 	Params    []ParamValue
+	Labels    map[string]string
 }
 
 // ParamValue is a key value pair returned from an evaluated experiment

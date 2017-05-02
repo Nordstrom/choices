@@ -15,6 +15,32 @@
     "application/json"
   ],
   "paths": {
+    "/api/v1/experiment-change-state": {
+      "post": {
+        "operationId": "ExperimentChangeState",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/intakeExperimentChangeStateReply"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/intakeExperimentChangeStateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ExperimentIntake"
+        ]
+      }
+    },
     "/api/v1/experiment-intake": {
       "post": {
         "summary": "ExperimentIntake takes a request from a web form and creates the\nexperiment in the data store.",
@@ -44,6 +70,31 @@
     }
   },
   "definitions": {
+    "intakeExperimentChangeStateReply": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/intakeState"
+        }
+      }
+    },
+    "intakeExperimentChangeStateRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/intakeState"
+        }
+      }
+    },
     "intakeExperimentIntakeReply": {
       "type": "object"
     },
@@ -63,80 +114,73 @@
       "type": "object",
       "properties": {
         "userID": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "programManagerID": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "productManagerID": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "hypothesis": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "kpi": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "timeBound": {
           "type": "boolean",
           "format": "boolean"
         },
         "plannedStartTime": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "plannedEndTime": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "actualStartTime": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "actualEndTime": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "actionPlanNegative": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "actionPlanNeutral": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "experimentType": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "ExperimentMetadata all the junk that elwin doesn't care about"
+    },
+    "intakeState": {
+      "type": "string",
+      "enum": [
+        "ERR",
+        "START",
+        "END"
+      ],
+      "default": "ERR"
     },
     "storageExperiment": {
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "namespace": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "params": {
@@ -149,8 +193,7 @@
           "$ref": "#/definitions/storageSegments"
         },
         "detailName": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         }
       },
       "title": "Experiment structure"
@@ -159,8 +202,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string",
-          "format": "string"
+          "type": "string"
         },
         "value": {
           "$ref": "#/definitions/storageValue"
@@ -187,8 +229,7 @@
         "choices": {
           "type": "array",
           "items": {
-            "type": "string",
-            "format": "string"
+            "type": "string"
           }
         },
         "weights": {
