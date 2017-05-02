@@ -1,0 +1,80 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.Name }}
+  labels:
+    app: "{{ .Release.Name }}-{{ .Values.Name }}"
+    env: "{{ .Values.Environment }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  minReadySeconds: 5
+  replicas: 5
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  template:
+    metadata:
+      labels:
+        run: {{ .Release.Name }}-{{ .Values.Name }}
+        env: {{ .Values.Environment }}
+      annotations:
+        scheduler.alpha.kubernetes.io/affinity: |
+          {
+            "podAntiAffinity": {
+              "preferredDuringSchedulingIgnoredDuringExecution": [
+                {
+                  "weight": 50,
+                  "labelSelector": {
+                    "matchExpressions": [
+                      {
+                        "key": "run",
+                        "operator": "In",
+                        "values": ["{{ .Release.Name }}-{{ .Values.Name }}"]
+                      },
+                      {
+                        "key": "env",
+                        "operator": "In",
+                        "values": ["{{ .Values.Environment }}"]
+                      }
+                    ]
+                  },
+                  "topologyKey": "kubernetes.io/hostname"
+                }
+              ]
+            }
+          }
+    spec:
+      containers:
+      - name: elwin
+        image: {{ .Values.Image }}
+        imagePullPolicy: Always
+        env:
+        - name: ELWIN_GRPC_ADDRESS
+          value: :8080
+        - name: ELWIN_JSON_ADDRESS
+          value: :8081
+        - name: ELWIN_READ_TIMEOUT
+          value: {{ .Values.readTimeout }}
+        - name: ELWIN_STORAGE_ADDRESS
+          value: {{ .Values.storageAddress }}
+        - name: ELWIN_UPDATE_FAIL_TIMEOUT
+          value: {{ .Values.failTimeout }}
+        - name: ELWIN_UPDATE_INTERVAL
+          value: {{ .Values.updateInterval }}
+        - name: ELWIN_WRITE_TIMEOUT
+          value: {{ .Values.writeTimeout }}
+        - name: ELWIN_IDLE_TIMEOUT
+          value: {{ .Values.idleTimeout }}
+        command:
+        - elwin
+        resources:
+          limits:
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
