@@ -1,0 +1,15 @@
+name: houston
+version: 0.0.1
+description: A way to launch things.
+keywords:
+- A/B Testing
+- Multi-variate Testing
+- Analytics
+home: https://github.com/Nordstrom/choices
+sources:
+- https://github.com/Nordstrom/choices.git
+maintainers:
+- name: Andrew O'Neill
+  email: foolusion@gmail.com
+engine: gotpl
+appVersion: v1.0.0rc1

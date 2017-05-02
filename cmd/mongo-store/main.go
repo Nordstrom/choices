@@ -219,9 +219,17 @@ func main() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("/etc/mongo")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("could not read config: %v", err)
+	err := viper.ReadInConfig()
+	if err != nil {
+		switch err.(type) {
+		case viper.ConfigFileNotFoundError:
+			log.Println("no config file found")
+		default:
+			log.Fatalf("could not read config: %v", err)
+		}
 	}
+	viper.SetEnvPrefix("elwin_mongo")
+	viper.AutomaticEnv()
 
 	log.Printf("connecting to %s/%s", viper.GetString(cfgMongoAddr), viper.GetString(cfgMongoDatabase))
 
