@@ -1,9 +1,9 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: "{{ .Release.Name }}-{{ .Values.elwin.name }}-json"
+  name: "{{ .Release.Name }}-{{ .Values.elwin.name }}"
   labels:
-    app: "{{ .Release.Name }}-{{ .Values.elwin.name }}-json"
+    app: "{{ .Release.Name }}-{{ .Values.elwin.name }}"
     env: "{{ .Values.environment }}"
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
