@@ -1,5 +1,5 @@
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: extensions/v1beta1 # change to apps/v1beta1 in k8s 1.6
 metadata:
   name: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
   labels:
