@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	storageEndpoint = flag.String("storage_endpoint", ":8083", "endpoint of elwin")
-	listenAddress   = flag.String("listen_address", ":8085", "address to listen on")
+	storageEndpoint = flag.String("storage_endpoint", "localhost:8080", "endpoint of elwin")
+	listenAddress   = flag.String("listen_address", ":8081", "address to listen on")
 )
 
 func run() error {

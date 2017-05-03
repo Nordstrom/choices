@@ -1,0 +1,26 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+  labels:
+    app: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+    env: "{{ .Values.environment }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8081"
+spec:
+  ports:
+    - name: grpc
+      port: 80
+      targetPort: 8080
+    - name: json
+      port: 8082
+    - name: metrics
+      port: 8081
+  selector:
+    run: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+    env: "{{ .Values.environment }}"

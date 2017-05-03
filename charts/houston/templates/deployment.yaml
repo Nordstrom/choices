@@ -1,0 +1,53 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.houston.name }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.houston.name }}
+    env: {{ .Values.environment }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/created": {{ .Release.Time.Seconds }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        run: {{ .Release.Name }}-{{ .Values.houston.name }}
+    spec:
+      containers:
+        - name: houston
+          image: {{ .Values.image }}
+          command:
+          - houston
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8080
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+          ports:
+          - containerPort: 8080
+          volumeMounts:
+          - name: houston-config
+            mountPath: /etc/houston
+            readOnly: true
+      volumes:
+      - name: houston-config
+        configMap:
+          name: {{ .Release.Name }}-{{ .Values.houston.name }}

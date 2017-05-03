@@ -1,13 +1,15 @@
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
-  name: {{ .Release.Name }}-{{ .Values.Name }}
+  name: "{{ .Release.Name }}-{{ .Values.elwin.name }}"
   labels:
-    app: "{{ .Release.Name }}-{{ .Values.Name }}"
-    env: "{{ .Values.Environment }}"
+    app: "{{ .Release.Name }}-{{ .Values.elwin.name }}"
+    env: "{{ .Values.environment }}"
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
+  annotations:
+    "helm.sh/created": "{{ .Release.Time.Seconds }}"
 spec:
   minReadySeconds: 5
   replicas: 5
@@ -20,8 +22,8 @@ spec:
   template:
     metadata:
       labels:
-        run: {{ .Release.Name }}-{{ .Values.Name }}
-        env: {{ .Values.Environment }}
+        run: "{{ .Release.Name }}-{{ .Values.elwin.name }}"
+        env: "{{ .Values.environment }}"
       annotations:
         scheduler.alpha.kubernetes.io/affinity: |
           {
@@ -34,12 +36,12 @@ spec:
                       {
                         "key": "run",
                         "operator": "In",
-                        "values": ["{{ .Release.Name }}-{{ .Values.Name }}"]
+                        "values": ["{{ .Release.Name }}-{{ .Values.elwin.name }}"]
                       },
                       {
                         "key": "env",
                         "operator": "In",
-                        "values": ["{{ .Values.Environment }}"]
+                        "values": ["{{ .Values.environment }}"]
                       }
                     ]
                   },
@@ -50,26 +52,33 @@ spec:
           }
     spec:
       containers:
+      - name: grpc-gateway
+        image: "{{ .Values.image }}"
+        imagePullPolicy: Always
+        command:
+        - "elwin-grpc-gateway"
+        - "-storage_endpoint=localhost:{{ .Values.elwin.grpcPort }}"
+        - "-listen_address=:{{ .Values.elwin.jsonPort }}"
       - name: elwin
-        image: {{ .Values.Image }}
+        image: "{{ .Values.image }}"
         imagePullPolicy: Always
         env:
         - name: ELWIN_GRPC_ADDRESS
-          value: :8080
+          value: ":{{ .Values.elwin.grpcPort }}"
         - name: ELWIN_JSON_ADDRESS
-          value: :8081
+          value: ":{{ .Values.elwin.metricsPort }}"
         - name: ELWIN_READ_TIMEOUT
-          value: {{ .Values.readTimeout }}
+          value: "{{ .Values.elwin.readTimeout }}"
         - name: ELWIN_STORAGE_ADDRESS
-          value: {{ .Values.storageAddress }}
+          value: "{{ .Release.Name }}-{{ .Values.mongo.name }}:80"
         - name: ELWIN_UPDATE_FAIL_TIMEOUT
-          value: {{ .Values.failTimeout }}
+          value: "{{ .Values.elwin.failTimeout }}"
         - name: ELWIN_UPDATE_INTERVAL
-          value: {{ .Values.updateInterval }}
+          value: "{{ .Values.elwin.updateInterval }}"
         - name: ELWIN_WRITE_TIMEOUT
-          value: {{ .Values.writeTimeout }}
+          value: "{{ .Values.elwin.writeTimeout }}"
         - name: ELWIN_IDLE_TIMEOUT
-          value: {{ .Values.idleTimeout }}
+          value: "{{ .Values.elwin.idleTimeout }}"
         command:
         - elwin
         resources:

@@ -42,6 +42,7 @@ const (
 	deleteEndpoint    = "/delete"
 	healthEndpoint    = "/healthz"
 	readinessEndpoint = "/readiness"
+	metricsEndpoint   = "/metrics"
 
 	cfgStorageAddr = "clients"
 	cfgListenAddr  = "listen_address"
@@ -94,8 +95,6 @@ func main() {
 		}
 	}
 
-	http.Handle("/metrics", promhttp.Handler())
-
 	errCh := make(chan error, 1)
 
 	cfg := config{
@@ -123,6 +122,7 @@ func main() {
 	mux.Handle(deleteEndpoint, deleteHandler(cfg))
 	mux.HandleFunc(healthEndpoint, healthHandler)
 	mux.HandleFunc(readinessEndpoint, readinessHandler)
+	mux.Handle(metricsEndpoint, promhttp.Handler())
 	server := http.Server{
 		Handler: mux,
 	}

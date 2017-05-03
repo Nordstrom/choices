@@ -1,0 +1,7 @@
+image: quay.io/nordstrom/choices
+houston:
+  name: houston
+  prodIntake: elwin-prod-intake
+  prodStorage: elwin-prod-mongo-store:80
+  devIntake: elwin-dev-intake
+  devStorage: elwin-dev-mongo-store:80

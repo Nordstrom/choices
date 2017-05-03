@@ -1,0 +1,53 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+  labels:
+    app: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+    env: "{{ .Values.environment }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    "helm.sh/created": "{{ .Release.Time.Seconds }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+        env: "{{ .Values.environment }}"
+    spec:
+      containers:
+      - name: grpc-gateway
+        image: "{{ .Values.image }}"
+        imagePullPolicy: Always
+        command:
+        - json-gateway
+        - -listen_address=:8082
+        - -storage_endpoint=localhost:8080
+      - name: mongo-store
+        image: "{{ .Values.image }}"
+        imagePullPolicy: Always
+        env:
+        - name: ELWIN_MONGO_LISTEN_ADDRESS
+          value: :8080
+        - name: ELWIN_MONGO_MONGO_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+              key: mongo-address
+        - name: ELWIN_MONGO_MONGO_DATABASE
+          value: "{{ .Values.environment }}"
+        - name: ELWIN_MONGO_MONGO_USER
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+              key: mongo-user
+        - name: ELWIN_MONGO_MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
+              key: mongo-password
+        command:
+        - mongo-store

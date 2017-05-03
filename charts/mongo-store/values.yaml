@@ -1,7 +1,0 @@
-Name: elwin-mongo
-Environment: prod
-Image: quay.io/nordstrom/choices
-mongoAddress: elwin-mongo-v1-mongodb
-mongoDatabase: prod
-mongoUser: ""
-mongoPassword: ""

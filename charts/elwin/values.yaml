@@ -1,9 +1,17 @@
-Name: elwin
-Image: quay.io/nordstrom/choices
-Environment: prod
-storageAddress: elwin-mongo:80
-readTimeout: 5s
-writeTimeout: 5s
-idleTimeout: 2m
-failTimeout: 15m
-updateInterval: 10s
+environment: prod
+image: quay.io/nordstrom/choices
+elwin:
+  name: elwin
+  readTimeout: 5s
+  writeTimeout: 5s
+  idleTimeout: 2m
+  failTimeout: 15m
+  updateInterval: 10s
+  grpcPort: 8080
+  metricsPort: 8081
+  jsonPort: 8082
+mongo:
+  name: elwin-mongo
+  address: elwin-mongo-v1-mongodb
+  user: ""
+  password: ""

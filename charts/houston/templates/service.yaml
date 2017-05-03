@@ -1,0 +1,19 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.houston.name }}
+  labels:
+    app: {{ .Release.Name }}-{{ .Values.houston.name }}
+    env: {{ .Values.environment }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: {{ .Release.Name }}-{{ .Values.houston.name }}
