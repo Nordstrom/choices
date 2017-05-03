@@ -39,7 +39,7 @@ spec:
               key: mongo-address
         - name: ELWIN_MONGO_MONGO_DATABASE
           value: "{{ .Values.environment }}"
-        - name: ELWIN_MONGO_MONGO_USER
+        - name: ELWIN_MONGO_MONGO_USERNAME
           valueFrom:
             secretKeyRef:
               name: "{{ .Release.Name }}-{{ .Values.mongo.name }}"
