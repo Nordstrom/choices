@@ -29,6 +29,7 @@ import (
 
 	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/elwin"
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -41,17 +42,11 @@ import (
 )
 
 var (
-	jsonRequests = prometheus.NewCounter(prometheus.CounterOpts{
+	requestDurations = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "nordstrom",
 		Subsystem: "elwin",
-		Name:      "json_requests",
-		Help:      "The number of json requests received.",
-	})
-	jsonDurations = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Namespace: "nordstrom",
-		Subsystem: "elwin",
-		Name:      "json_durations_nanoseconds",
-		Help:      "json latency distributions.",
+		Name:      "request_durations_nanoseconds",
+		Help:      "request latency distributions.",
 		Buckets:   prometheus.ExponentialBuckets(1, 10, 10),
 	})
 	updateErrors = prometheus.NewCounter(prometheus.CounterOpts{
@@ -148,10 +143,27 @@ func main() {
 		log.Fatal(err)
 	}
 
+	lgrpc, err := net.Listen("tcp", viper.GetString(cfgGRPCAddr))
+	if err != nil {
+		ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
+		return
+	}
+	defer lgrpc.Close()
+	log.Printf("Listening for grpc on %s", viper.GetString(cfgGRPCAddr))
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+	)
+	grpc_prometheus.Register(grpcServer)
+	e := &elwinServer{ec}
+	elwin.RegisterElwinServer(grpcServer, e)
+	go func() {
+		ec.ErrChan <- grpcServer.Serve(lgrpc)
+	}()
+
 	// register prometheus metrics
-	prometheus.MustRegister(jsonRequests)
-	prometheus.MustRegister(jsonDurations)
 	prometheus.MustRegister(updateErrors)
+	prometheus.MustRegister(requestDurations)
 
 	ljson, err := net.Listen("tcp", viper.GetString(cfgJSONAddr))
 	if err != nil {
@@ -163,6 +175,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
+	mux.HandleFunc("/elwin/v1/experiments", e.json)
 	mux.Handle("/metrics", promhttp.Handler())
 	if viper.IsSet(cfgProf) {
 		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
@@ -184,20 +197,6 @@ func main() {
 
 	go func() {
 		ec.ErrChan <- srv.Serve(ljson)
-	}()
-
-	go func() {
-		lgrpc, err := net.Listen("tcp", viper.GetString(cfgGRPCAddr))
-		if err != nil {
-			ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
-			return
-		}
-		defer lgrpc.Close()
-		log.Printf("Listening for grpc on %s", viper.GetString(cfgGRPCAddr))
-
-		grpcServer := grpc.NewServer()
-		elwin.RegisterElwinServer(grpcServer, &elwinServer{ec})
-		ec.ErrChan <- grpcServer.Serve(lgrpc)
 	}()
 
 	signalChan := make(chan os.Signal, 1)
@@ -229,6 +228,10 @@ type elwinServer struct {
 }
 
 func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetReply, error) {
+	start := time.Now()
+	defer func() {
+		requestDurations.Observe(float64(time.Since(start)))
+	}()
 	if r == nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "Get: request is nil")
 	}
@@ -316,6 +319,33 @@ func appendToGroup(br map[string]*elwin.ExperimentList, e choices.ExperimentResp
 	}
 	elist = append(elist, ee)
 	br[group].Experiments = elist
+}
+
+func (e *elwinServer) json(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method Not Allowed", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	dec := json.NewDecoder(r.Body)
+	data := new(elwin.GetRequest)
+	if err := dec.Decode(data); err != nil {
+		http.Error(w, "could not parse json", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	resp, err := e.Get(ctx, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(resp); err != nil {
+		http.Error(w, "could not marshal json", http.StatusInternalServerError)
+		return
+	}
 }
 
 func logCloseErr(c io.Closer) {
