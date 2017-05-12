@@ -15,7 +15,6 @@
 package choices
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/binary"
 	"errors"
@@ -95,50 +94,11 @@ func (h *hashConfig) setUserID(u string) {
 	h.userID = u
 }
 
-// errWriter is a convenience struct to eliminate lots of if err !=
-// nil.
-type errWriter struct {
-	buf bytes.Buffer
-	err error
-}
-
-// writeString writes the given string to the buf or nothing if err !=
-// nil
-func (e *errWriter) writeString(s string) {
-	if e.err == nil {
-		_, e.err = e.buf.WriteString(s)
-	}
-}
-
-// writeByte writes a single byte to the buf or nothing if err != nil
-func (e *errWriter) writeByte(b byte) {
-	if e.err == nil {
-		e.err = e.buf.WriteByte(b)
-	}
-}
-
 // Bytes returns a []byte that represents the entire salt+userID the
 // format is as follows.
 //     "globalSalt.namespace.experiment.param@userID"
 func (h *hashConfig) Bytes() ([]byte, error) {
-	ew := errWriter{}
-	ew.writeString(globalSalt)
-	ew.writeByte('.')
-	for i, v := range h.salt {
-		ew.writeString(v)
-		if i < len(h.salt)-1 {
-			ew.writeByte('.')
-		}
-	}
-
-	ew.writeByte('@')
-
-	ew.writeString(h.userID)
-
-	if ew.err != nil {
-		return nil, ew.err
-	}
-	return ew.buf.Bytes(), nil
+	return []byte(globalSalt + "." + h.salt[0] + "." + h.salt[1] + "." + h.salt[2] + "@" + h.userID), nil
 }
 
 // hash hashes the hashConfig returning a uint64 hashed value or an

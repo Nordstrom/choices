@@ -41,14 +41,14 @@ func CreateExperiment(
 	}
 	exp.ID = util.BasicNameGenerator.GenerateName(fmt.Sprintf("exp-%s-", exp.Name))
 
-	if err := expcontroller.SetNamespace(ctx, ns.ToNamespace()); err != nil {
+	if err := expcontroller.SetNamespace(ctx, ns.ToNamespace(sNamespace)); err != nil {
 		return nil, errors.Wrap(err, "could not save namespace")
 	}
-	if err := expcontroller.SetExperiment(ctx, exp.ToExperiment()); err != nil {
+	if err := expcontroller.SetExperiment(ctx, exp.ToExperiment(sExperiment)); err != nil {
 		return nil, errors.Wrap(err, "could not save experiment")
 	}
 	// TODO: do this in a better way
-	out := exp.ToExperiment()
+	out := exp.ToExperiment(sExperiment)
 	out.DetailName = sExperiment.DetailName
 	return out, nil
 }
@@ -136,7 +136,7 @@ func AutoFix(ctx context.Context, e experimentController) error {
 			if err := e.SetNamespace(ctx, &storage.Namespace{
 				Name:        err.Namespace,
 				NumSegments: int64(err.Segments.len),
-				Segments:    err.Segments.ToSegments(),
+				Segments:    err.Segments.ToSegments(nil),
 			}); err != nil {
 				return errors.Wrap(err, "could not add namespace")
 			}
