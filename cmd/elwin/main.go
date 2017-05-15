@@ -259,7 +259,9 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 		selector = selector.Add(*req)
 	}
 
-	resp, err := e.Experiments(r.UserID, selector)
+// TODO: replace this with a pool or something similar
+	resp := make([]*choices.ExperimentResponse, 0, 100)
+ 	resp, err := e.Experiments(resp, r.UserID, selector)
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", r.Requirements, r.UserID, err)
 	}
@@ -300,7 +302,7 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 	return exp, nil
 }
 
-func appendToGroup(br map[string]*elwin.ExperimentList, e choices.ExperimentResponse, group string) {
+func appendToGroup(br map[string]*elwin.ExperimentList, e *choices.ExperimentResponse, group string) {
 	if br[group] == nil {
 		br[group] = &elwin.ExperimentList{}
 	}
