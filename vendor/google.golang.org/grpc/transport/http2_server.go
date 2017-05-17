@@ -331,12 +331,12 @@ func (t *http2Server) HandleStreams(handle func(*Stream), traceCtx func(context.
 	// Check the validity of client preface.
 	preface := make([]byte, len(clientPreface))
 	if _, err := io.ReadFull(t.conn, preface); err != nil {
-		//grpclog.Printf("transport: http2Server.HandleStreams failed to receive the preface from client: %v", err)
+		//  grpclog.Printf("transport: http2Server.HandleStreams failed to receive the preface from client: %v", err)
 		t.Close()
 		return
 	}
 	if !bytes.Equal(preface, clientPreface) {
-		//grpclog.Printf("transport: http2Server.HandleStreams received bogus greeting from client: %q", preface)
+		//  grpclog.Printf("transport: http2Server.HandleStreams received bogus greeting from client: %q", preface)
 		t.Close()
 		return
 	}
@@ -347,14 +347,14 @@ func (t *http2Server) HandleStreams(handle func(*Stream), traceCtx func(context.
 		return
 	}
 	if err != nil {
-		//grpclog.Printf("transport: http2Server.HandleStreams failed to read frame: %v", err)
+		//  grpclog.Printf("transport: http2Server.HandleStreams failed to read frame: %v", err)
 		t.Close()
 		return
 	}
 	atomic.StoreUint32(&t.activity, 1)
 	sf, ok := frame.(*http2.SettingsFrame)
 	if !ok {
-		//grpclog.Printf("transport: http2Server.HandleStreams saw invalid preface type %T from client", frame)
+		//  grpclog.Printf("transport: http2Server.HandleStreams saw invalid preface type %T from client", frame)
 		t.Close()
 		return
 	}
