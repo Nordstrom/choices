@@ -105,6 +105,7 @@ func (e *Experiment) eval(er *ExperimentResponse, h hashConfig) error {
 	}
 	er.Name = e.Name
 	er.Namespace = e.Namespace
+	er.Labels = e.Labels
 	return nil
 }
 
