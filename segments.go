@@ -28,11 +28,14 @@ type segments struct {
 	len int
 }
 
-func (s *segments) ToSegments() *storage.Segments {
-	return &storage.Segments{
-		B:   s.b,
-		Len: int64(s.len),
+func (s *segments) ToSegments(seg *storage.Segments) *storage.Segments {
+	if seg == nil {
+		seg = new(storage.Segments)
 	}
+	seg.B = s.b
+	seg.Len = int64(s.len)
+
+	return seg
 }
 
 // segmentsAll is a value where every segment is available

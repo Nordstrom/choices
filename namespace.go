@@ -11,12 +11,18 @@ type Namespace struct {
 	Segments    *segments
 }
 
-func (n *Namespace) ToNamespace() *storage.Namespace {
-	return &storage.Namespace{
-		Name:        n.Name,
-		NumSegments: int64(n.NumSegments),
-		Segments:    n.Segments.ToSegments(),
+func (n *Namespace) ToNamespace(ns *storage.Namespace) *storage.Namespace {
+	if ns == nil {
+		ns = new(storage.Namespace)
 	}
+	ns.Name = n.Name
+	ns.NumSegments = int64(n.NumSegments)
+	if ns.Segments == nil {
+		ns.Segments = new(storage.Segments)
+	}
+	ns.Segments.B = n.Segments.b
+	ns.Segments.Len = int64(n.Segments.len)
+	return ns
 }
 
 const defaultNumSegments = 128

@@ -42,13 +42,14 @@ func TestExperiment(t *testing.T) {
 				},
 				Segments: &segmentsAll,
 			},
-			want: ExperimentResponse{Name: "experiment", Namespace: "", Params: []ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}}},
+			want: ExperimentResponse{Name: "experiment", Namespace: "", Params: []*ParamValue{{Name: "p1", Value: "b"}, {Name: "p2", Value: "b"}}},
 			err:  nil,
 		},
 	}
 	h := hashConfig{}
 	for _, test := range tests {
-		got, err := test.exp.eval(h)
+		got := new(ExperimentResponse)
+		err := test.exp.eval(got, h)
 		if err != test.err {
 			t.Fatalf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 		}
@@ -56,7 +57,7 @@ func TestExperiment(t *testing.T) {
 			t.Fatalf("%v.eval() = %v, want %v", test.exp, test.want, got)
 		}
 		for i, v := range got.Params {
-			if v != test.want.Params[i] {
+			if *v != *test.want.Params[i] {
 				t.Fatalf("%v.eval() = %v %v, want %v %v", test.exp, got, err, test.want, test.err)
 			}
 		}
@@ -88,11 +89,12 @@ func TestParamEval(t *testing.T) {
 	}
 	h := hashConfig{salt: [3]string{"", "", ""}}
 	for _, test := range tests {
-		got, err := test.p.eval(h)
+		got := new(ParamValue)
+		err := test.p.eval(got, h)
 		if err != test.err {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
 		}
-		if got != test.want {
+		if *got != test.want {
 			t.Errorf("%v.eval(nil) = %v %v, want %v %v", test.p, got, err, test.want, test.err)
 		}
 	}
@@ -111,10 +113,35 @@ func BenchmarkExperimentEval(b *testing.B) {
 	h := hashConfig{
 		salt: [3]string{"namespace", "", ""},
 	}
+	er := new(ExperimentResponse)
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err := e.eval(h); err != nil {
+		if err := e.eval(er, h); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkParamEval(b *testing.B) {
+	p := Param{
+		Name: "param",
+		Choices: &Uniform{
+			Choices: []string{
+				"a",
+				"b",
+			},
+		},
+	}
+	h := hashConfig{
+		salt:   [3]string{"namespace", "experiment", ""},
+		userID: "andrew",
+	}
+	ep := new(ParamValue)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := p.eval(ep, h); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -159,10 +186,11 @@ func Benchmark1Experiments(b *testing.B) {
 	c := Config{
 		storage: expStore,
 	}
+	resp := make([]*ExperimentResponse, len(exps))
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := c.Experiments("andrew", sel)
+		resp, err = c.Experiments(resp, "andrew", sel)
 		if err != nil {
 			b.Error(err)
 		}
@@ -213,10 +241,11 @@ func Benchmark100Experiments(b *testing.B) {
 	c := Config{
 		storage: expStore,
 	}
+	resp := make([]*ExperimentResponse, len(exps))
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := c.Experiments("andrew", sel)
+		resp, err = c.Experiments(resp, "andrew", sel)
 		if err != nil {
 			b.Error(err)
 		}
@@ -234,7 +263,7 @@ func TestToExperiment(t *testing.T) {
 		},
 	}
 	for tname, test := range tests {
-		out := test.e.ToExperiment()
+		out := test.e.ToExperiment(nil)
 		if out.Name != test.want.Name {
 			t.Fatalf("%s: e.ToExperiment() = %v, want %v", tname, *out, test.want)
 		}

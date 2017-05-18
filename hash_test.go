@@ -109,7 +109,12 @@ func BenchmarkHash(b *testing.B) {
 }
 
 func BenchmarkHashBytes(b *testing.B) {
-	h := hashConfig{}
+	h := hashConfig{
+		salt:   [3]string{"namespace", "experiment", "param"},
+		userID: "nordstrom",
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if _, err := h.Bytes(); err != nil {
 			b.Fatal(err)

@@ -15,6 +15,7 @@
 package choices
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -43,14 +44,47 @@ func WithStorageConfig(addr string, updateInterval time.Duration) ConfigOpt {
 	}
 }
 
+type erPool struct {
+	mu   sync.RWMutex
+	pool sync.Pool
+}
+
+func (e *erPool) get() []ExperimentResponse {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	out, ok := e.pool.Get().([]ExperimentResponse)
+	if out == nil {
+		return make([]ExperimentResponse, 0, 100)
+	} else if !ok {
+		log.Fatal("pool had unknown object")
+	}
+	return out
+}
+
+func (e *erPool) put(exp []ExperimentResponse) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	e.pool.Put(exp)
+}
+
+func (e *erPool) new(f func() interface{}) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	e.pool.New = f
+}
+
 // experimentStore is the in memory copy of the storage. el is the
 // storage.ElwinStorageClient used to get the data out of storage.
 type experimentStore struct {
+	el storage.ElwinStorageClient
+
 	mu            sync.RWMutex
-	el            storage.ElwinStorageClient
-	env           int
 	cache         []*Experiment
 	failedUpdates int
+	pool          erPool
 }
 
 // newExperimentStore creates a new in memory store for the data and client to
@@ -85,6 +119,9 @@ func (n *experimentStore) update() error {
 	n.mu.Lock()
 	n.cache = cache
 	n.mu.Unlock()
+
+	go n.pool.new(func() interface{} { return make([]ExperimentResponse, 0, len(n.cache)) })
+
 	return nil
 }
 
