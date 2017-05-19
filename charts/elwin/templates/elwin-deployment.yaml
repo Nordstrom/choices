@@ -25,7 +25,6 @@ spec:
         run: "{{ .Release.Name }}-{{ .Values.elwin.name }}"
         env: "{{ .Values.environment }}"
       annotations: # change to pod affinity field
-        scheduler.alpha.kubernetes.io/tolerations: '[{“key”:“dedicate”, “value”:“ato-workers”}]'
         scheduler.alpha.kubernetes.io/affinity: |
           {
             "podAntiAffinity": {
@@ -89,3 +88,4 @@ spec:
           requests:
             cpu: 50m
             memory: 128Mi
+      dnsPolicy: Default

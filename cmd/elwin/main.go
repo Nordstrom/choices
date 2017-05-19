@@ -79,6 +79,10 @@ func bind(s []string) error {
 	return bind(s[1:])
 }
 
+//hi Handler for pprof
+func hiHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("hi"))
+}
 func main() {
 	log.Println("Starting elwin...")
 
@@ -177,6 +181,16 @@ func main() {
 	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.HandleFunc("/elwin/v1/experiments", e.json)
 	mux.Handle("/metrics", promhttp.Handler())
+
+	//register pprof handlers
+	mux.HandleFunc("/", hiHandler)
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	//http.ListenAndServe(":8080", mux)
+
 	if viper.IsSet(cfgProf) {
 		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	}
@@ -259,9 +273,9 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 		selector = selector.Add(*req)
 	}
 
-// TODO: replace this with a pool or something similar
+	// TODO: replace this with a pool or something similar
 	resp := make([]*choices.ExperimentResponse, 0, 100)
- 	resp, err := e.Experiments(resp, r.UserID, selector)
+	resp, err := e.Experiments(resp, r.UserID, selector)
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", r.Requirements, r.UserID, err)
 	}
