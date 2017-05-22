@@ -29,14 +29,11 @@ import (
 
 	"github.com/Nordstrom/choices"
 	"github.com/foolusion/elwinprotos/elwin"
-	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 )
@@ -84,7 +81,6 @@ func main() {
 
 	viper.SetDefault(cfgStorageAddr, "elwin-storage:80")
 	viper.SetDefault(cfgJSONAddr, ":8080")
-	viper.SetDefault(cfgGRPCAddr, ":8081")
 	viper.SetDefault(cfgUInterval, "10s")
 	viper.SetDefault(cfgRTimeout, "5s")
 	viper.SetDefault(cfgWTimeout, "5s")
@@ -108,7 +104,6 @@ func main() {
 	if err := bind([]string{
 		cfgStorageAddr,
 		cfgJSONAddr,
-		cfgGRPCAddr,
 		cfgUInterval,
 		cfgRTimeout,
 		cfgWTimeout,
@@ -143,23 +138,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	lgrpc, err := net.Listen("tcp", viper.GetString(cfgGRPCAddr))
-	if err != nil {
-		ec.ErrChan <- fmt.Errorf("main: failed to listen: %v", err)
-		return
-	}
-	defer lgrpc.Close()
-	log.Printf("Listening for grpc on %s", viper.GetString(cfgGRPCAddr))
-
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
-	)
-	grpc_prometheus.Register(grpcServer)
 	e := &elwinServer{ec}
-	elwin.RegisterElwinServer(grpcServer, e)
-	go func() {
-		ec.ErrChan <- grpcServer.Serve(lgrpc)
-	}()
 
 	// register prometheus metrics
 	prometheus.MustRegister(updateErrors)
@@ -232,9 +211,9 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 	defer func() {
 		requestDurations.Observe(float64(time.Since(start)))
 	}()
-	if r == nil {
+	/*if r == nil {
 		return nil, grpc.Errorf(codes.InvalidArgument, "Get: request is nil")
-	}
+	}*/
 	selector := labels.NewSelector()
 	for _, requirement := range r.Requirements {
 		var op selection.Operator
@@ -259,9 +238,9 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 		selector = selector.Add(*req)
 	}
 
-// TODO: replace this with a pool or something similar
+	// TODO: replace this with a pool or something similar
 	resp := make([]*choices.ExperimentResponse, 0, 100)
- 	resp, err := e.Experiments(resp, r.UserID, selector)
+	resp, err := e.Experiments(resp, r.UserID, selector)
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", r.Requirements, r.UserID, err)
 	}
