@@ -12,6 +12,6 @@ elwin:
   jsonPort: 8082
 mongo:
   name: elwin-mongo
-  address: elwin-mongo-v1-mongodb
+  address: trendy-hyena-mongodb
   user: ""
   password: ""
