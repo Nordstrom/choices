@@ -1,7 +1,7 @@
 pkg := github.com/Nordstrom/choices
 db := docker run -v ${CURDIR}:/go/src/${pkg}:ro -v ${CURDIR}/bin:/go/bin golang:alpine go install ${pkg}
 image := quay.io/nordstrom/choices
-tag := v0.0.5
+tag := v0.0.7
 
 all: docker/build
 
@@ -31,4 +31,3 @@ docker/tag: docker/build
 
 docker/push: docker/tag
 	docker push ${image}:${tag}
-
