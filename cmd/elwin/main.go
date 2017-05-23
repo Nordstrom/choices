@@ -151,6 +151,8 @@ func main() {
 	log.Printf("Listening for json on %s", viper.GetString(cfgJSONAddr))
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": ec}))
+	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.HandleFunc("/elwin/v1/experiments", e.json)
 	mux.Handle("/metrics", promhttp.Handler())
 	if viper.IsSet(cfgProf) {
@@ -239,13 +241,36 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", r.Requirements, r.UserID, err)
 	}
 
+	//DEBUG
+	/* log.Print(r) */
+
 	if r.By != "" {
 		byResp := make(map[string]*elwin.ExperimentList, 10)
+
+		//DEBUG
+		/*
+			log.Print("#Selector: ", selector)
+			log.Print("resp: ", resp)
+			log.Print("byResp: ", byResp)
+		*/
+
 		for _, v := range resp {
-			if group, ok := v.Labels[r.By]; !ok {
-				appendToGroup(byResp, v, "None")
-			} else {
-				appendToGroup(byResp, v, group)
+
+			if v != nil {
+				//DEBUG
+				/*
+					log.Print("#### Value of v == ", v.Labels)
+					log.Print("#### Value of r.By == ", r.By)
+					log.Print("#### Value of v.Labels[r.By] == ", v.Labels[r.By])
+				*/
+
+				if group, ok := v.Labels[r.By]; !ok {
+					appendToGroup(byResp, v, "None")
+				} else {
+					appendToGroup(byResp, v, group)
+				}
+				//DEBUG
+				//log.Print("#### Value of byResp: ", byResp)
 			}
 		}
 		return &elwin.GetReply{
@@ -326,5 +351,38 @@ func (e *elwinServer) json(w http.ResponseWriter, r *http.Request) {
 func logCloseErr(c io.Closer) {
 	if err := c.Close(); err != nil {
 		log.Printf("could not close response body: %s", err)
+	}
+}
+
+func healthzHandler(healthChecks map[string]interface{}) http.HandlerFunc {
+	type healthy interface {
+		IsHealthy() error
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		errs := make(map[string]string, len(healthChecks))
+		for key, healthChecker := range healthChecks {
+			if hc, ok := healthChecker.(healthy); ok {
+				err := hc.IsHealthy()
+				if err != nil {
+					errs[key] = err.Error()
+				}
+			}
+		}
+		if len(errs) != 0 {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			enc := json.NewEncoder(w)
+			if err := enc.Encode(errs); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/plain")
+		if _, err := w.Write([]byte("OK")); err != nil {
+			log.Printf("could not write to healthz connection: %s", err)
+		}
 	}
 }
