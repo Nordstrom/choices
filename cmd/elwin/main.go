@@ -57,7 +57,6 @@ var (
 const (
 	cfgStorageAddr = "storage_address"
 	cfgJSONAddr    = "json_address"
-	cfgGRPCAddr    = "grpc_address"
 	cfgUInterval   = "update_interval"
 	cfgRTimeout    = "read_timeout"
 	cfgWTimeout    = "write_timeout"
@@ -152,8 +151,6 @@ func main() {
 	log.Printf("Listening for json on %s", viper.GetString(cfgJSONAddr))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", healthzHandler(map[string]interface{}{"storage": ec}))
-	mux.HandleFunc("/readiness", healthzHandler(map[string]interface{}{"storage": ec}))
 	mux.HandleFunc("/elwin/v1/experiments", e.json)
 	mux.Handle("/metrics", promhttp.Handler())
 	if viper.IsSet(cfgProf) {
@@ -211,9 +208,6 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 	defer func() {
 		requestDurations.Observe(float64(time.Since(start)))
 	}()
-	/*if r == nil {
-		return nil, grpc.Errorf(codes.InvalidArgument, "Get: request is nil")
-	}*/
 	selector := labels.NewSelector()
 	for _, requirement := range r.Requirements {
 		var op selection.Operator
@@ -332,38 +326,5 @@ func (e *elwinServer) json(w http.ResponseWriter, r *http.Request) {
 func logCloseErr(c io.Closer) {
 	if err := c.Close(); err != nil {
 		log.Printf("could not close response body: %s", err)
-	}
-}
-
-func healthzHandler(healthChecks map[string]interface{}) http.HandlerFunc {
-	type healthy interface {
-		IsHealthy() error
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		errs := make(map[string]string, len(healthChecks))
-		for key, healthChecker := range healthChecks {
-			if hc, ok := healthChecker.(healthy); ok {
-				err := hc.IsHealthy()
-				if err != nil {
-					errs[key] = err.Error()
-				}
-			}
-		}
-		if len(errs) != 0 {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Header().Set("Content-Type", "application/json")
-			enc := json.NewEncoder(w)
-			if err := enc.Encode(errs); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "text/plain")
-		if _, err := w.Write([]byte("OK")); err != nil {
-			log.Printf("could not write to healthz connection: %s", err)
-		}
 	}
 }
