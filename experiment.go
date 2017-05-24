@@ -15,10 +15,10 @@
 package choices
 
 import (
-	"encoding/json"
 	"errors"
 
 	"github.com/foolusion/elwinprotos/storage"
+	"github.com/pquerna/ffjson/ffjson"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -121,7 +121,7 @@ func (e *Experiment) MarshalJSON() ([]byte, error) {
 		Segments: e.Segments,
 		Params:   e.Params,
 	}
-	return json.Marshal(aux)
+	return ffjson.Marshal(aux)
 }
 
 // Param is a struct that represents a single parameter in an
@@ -168,7 +168,7 @@ func (p *Param) MarshalJSON() ([]byte, error) {
 		Name:    p.Name,
 		Choices: p.Choices,
 	}
-	return json.Marshal(aux)
+	return ffjson.Marshal(aux)
 }
 
 // eval evaluates the Param based on the given hashConfig. It returns
