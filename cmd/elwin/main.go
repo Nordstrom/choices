@@ -342,6 +342,7 @@ func (e *elwinServer) json(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	enc := json.NewEncoder(w)
+	w.Header().Set("Content-Type", "application/json")
 	if err := enc.Encode(resp); err != nil {
 		http.Error(w, "could not marshal json", http.StatusInternalServerError)
 		return
