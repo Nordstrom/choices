@@ -109,6 +109,7 @@ func (n *experimentStore) read() []*Experiment {
 func (n *experimentStore) update() error {
 	ar, err := n.el.List(context.TODO(), &storage.ListRequest{})
 	if err != nil {
+		log.Print("### ERROR in storage.go -> line 79", &storage.ListRequest{})
 		return errors.Wrap(err, "error requesting All from storage")
 	}
 

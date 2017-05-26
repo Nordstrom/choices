@@ -209,7 +209,9 @@ func main() {
 			case choices.ErrUpdateStorage:
 				updateErrors.Inc()
 			}
+			log.Println("### LOG in elwin/main.go -> line 213", err)
 			log.Println(err)
+			os.Exit(0)
 		case s := <-signalChan:
 			log.Printf("Captured %v. Exitting...", s)
 			cancel()

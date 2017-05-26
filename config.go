@@ -17,6 +17,7 @@ package choices
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/pkg/errors"
@@ -80,6 +81,7 @@ func NewChoices(ctx context.Context, opts ...ConfigOpt) (*Config, error) {
 	go func(e *Config) {
 		err := e.storage.update()
 		if err != nil {
+			log.Print("### ERROR IN config.go -> line 84")
 			e.ErrChan <- ErrUpdateStorage{error: err}
 		}
 		ticker := time.NewTicker(e.updateInterval)
