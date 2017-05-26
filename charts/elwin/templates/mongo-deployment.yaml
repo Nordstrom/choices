@@ -19,13 +19,6 @@ spec:
         env: "{{ .Values.environment }}"
     spec:
       containers:
-      - name: grpc-gateway
-        image: "{{ .Values.image }}"
-        imagePullPolicy: Always
-        command:
-        - json-gateway
-        - -listen_address=:8082
-        - -storage_endpoint=localhost:8080
       - name: mongo-store
         image: "{{ .Values.image }}"
         imagePullPolicy: Always

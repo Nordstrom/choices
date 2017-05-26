@@ -213,7 +213,7 @@ func (s *server) Remove(ctx oldctx.Context, r *storage.RemoveRequest) (*storage.
 func main() {
 	log.Println("Starting mongo-store...")
 	viper.SetDefault(cfgListenAddr, ":8080")
-	viper.SetDefault(cfgMongoAddr, "localhost" /*"elwin-mongo"*/)
+	viper.SetDefault(cfgMongoAddr, "elwin-mongo")
 	viper.SetDefault(cfgMongoDatabase, "elwin")
 
 	viper.SetConfigName("config")
