@@ -57,8 +57,6 @@ spec:
         image: "{{ .Values.image }}"
         imagePullPolicy: Always
         env:
-        - name: ELWIN_GRPC_ADDRESS
-          value: ":{{ .Values.elwin.grpcPort }}"
         - name: ELWIN_JSON_ADDRESS
           value: ":{{ .Values.elwin.metricsPort }}"
         - name: ELWIN_READ_TIMEOUT
