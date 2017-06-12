@@ -194,8 +194,6 @@ func main() {
 			ctx, sdcancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer sdcancel()
 			srv.Shutdown(ctx)
-			// send StatusServiceUnavailable to new requestors
-			// block server from accepting new requests
 			os.Exit(0)
 		}
 	}
@@ -241,36 +239,16 @@ func (e *elwinServer) Get(ctx context.Context, r *elwin.GetRequest) (*elwin.GetR
 		return nil, fmt.Errorf("error evaluating experiments for %s, %s: %v", r.Requirements, r.UserID, err)
 	}
 
-	//DEBUG
-	/* log.Print(r) */
-
 	if r.By != "" {
 		byResp := make(map[string]*elwin.ExperimentList, 10)
-
-		//DEBUG
-		/*
-			log.Print("#Selector: ", selector)
-			log.Print("resp: ", resp)
-			log.Print("byResp: ", byResp)
-		*/
-
 		for _, v := range resp {
 
 			if v != nil {
-				//DEBUG
-				/*
-					log.Print("#### Value of v == ", v.Labels)
-					log.Print("#### Value of r.By == ", r.By)
-					log.Print("#### Value of v.Labels[r.By] == ", v.Labels[r.By])
-				*/
-
 				if group, ok := v.Labels[r.By]; !ok {
 					appendToGroup(byResp, v, "None")
 				} else {
 					appendToGroup(byResp, v, group)
 				}
-				//DEBUG
-				//log.Print("#### Value of byResp: ", byResp)
 			}
 		}
 		return &elwin.GetReply{
