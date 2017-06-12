@@ -406,6 +406,10 @@ func (u *Unstructured) GetDeletionTimestamp() *metav1.Time {
 }
 
 func (u *Unstructured) SetDeletionTimestamp(timestamp *metav1.Time) {
+	if timestamp == nil {
+		u.setNestedField(nil, "metadata", "deletionTimestamp")
+		return
+	}
 	ts, _ := timestamp.MarshalQueryParameter()
 	u.setNestedField(ts, "metadata", "deletionTimestamp")
 }
@@ -446,6 +450,14 @@ func (u *Unstructured) GroupVersionKind() schema.GroupVersionKind {
 	}
 	gvk := gv.WithKind(u.GetKind())
 	return gvk
+}
+
+func (u *Unstructured) GetInitializers() *metav1.Initializers {
+	panic("not implemented")
+}
+
+func (u *Unstructured) SetInitializers(initializers *metav1.Initializers) {
+	panic("not implemented")
 }
 
 func (u *Unstructured) GetFinalizers() []string {

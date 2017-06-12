@@ -12,7 +12,7 @@ metadata:
     "helm.sh/created": "{{ .Release.Time.Seconds }}"
 spec:
   minReadySeconds: 5
-  replicas: 5
+  replicas: 1
   revisionHistoryLimit: 5
   strategy:
     type: RollingUpdate
@@ -53,19 +53,10 @@ spec:
     spec:
       # affinity goes here
       containers:
-      - name: grpc-gateway
-        image: "{{ .Values.image }}"
-        imagePullPolicy: Always
-        command:
-        - "elwin-grpc-gateway"
-        - "-storage_endpoint=localhost:{{ .Values.elwin.grpcPort }}"
-        - "-listen_address=:{{ .Values.elwin.jsonPort }}"
       - name: elwin
         image: "{{ .Values.image }}"
         imagePullPolicy: Always
         env:
-        - name: ELWIN_GRPC_ADDRESS
-          value: ":{{ .Values.elwin.grpcPort }}"
         - name: ELWIN_JSON_ADDRESS
           value: ":{{ .Values.elwin.metricsPort }}"
         - name: ELWIN_READ_TIMEOUT

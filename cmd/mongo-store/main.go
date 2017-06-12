@@ -244,6 +244,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer sess.Close()
+
 	srv := &server{
 		Session: sess,
 		db:      viper.GetString(cfgMongoDatabase),

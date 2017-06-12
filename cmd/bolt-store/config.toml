@@ -1,4 +1,0 @@
-db_file = "test.db"
-db_bucket = "dev"
-listen_address = ":8080"
-metrics_address = ":8081"

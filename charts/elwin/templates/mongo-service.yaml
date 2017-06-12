@@ -14,11 +14,8 @@ metadata:
     prometheus.io/port: "8081"
 spec:
   ports:
-    - name: grpc
-      port: 80
-      targetPort: 8080
     - name: json
-      port: 8082
+      port: 8080
     - name: metrics
       port: 8081
   selector:

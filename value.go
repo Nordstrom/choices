@@ -15,8 +15,9 @@
 package choices
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 // ValueType are the different types of Values a Param can have. This is used
@@ -54,7 +55,7 @@ func (u *Uniform) MarshalJSON() ([]byte, error) {
 	}{
 		Choices: u.Choices,
 	}
-	return json.Marshal(aux)
+	return ffjson.Marshal(aux)
 }
 
 // Weighted is a way to select from a list of Choices with probability ratio
@@ -76,7 +77,7 @@ func (w *weightedChoice) MarshalJSON() ([]byte, error) {
 		Name:   w.name,
 		Weight: w.weight,
 	}
-	return json.Marshal(aux)
+	return ffjson.Marshal(aux)
 }
 
 // Choice implements the choice interface for Weighted choices.
@@ -104,5 +105,5 @@ func (w *Weighted) MarshalJSON() ([]byte, error) {
 	}{
 		Choices: w.Choices,
 	}
-	return json.Marshal(aux)
+	return ffjson.Marshal(aux)
 }

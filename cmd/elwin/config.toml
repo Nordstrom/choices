@@ -1,7 +1,6 @@
 storage_address = ":8080"
 
 json_address = ":8082"
-grpc_address = ":8083"
 update_interval = "10s"
 
 read_timeout = "5s"

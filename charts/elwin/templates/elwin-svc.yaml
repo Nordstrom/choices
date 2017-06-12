@@ -11,21 +11,17 @@ metadata:
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/path: /metrics
-    prometheus.io/port: "{{ .Values.elwin.metricsPort }}"
-    service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    service.beta.kubernetes.io/aws-load-balancer: 0.0.0.0/0
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
 spec:
   type: LoadBalancer
   ports:
-  - name: grpc
-    port: {{ .Values.elwin.grpcPort }}
-    protocol: TCP
   - name: json
     port: 80
     protocol: TCP
-    targetPort: {{ .Values.elwin.jsonPort }}
+    targetPort: 8080
   - name: metrics
-    port: {{ .Values.elwin.metricsPort }}
+    port: 8081
     protocol: TCP
   selector:
     run: "{{ .Release.Name }}-{{ .Values.elwin.name }}"
