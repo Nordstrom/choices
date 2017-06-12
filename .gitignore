@@ -2,3 +2,5 @@ untracked/
 bin/
 .history/
 *.bak
+Gopkg.lock
+Gopkg.toml
